@@ -39,6 +39,7 @@ list(APPEND SOURCES
   physics/material/MaterialStateStore.cc
   physics/material/detail/Utils.cc
   sim/TrackInitializerStore.cc
+  sim/VacancyStore.cc
 )
 
 if(CELERITAS_USE_CUDA)
