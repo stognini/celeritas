@@ -7,27 +7,17 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include "base/KernelParamCalculator.cuda.hh"
+#include "base/NumericLimits.hh"
 #include "base/Span.hh"
 #include "physics/base/Primary.hh"
-#include "ParamPointers.hh"
-#include "StatePointers.hh"
-#include "TrackInitializerPointers.hh"
+#include "sim/ParamPointers.hh"
+#include "sim/StatePointers.hh"
+#include "sim/TrackInitializerPointers.hh"
 
 namespace celeritas
 {
-//---------------------------------------------------------------------------//
-// Predicate used to check whether the track at a given index in the track
-// vector is alive
-struct alive
+namespace detail
 {
-    size_type flag;
-
-    alive(size_type flag) : flag(flag){};
-
-    CELER_FUNCTION bool operator()(const size_type x) { return x == flag; }
-};
-
 //---------------------------------------------------------------------------//
 // Mark a track state as alive to indicate a new track can't be initialized
 // there.
@@ -73,4 +63,5 @@ size_type reduce_counts(span<size_type> counts);
 void exclusive_scan_counts(span<size_type> counts);
 
 //---------------------------------------------------------------------------//
+} // namespace detail
 } // namespace celeritas

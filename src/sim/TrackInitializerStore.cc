@@ -8,7 +8,7 @@
 #include "TrackInitializerStore.hh"
 
 #include <numeric>
-#include "InitializeTracks.hh"
+#include "detail/InitializeTracks.hh"
 
 namespace celeritas
 {
@@ -61,7 +61,7 @@ void TrackInitializerStore::create_from_primaries(span<const Primary> primaries)
             <= initializers_.capacity() - initializers_.size());
 
     // Launch a kernel to create track initializers from primaries
-    process_primaries(primaries, this->device_pointers());
+    detail::process_primaries(primaries, this->device_pointers());
     initializers_.resize(initializers_.size() + primaries.size());
 }
 
@@ -130,17 +130,18 @@ void TrackInitializerStore::create_from_secondaries(StatePointers states,
 
     // Launch a kernel to identify which track slots are still alive and count
     // the number of surviving secondaries per track
-    locate_alive(states, params, this->device_pointers());
+    detail::locate_alive(states, params, this->device_pointers());
 
     // Remove all elements in the vacancy vector that were flagged as active
     // tracks, leaving the (sorted) indices of the empty slots
-    size_type num_vac = remove_if_alive(vacancies_.device_pointers());
+    size_type num_vac = detail::remove_if_alive(vacancies_.device_pointers());
     vacancies_.resize(num_vac);
 
     // Sum the total number secondaries produced in all interactions
     // TODO: if we don't have space for all the secondaries, we will need to
     // buffer the current track initializers to create room
-    size_type num_sec = reduce_counts(secondary_counts_.device_pointers());
+    size_type num_sec
+        = detail::reduce_counts(secondary_counts_.device_pointers());
     REQUIRE(num_sec <= initializers_.capacity() - initializers_.size());
 
     // The exclusive prefix sum of the number of secondaries produced by each
@@ -148,10 +149,10 @@ void TrackInitializerStore::create_from_secondaries(StatePointers states,
     // for each thread. Starting at that index, each thread creates track
     // initializers from all surviving secondaries produced in its
     // interaction.
-    exclusive_scan_counts(secondary_counts_.device_pointers());
+    detail::exclusive_scan_counts(secondary_counts_.device_pointers());
 
     // Launch a kernel to create track initializers from secondaries
-    process_secondaries(states, params, this->device_pointers());
+    detail::process_secondaries(states, params, this->device_pointers());
     initializers_.resize(initializers_.size() + num_sec);
     parent_.resize(num_sec);
 }
@@ -174,7 +175,7 @@ void TrackInitializerStore::initialize_tracks(StatePointers states,
     vacancies_.resize(num_tracks);
 
     // Launch a kernel to initialize tracks on device
-    init_tracks(states, params, this->device_pointers());
+    detail::init_tracks(states, params, this->device_pointers());
     initializers_.resize(initializers_.size() - num_tracks);
 
     // Update the total number of tracks initialized in the simulation

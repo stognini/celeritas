@@ -3,7 +3,7 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file InitializeTracks.test.hh
+//! \file TrackInitializerStore.test.hh
 //---------------------------------------------------------------------------//
 #include "physics/base/Interaction.hh"
 #include "physics/base/SecondaryAllocatorPointers.hh"

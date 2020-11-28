@@ -3,10 +3,9 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file InitializeTracks.test.cu
+//! \file TrackInitializerStore.test.cu
 //---------------------------------------------------------------------------//
-#include "sim/InitializeTracks.hh"
-#include "InitializeTracks.test.hh"
+#include "TrackInitializerStore.test.hh"
 
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>

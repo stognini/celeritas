@@ -14,9 +14,22 @@
 #include <vector>
 #include "base/Atomics.hh"
 #include "base/DeviceVector.hh"
+#include "base/KernelParamCalculator.cuda.hh"
 
-namespace celeritas
+namespace
 {
+using namespace celeritas;
+using celeritas::detail::flag_alive;
+//---------------------------------------------------------------------------//
+// HELPER CLASSES
+//---------------------------------------------------------------------------//
+struct IsEqual
+{
+    size_type value;
+
+    CELER_FUNCTION bool operator()(size_type x) const { return x == value; }
+};
+
 //---------------------------------------------------------------------------//
 // KERNELS
 //---------------------------------------------------------------------------//
@@ -195,7 +208,14 @@ __global__ void process_secondaries_kernel(const StatePointers states,
         }
     }
 }
+} // end namespace
 
+//---------------------------------------------------------------------------//
+
+namespace celeritas
+{
+namespace detail
+{
 //---------------------------------------------------------------------------//
 // KERNEL INTERFACE
 //---------------------------------------------------------------------------//
@@ -273,7 +293,7 @@ size_type remove_if_alive(span<size_type> vacancies)
     thrust::device_ptr<size_type> end = thrust::remove_if(
         thrust::device_pointer_cast(vacancies.data()),
         thrust::device_pointer_cast(vacancies.data() + vacancies.size()),
-        alive(flag_alive()));
+        IsEqual{flag_alive()});
 
     CELER_CUDA_CALL(cudaDeviceSynchronize());
 
@@ -315,4 +335,5 @@ void exclusive_scan_counts(span<size_type> counts)
 }
 
 //---------------------------------------------------------------------------//
+} // namespace detail
 } // namespace celeritas

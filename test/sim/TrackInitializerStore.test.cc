@@ -3,19 +3,18 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file InitializeTracks.test.cc
+//! \file TrackInitializerStore.test.cc
 //---------------------------------------------------------------------------//
-#include "sim/InitializeTracks.hh"
+#include "sim/TrackInitializerStore.hh"
 
-#include "physics/base/SecondaryAllocatorStore.hh"
-#include "gtest/Main.hh"
-#include "gtest/Test.hh"
+#include "celeritas_test.hh"
 #include "geometry/GeoParams.hh"
-#include "physics/material/MaterialParams.hh"
 #include "physics/base/ParticleParams.hh"
+#include "physics/base/SecondaryAllocatorStore.hh"
+#include "physics/material/MaterialParams.hh"
 #include "sim/ParamPointers.hh"
 #include "sim/StateStore.hh"
-#include "InitializeTracks.test.hh"
+#include "TrackInitializerStore.test.hh"
 
 namespace celeritas_test
 {
@@ -80,8 +79,8 @@ class TrackInitTest : public celeritas::Test
     std::shared_ptr<ParticleParams> particle_params;
     std::shared_ptr<MaterialParams> material_params;
     std::shared_ptr<GeoParams>      geo_params;
-    ParamPointers         params;
-    DeviceVector<Primary> primaries;
+    ParamPointers                   params;
+    DeviceVector<Primary>           primaries;
 };
 
 //---------------------------------------------------------------------------//
@@ -93,8 +92,8 @@ TEST_F(TrackInitTest, run)
     // Allocate storage on device for track state data
     ParticleStateStore particle_states(num_tracks);
     GeoStateStore      geo_states(*geo_params, num_tracks);
-    SimStateStore sim_states(num_tracks);
-    RngStateStore rng_states(num_tracks);
+    SimStateStore      sim_states(num_tracks);
+    RngStateStore      rng_states(num_tracks);
     StateStore    store(particle_states, geo_states, sim_states, rng_states);
     StatePointers states = store.device_pointers();
 
