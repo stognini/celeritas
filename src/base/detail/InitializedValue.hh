@@ -43,7 +43,7 @@ class InitializedValue
     }
 
     //! Implicit assign from type
-    InitializedValue operator=(const T& value)
+    InitializedValue& operator=(const T& value)
     {
         value_ = value;
         return *this;

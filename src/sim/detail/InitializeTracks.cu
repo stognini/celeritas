@@ -15,6 +15,9 @@
 #include "base/Atomics.hh"
 #include "base/DeviceVector.hh"
 #include "base/KernelParamCalculator.cuda.hh"
+#include "geometry/GeoTrackView.hh"
+#include "physics/base/ParticleTrackView.hh"
+#include "sim/SimTrackView.hh"
 
 namespace
 {
@@ -45,7 +48,10 @@ __global__ void init_tracks_kernel(const StatePointers            states,
     auto thread_id = KernelParamCalculator::thread_id().get();
     if (thread_id < inits.vacancies.size())
     {
-        // Get the track initializer, starting from the back of the vector
+        // Get the track initializer from the back of the vector. Since new
+        // initializers are pushed to the back of the vector, these will be the
+        // most recently added and therefore the ones that still might have a
+        // parent they can copy the geometry state from.
         const TrackInitializer& init
             = inits.initializers[inits.initializers.size() - thread_id - 1];
 
@@ -67,7 +73,7 @@ __global__ void init_tracks_kernel(const StatePointers            states,
             unsigned int parent_id
                 = inits.parent[inits.parent.size() - thread_id - 1];
             GeoTrackView parent(params.geo, states.geo, ThreadId(parent_id));
-            geo.copy_state(parent, init.geo.dir);
+            geo = {parent, init.geo.dir};
         }
         // Initialize it from the position otherwise
         else
@@ -91,7 +97,8 @@ __global__ void locate_alive_kernel(const StatePointers            states,
     if (thread_id < states.size())
     {
         // Secondary to copy to the parent's track slot if the parent has died
-        Secondary firstborn = Secondary::from_cutoff();
+        Secondary  invalid   = Secondary{};
+        Secondary& firstborn = invalid;
 
         // Count how many secondaries survived cutoffs for each track
         inits.secondary_counts[thread_id] = 0;
@@ -108,16 +115,16 @@ __global__ void locate_alive_kernel(const StatePointers            states,
         }
 
         SimTrackView sim(states.sim, ThreadId(thread_id));
-
-        // The track is alive: mark this track slot as active
         if (sim.alive())
         {
+            // The track is alive: mark this track slot as active
             inits.vacancies[thread_id] = flag_alive();
         }
-        // The track is dead and produced secondaries: fill the empty track
-        // slot with the first secondary and mark the track slot as active
         else if (firstborn)
         {
+            // The track is dead and produced secondaries: fill the empty track
+            // slot with the first secondary and mark the track slot as active
+
             // TODO: calculate the correct track ID for the secondary
             // Initialize the simulation state
             sim = {TrackId{}, sim.track_id(), sim.event_id(), true};
@@ -129,17 +136,17 @@ __global__ void locate_alive_kernel(const StatePointers            states,
 
             // Keep the parent's geometry state
             GeoTrackView geo(params.geo, states.geo, ThreadId(thread_id));
-            geo.copy_state(geo, firstborn.direction);
+            geo = {geo, firstborn.direction};
 
             // Mark the secondary as processed and the track as active
             --inits.secondary_counts[thread_id];
-            firstborn                  = Secondary::from_cutoff();
+            firstborn                  = Secondary{};
             inits.vacancies[thread_id] = flag_alive();
         }
-        // The track is dead and did not produce secondaries: store the index
-        // so it can be used later to initialize a new track
         else
         {
+            // The track is dead and did not produce secondaries: store the
+            // index so it can be used later to initialize a new track
             inits.vacancies[thread_id] = thread_id;
         }
     }
@@ -193,7 +200,7 @@ __global__ void process_secondaries_kernel(const StatePointers states,
                 inits.parent[offset_id] = thread_id;
 
                 // Calculate the track ID of the secondary
-                unsigned int track_id = 1 + inits.track_count + offset_id++;
+                unsigned int track_id = inits.track_count + offset_id++;
 
                 // Construct a track initializer from a secondary
                 init.sim.track_id    = TrackId{track_id};
@@ -320,8 +327,11 @@ size_type reduce_counts(span<size_type> counts)
 
 //---------------------------------------------------------------------------//
 /*!
- * Calculate the exclusive prefix sum of the number of surviving secondaries
- * from each interaction.
+ * Do an exclusive scan of the number of surviving secondaries from each track.
+ *
+ * For an input array x, this calculates the exclusive prefix sum y of the
+ * array elements, i.e., y_i = \sum_{j=0}^{i-1} x_j, where y_0 = 0, and stores
+ * the result in the input array.
  */
 void exclusive_scan_counts(span<size_type> counts)
 {

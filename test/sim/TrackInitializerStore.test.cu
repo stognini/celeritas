@@ -10,6 +10,7 @@
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include "base/KernelParamCalculator.cuda.hh"
+#include "sim/SimTrackView.hh"
 
 namespace celeritas_test
 {

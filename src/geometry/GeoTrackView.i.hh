@@ -64,19 +64,20 @@ CELER_FUNCTION GeoTrackView& GeoTrackView::operator=(const Initializer_t& init)
 /*!
  * Construct the state from a direction and a copy of the parent state.
  */
-CELER_FUNCTION void
-GeoTrackView::copy_state(const GeoTrackView& parent, const Real3 direction)
+CELER_FUNCTION
+GeoTrackView& GeoTrackView::operator=(const DetailedInitializer& init)
 {
-    if (this != &parent)
+    if (this != &init.other)
     {
         // Copy the navigation state and position from the parent state
-        parent.vgstate_.CopyTo(&vgstate_);
-        pos_ = parent.pos_;
+        init.other.vgstate_.CopyTo(&vgstate_);
+        pos_ = init.other.pos_;
     }
     // Set up the next state and initialize the direction
     vgnext_.Clear();
     next_step_ = celeritas::numeric_limits<real_type>::quiet_NaN();
-    dir_       = direction;
+    dir_       = init.dir;
+    return *this;
 }
 
 //---------------------------------------------------------------------------//

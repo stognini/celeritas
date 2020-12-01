@@ -24,9 +24,9 @@ struct StatePointers
 {
     ParticleStatePointers particle;
     GeoStatePointers      geo;
-    SimStatePointers  sim;
-    RngStatePointers  rng;
-    span<Interaction> interactions;
+    SimStatePointers      sim;
+    RngStatePointers      rng;
+    span<Interaction>     interactions;
 
     explicit CELER_FUNCTION operator bool() const
     {

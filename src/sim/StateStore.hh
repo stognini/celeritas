@@ -23,11 +23,21 @@ namespace celeritas
 class StateStore
 {
   public:
-    // Construct with the track state storage objects
-    StateStore(ParticleStateStore& particle_states,
-               GeoStateStore&      geo_states,
-               SimStateStore&      sim_states,
-               RngStateStore&      rng_states);
+    //@{
+    //! Type aliases
+    using SPConstGeo = std::shared_ptr<const GeoParams>;
+    //@}
+
+    struct Input
+    {
+        size_type     num_tracks;
+        SPConstGeo    geo;
+        unsigned long host_seed = 12345u;
+    };
+
+  public:
+    // Construct with the track state input
+    explicit StateStore(const Input& inp);
 
     // Get the total number of tracks
     size_type size() const { return particle_states_.size(); }
@@ -36,10 +46,10 @@ class StateStore
     StatePointers device_pointers();
 
   private:
-    ParticleStateStore& particle_states_;
-    GeoStateStore&            geo_states_;
-    SimStateStore&            sim_states_;
-    RngStateStore&            rng_states_;
+    ParticleStateStore        particle_states_;
+    GeoStateStore             geo_states_;
+    SimStateStore             sim_states_;
+    RngStateStore             rng_states_;
     DeviceVector<Interaction> interactions_;
 };
 

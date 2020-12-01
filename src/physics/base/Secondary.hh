@@ -25,8 +25,9 @@ struct Secondary
     units::MevEnergy energy;    //!< New kinetic energy
     Real3            direction; //!< New direction
 
-    // Secondary did not survive cutoffs and has been processed
-    static inline CELER_FUNCTION Secondary from_cutoff();
+    // Default to invalid state
+    CELER_FUNCTION
+    Secondary() : def_id(ParticleDefId{}), energy(zero_quantity()) {}
 
     // Whether the secondary survived cutoffs
     explicit inline CELER_FUNCTION operator bool() const;
@@ -34,19 +35,6 @@ struct Secondary
 
 //---------------------------------------------------------------------------//
 // INLINE FUNCTIONS
-//---------------------------------------------------------------------------//
-/*!
- * Construct a secondary that has been killed after having cutoffs applied and
- * energy deposited locally
- */
-CELER_FUNCTION Secondary Secondary::from_cutoff()
-{
-    Secondary result;
-    result.def_id = {};
-    result.energy = zero_quantity();
-    return result;
-}
-
 //---------------------------------------------------------------------------//
 /*!
  * Whether the Secondary succeeded.

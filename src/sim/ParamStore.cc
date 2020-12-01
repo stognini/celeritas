@@ -3,9 +3,9 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file StateStore.cc
+//! \file ParamStore.cc
 //---------------------------------------------------------------------------//
-#include "StateStore.hh"
+#include "ParamStore.hh"
 
 #include "base/Assert.hh"
 
@@ -13,29 +13,30 @@ namespace celeritas
 {
 //---------------------------------------------------------------------------//
 /*!
- * Construct with the track state storage objects.
+ * Construct with the shared problem data..
  */
-StateStore::StateStore(const Input& inp)
-    : particle_states_(ParticleStateStore(inp.num_tracks))
-    , geo_states_(GeoStateStore(*inp.geo, inp.num_tracks))
-    , sim_states_(SimStateStore(inp.num_tracks))
-    , rng_states_(RngStateStore(inp.num_tracks, inp.host_seed))
-    , interactions_(this->size())
+ParamStore::ParamStore(SPConstGeo      geo,
+                       SPConstMaterial mat,
+                       SPConstParticle particle)
+    : geo_params_(std::move(geo))
+    , material_params_(std::move(mat))
+    , particle_params_(std::move(particle))
 {
+    REQUIRE(geo_params_);
+    REQUIRE(material_params_);
+    REQUIRE(particle_params_);
 }
 
 //---------------------------------------------------------------------------//
 /*!
  * Get a view to the managed data.
  */
-StatePointers StateStore::device_pointers()
+ParamPointers ParamStore::device_pointers()
 {
-    StatePointers result;
-    result.particle = particle_states_.device_pointers();
-    result.geo          = geo_states_.device_pointers();
-    result.sim          = sim_states_.device_pointers();
-    result.rng          = rng_states_.device_pointers();
-    result.interactions = interactions_.device_pointers();
+    ParamPointers result;
+    result.geo      = geo_params_->device_pointers();
+    result.material = material_params_->device_pointers();
+    result.particle = particle_params_->device_pointers();
     ENSURE(result);
     return result;
 }

@@ -20,13 +20,13 @@ namespace celeritas
  */
 struct ParamPointers
 {
-    ParticleParamsPointers particle;
     GeoParamsPointers      geo;
     MaterialParamsPointers material;
+    ParticleParamsPointers particle;
 
     explicit CELER_FUNCTION operator bool() const
     {
-        return particle && geo && material;
+        return geo && material && particle;
     }
 };
 

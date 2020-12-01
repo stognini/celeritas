@@ -9,6 +9,7 @@
 
 #ifdef __CUDA_ARCH__
 #    include <cfloat>
+#    include <climits>
 #    include <math_constants.h>
 #else
 #    include <limits>

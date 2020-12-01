@@ -39,6 +39,7 @@ list(APPEND SOURCES
   physics/material/MaterialStateStore.cc
   physics/material/detail/Utils.cc
   random/cuda/RngStateStore.cc
+  sim/ParamStore.cc
   sim/SimStateStore.cc
   sim/StateStore.cc
   sim/TrackInitializerStore.cc

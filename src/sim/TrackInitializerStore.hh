@@ -10,8 +10,8 @@
 #include "base/DeviceVector.hh"
 #include "physics/base/ParticleStateStore.hh"
 #include "physics/base/SecondaryAllocatorStore.hh"
-#include "ParamPointers.hh"
-#include "StatePointers.hh"
+#include "ParamStore.hh"
+#include "StateStore.hh"
 #include "TrackInitializerPointers.hh"
 
 namespace celeritas
@@ -23,22 +23,21 @@ namespace celeritas
 class TrackInitializerStore
 {
   public:
-    // Construct with the maximum number of track initializers to store on
-    // device
-    explicit TrackInitializerStore(ParticleStateStore&      particles,
-                                   SecondaryAllocatorStore& secondaries);
+    // Construct with the number of tracks and the maximum number of track
+    // initializers to store on device
+    explicit TrackInitializerStore(size_type num_tracks, size_type capacity);
 
     // Get a view to the managed data
     TrackInitializerPointers device_pointers();
 
     // Create track initializers on device from primary particles
-    void create_from_primaries(span<const Primary> primaries);
+    void extend_from_primaries(span<const Primary> primaries);
 
     // Create track initializers on device from secondary particles.
-    void create_from_secondaries(StatePointers states, ParamPointers params);
+    void extend_from_secondaries(StateStore& states, ParamStore& params);
 
     // Initialize track states on device.
-    void initialize_tracks(StatePointers states, ParamPointers params);
+    void initialize_tracks(StateStore& states, ParamStore& params);
 
   private:
     // Track initializers created from primaries or secondaries

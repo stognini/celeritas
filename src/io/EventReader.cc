@@ -47,8 +47,7 @@ EventReader::result_type EventReader::operator()()
         }
         ++event_id;
 
-        // Track numbering starts at 1 since 0 is reserved for the parent ID
-        int track_id = 1;
+        int track_id = 0;
 
         // Convert the energy units to MeV and the length units to cm
         gen_event.set_units(HepMC3::Units::MEV, HepMC3::Units::CM);

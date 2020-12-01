@@ -10,7 +10,9 @@
 #include "physics/base/SecondaryAllocatorView.hh"
 #include "physics/base/ParticleStateStore.hh"
 #include "physics/base/ParticleTrackView.hh"
-#include "sim/TrackInitializerStore.hh"
+#include "sim/TrackInitializerPointers.hh"
+#include "sim/ParamPointers.hh"
+#include "sim/StatePointers.hh"
 #include <vector>
 
 namespace celeritas_test
@@ -65,7 +67,7 @@ struct Interactor
             }
             else
             {
-                result.secondaries[i] = Secondary::from_cutoff();
+                result.secondaries[i] = Secondary{};
             }
         }
         return result;
