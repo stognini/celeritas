@@ -22,7 +22,7 @@
 namespace
 {
 using namespace celeritas;
-using celeritas::detail::flag_alive;
+using celeritas::detail::flag_id;
 //---------------------------------------------------------------------------//
 // HELPER CLASSES
 //---------------------------------------------------------------------------//
@@ -97,18 +97,18 @@ __global__ void locate_alive_kernel(const StatePointers            states,
     if (thread_id < states.size())
     {
         // Secondary to copy to the parent's track slot if the parent has died
-        Secondary  invalid   = Secondary{};
-        Secondary& firstborn = invalid;
+        size_type secondary_id = flag_id();
 
         // Count how many secondaries survived cutoffs for each track
         inits.secondary_counts[thread_id] = 0;
-        for (const auto& secondary : states.interactions[thread_id].secondaries)
+        Interaction& result               = states.interactions[thread_id];
+        for (size_type i = 0; i < result.secondaries.size(); ++i)
         {
-            if (secondary)
+            if (result.secondaries[i])
             {
-                if (!firstborn)
+                if (secondary_id == flag_id())
                 {
-                    firstborn = secondary;
+                    secondary_id = i;
                 }
                 ++inits.secondary_counts[thread_id];
             }
@@ -118,30 +118,36 @@ __global__ void locate_alive_kernel(const StatePointers            states,
         if (sim.alive())
         {
             // The track is alive: mark this track slot as active
-            inits.vacancies[thread_id] = flag_alive();
+            inits.vacancies[thread_id] = flag_id();
         }
-        else if (firstborn)
+        else if (secondary_id != flag_id())
         {
             // The track is dead and produced secondaries: fill the empty track
             // slot with the first secondary and mark the track slot as active
 
-            // TODO: calculate the correct track ID for the secondary
+            // Calculate the track ID of the secondary
+            // TODO: This is nondeterministic; we need to calculate the track
+            // ID in a reproducible way.
+            unsigned int track_id
+                = atomic_add(&inits.track_counter[sim.event_id().get()], 1ull);
+
             // Initialize the simulation state
-            sim = {TrackId{}, sim.track_id(), sim.event_id(), true};
+            sim = {TrackId{track_id}, sim.track_id(), sim.event_id(), true};
 
             // Initialize the particle state from the secondary
+            Secondary&        secondary = result.secondaries[secondary_id];
             ParticleTrackView particle(
                 params.particle, states.particle, ThreadId(thread_id));
-            particle = {firstborn.def_id, firstborn.energy};
+            particle = {secondary.def_id, secondary.energy};
 
             // Keep the parent's geometry state
             GeoTrackView geo(params.geo, states.geo, ThreadId(thread_id));
-            geo = {geo, firstborn.direction};
+            geo = {geo, secondary.direction};
 
             // Mark the secondary as processed and the track as active
             --inits.secondary_counts[thread_id];
-            firstborn                  = Secondary{};
-            inits.vacancies[thread_id] = flag_alive();
+            secondary                  = Secondary{};
+            inits.vacancies[thread_id] = flag_id();
         }
         else
         {
@@ -197,10 +203,13 @@ __global__ void process_secondaries_kernel(const StatePointers states,
                     = inits.initializers[inits.initializers.size() + offset_id];
 
                 // Store the thread ID of the secondary's parent
-                inits.parent[offset_id] = thread_id;
+                inits.parent[offset_id++] = thread_id;
 
                 // Calculate the track ID of the secondary
-                unsigned int track_id = inits.track_count + offset_id++;
+                // TODO: This is nondeterministic; we need to calculate the
+                // track ID in a reproducible way.
+                unsigned int track_id = atomic_add(
+                    &inits.track_counter[sim.event_id().get()], 1ull);
 
                 // Construct a track initializer from a secondary
                 init.sim.track_id    = TrackId{track_id};
@@ -300,7 +309,7 @@ size_type remove_if_alive(span<size_type> vacancies)
     thrust::device_ptr<size_type> end = thrust::remove_if(
         thrust::device_pointer_cast(vacancies.data()),
         thrust::device_pointer_cast(vacancies.data() + vacancies.size()),
-        IsEqual{flag_alive()});
+        IsEqual{flag_id()});
 
     CELER_CUDA_CALL(cudaDeviceSynchronize());
 

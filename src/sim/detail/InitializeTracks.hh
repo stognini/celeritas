@@ -19,9 +19,8 @@ namespace celeritas
 namespace detail
 {
 //---------------------------------------------------------------------------//
-// Mark a track state as alive to indicate a new track can't be initialized
-// there.
-CELER_CONSTEXPR_FUNCTION size_type flag_alive()
+// Invalid index flag
+CELER_CONSTEXPR_FUNCTION size_type flag_id()
 {
     return numeric_limits<size_type>::max();
 }

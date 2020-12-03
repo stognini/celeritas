@@ -7,9 +7,9 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include "SimStatePointers.hh"
 #include "base/Macros.hh"
 #include "base/Types.hh"
+#include "SimStatePointers.hh"
 
 namespace celeritas
 {

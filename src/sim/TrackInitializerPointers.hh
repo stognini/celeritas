@@ -8,9 +8,9 @@
 #pragma once
 
 #include "base/Types.hh"
-#include "physics/base/Primary.hh"
-#include "physics/base/ParticleStatePointers.hh"
 #include "geometry/GeoStatePointers.hh"
+#include "physics/base/ParticleStatePointers.hh"
+#include "physics/base/Primary.hh"
 #include "SimStatePointers.hh"
 #include "Types.hh"
 
@@ -53,7 +53,7 @@ struct TrackInitializerPointers
     span<size_type>        parent;
     span<size_type>        vacancies;
     span<size_type>        secondary_counts;
-    size_type              track_count;
+    span<ull_int>          track_counter;
 
     explicit CELER_FUNCTION operator bool() const
     {

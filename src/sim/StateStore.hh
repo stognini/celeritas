@@ -8,8 +8,8 @@
 #pragma once
 
 #include "base/DeviceVector.hh"
-#include "physics/base/ParticleStateStore.hh"
 #include "geometry/GeoStateStore.hh"
+#include "physics/base/ParticleStateStore.hh"
 #include "random/cuda/RngStateStore.hh"
 #include "SimStateStore.hh"
 #include "StatePointers.hh"
