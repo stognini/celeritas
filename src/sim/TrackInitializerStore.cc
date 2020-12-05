@@ -177,6 +177,7 @@ void TrackInitializerStore::extend_from_secondaries(StateStore& states,
     // buffer the current track initializers to create room
     size_type num_sec
         = detail::reduce_counts(secondary_counts_.device_pointers());
+    // TODO: CHECK --> INSIST
     CHECK(num_sec + initializers_.size() <= initializers_.capacity());
 
     // The exclusive prefix sum of the number of secondaries produced by each
@@ -209,8 +210,6 @@ void TrackInitializerStore::initialize_tracks(StateStore& states,
     // The number of new tracks to initialize is the smaller of the number of
     // empty slots in the track vector and the number of track initializers
     size_type num_tracks = std::min(vacancies_.size(), initializers_.size());
-    vacancies_.resize(num_tracks);
-
     if (num_tracks > 0)
     {
         // Launch a kernel to initialize tracks on device
@@ -218,6 +217,7 @@ void TrackInitializerStore::initialize_tracks(StateStore& states,
                             params.device_pointers(),
                             this->device_pointers());
         initializers_.resize(initializers_.size() - num_tracks);
+        vacancies_.resize(vacancies_.size() - num_tracks);
     }
 }
 

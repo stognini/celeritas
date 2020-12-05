@@ -7,6 +7,7 @@
 //---------------------------------------------------------------------------//
 #include "sim/TrackInitializerStore.hh"
 
+#include <numeric>
 #include "celeritas_test.hh"
 #include "geometry/GeoParams.hh"
 #include "physics/base/SecondaryAllocatorStore.hh"
@@ -26,7 +27,7 @@ using namespace celeritas;
 //---------------------------------------------------------------------------//
 
 ITTestInput::ITTestInput(std::vector<size_type>& host_alloc_size,
-                         std::vector<int>&       host_alive)
+                         std::vector<char>&      host_alive)
     : alloc_size(host_alloc_size.size()), alive(host_alive.size())
 {
     REQUIRE(host_alloc_size.size() == host_alive.size());
@@ -106,8 +107,8 @@ class TrackInitTest : public celeritas::Test
 
 TEST_F(TrackInitTest, run)
 {
-    constexpr size_type num_tracks = 10;
-    constexpr size_type capacity   = 100;
+    const size_type num_tracks = 10;
+    const size_type capacity   = 100;
 
     // Create 12 primary particles
     std::vector<Primary> primaries = generate_primaries(12);
@@ -136,14 +137,14 @@ TEST_F(TrackInitTest, run)
 
     // Check the IDs of the initialized tracks
     output.track_id   = tracks_test(states.device_pointers());
-    expected.track_id = {11, 10, 9, 8, 7, 6, 5, 4, 3, 2};
+    expected.track_id = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
     EXPECT_VEC_EQ(expected.track_id, output.track_id);
 
     // Allocate input device data (number of secondaries to produce for each
     // track and whether the track survives the interaction)
-    std::vector<size_type> alloc_size = {1, 1, 0, 0, 1, 1, 0, 0, 1, 1};
-    std::vector<int>       alive      = {0, 1, 0, 1, 0, 1, 0, 1, 0, 1};
-    ITTestInput            input(alloc_size, alive);
+    std::vector<size_type> alloc = {1, 1, 0, 0, 1, 1, 0, 0, 1, 1};
+    std::vector<char>      alive = {0, 1, 0, 1, 0, 1, 0, 1, 0, 1};
+    ITTestInput            input(alloc, alive);
 
     // Launch kernel to process interactions
     interact(states.device_pointers(),
@@ -168,8 +169,110 @@ TEST_F(TrackInitTest, run)
 
     // Check the track IDs of the initialized tracks
     output.track_id   = tracks_test(states.device_pointers());
-    expected.track_id = {12, 10, 17, 8, 13, 6, 16, 4, 14, 2};
+    expected.track_id = {12, 3, 16, 5, 13, 7, 17, 9, 14, 11};
     EXPECT_VEC_EQ(expected.track_id, output.track_id);
+}
+
+TEST_F(TrackInitTest, primaries)
+{
+    const size_type num_tracks = 512;
+    const size_type capacity   = 1024;
+
+    // Create primary particles
+    const size_type      num_primaries = 8192;
+    std::vector<Primary> primaries     = generate_primaries(num_primaries);
+
+    // Allocate storage on device
+    StateStore              states({num_tracks, geo_params, 12345u});
+    SecondaryAllocatorStore secondaries(capacity);
+    TrackInitializerStore   track_init(num_tracks, capacity, primaries);
+
+    // Kill all the tracks in each interaction and don't produce secondaries
+    std::vector<size_type> alloc(num_tracks, 0);
+    std::vector<char>      alive(num_tracks, 0);
+    ITTestInput            input(alloc, alive);
+
+    for (auto i = num_primaries; i > 0; i -= capacity)
+    {
+        EXPECT_EQ(track_init.num_primaries(), i);
+
+        // Create track initializers on device from primary particles
+        track_init.extend_from_primaries();
+
+        for (auto j = capacity; j > 0; j -= num_tracks)
+        {
+            EXPECT_EQ(track_init.size(), j);
+
+            // Initialize tracks on device
+            track_init.initialize_tracks(states, params);
+
+            // Launch kernel that will kill all trackss
+            interact(states.device_pointers(),
+                     secondaries.device_pointers(),
+                     input.device_pointers());
+
+            // Launch a kernel to create track initializers from secondaries
+            track_init.extend_from_secondaries(states, params);
+        }
+    }
+
+    // Check the final track IDs
+    ITTestOutput output, expected;
+    output.track_id = tracks_test(states.device_pointers());
+    expected.track_id.resize(num_tracks);
+    std::iota(expected.track_id.begin(),
+              expected.track_id.end(),
+              num_primaries - capacity);
+    EXPECT_VEC_EQ(expected.track_id, output.track_id);
+
+    EXPECT_EQ(track_init.num_primaries(), 0);
+    EXPECT_EQ(track_init.size(), 0);
+}
+
+TEST_F(TrackInitTest, secondaries)
+{
+    const size_type num_tracks = 512;
+    const size_type capacity   = 1024;
+
+    // Create primary particles
+    const size_type      num_primaries = 128;
+    std::vector<Primary> primaries     = generate_primaries(num_primaries);
+
+    // Allocate storage on device
+    StateStore              states({num_tracks, geo_params, 12345u});
+    SecondaryAllocatorStore secondaries(capacity);
+    TrackInitializerStore   track_init(num_tracks, capacity, primaries);
+
+    // Allocate input device data (number of secondaries to produce for each
+    // track and whether the track survives the interaction)
+    std::vector<size_type> alloc     = {1, 1, 2, 0, 0, 0, 0, 0};
+    std::vector<char>      alive     = {1, 0, 0, 1, 0, 0, 0, 0};
+    size_type              base_size = alive.size();
+    for (size_type i = 0; i < num_tracks / base_size - 1; ++i)
+    {
+        alloc.insert(alloc.end(), alloc.begin(), alloc.begin() + base_size);
+        alive.insert(alive.end(), alive.begin(), alive.begin() + base_size);
+    }
+    ITTestInput input(alloc, alive);
+
+    // Create track initializers on device from primary particles
+    track_init.extend_from_primaries();
+    EXPECT_EQ(track_init.num_primaries(), 0);
+    EXPECT_EQ(track_init.size(), num_primaries);
+
+    while (track_init.size())
+    {
+        // Initialize the primary tracks on device
+        track_init.initialize_tracks(states, params);
+
+        // Launch kernel to process interactions
+        interact(states.device_pointers(),
+                 secondaries.device_pointers(),
+                 input.device_pointers());
+
+        // Launch a kernel to create track initializers from secondaries
+        track_init.extend_from_secondaries(states, params);
+    }
 }
 
 //---------------------------------------------------------------------------//

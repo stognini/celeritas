@@ -26,20 +26,28 @@ __global__ void interact_kernel(StatePointers              states,
     auto thread_id = celeritas::KernelParamCalculator::thread_id().get();
     if (thread_id < states.size())
     {
-        // Allow the particle to interact and create secondaries
-        SecondaryAllocatorView allocate_secondaries(secondaries);
-        Interactor interact(allocate_secondaries, input.alloc_size[thread_id]);
-        states.interactions[thread_id] = interact();
+        SimTrackView sim(states.sim, ThreadId(thread_id));
 
-        // Kill some of the tracks
-        if (!input.alive[thread_id])
+        // There may be more track slots than active tracks; only active tracks
+        // should interact
+        if (sim.alive())
         {
-            SimTrackView sim(states.sim, ThreadId(thread_id));
-            sim.alive() = false;
-        }
+            // Allow the particle to interact and create secondaries
+            SecondaryAllocatorView allocate_secondaries(secondaries);
+            Interactor             interact(allocate_secondaries,
+                                input.alloc_size[thread_id]);
+            states.interactions[thread_id] = interact();
 
-        // Kill the first secondary
-        // states.interactions[thread_id].secondaries[0] = Secondary{};
+            // Kill the selected tracks
+            if (!input.alive[thread_id])
+            {
+                sim.alive() = false;
+            }
+        }
+        else
+        {
+            states.interactions[thread_id] = Interaction::from_absorption();
+        }
     }
 }
 

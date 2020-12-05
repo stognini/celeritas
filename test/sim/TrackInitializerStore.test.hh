@@ -61,20 +61,20 @@ struct Interactor
 struct ITTestInputPointers
 {
     span<const size_type> alloc_size;
-    span<const int>       alive;
+    span<const char>      alive;
 };
 
 struct ITTestInput
 {
     ITTestInput(std::vector<size_type>& host_alloc_size,
-                std::vector<int>&       host_alive);
+                std::vector<char>&      host_alive);
 
     ITTestInputPointers device_pointers();
 
     // Number of secondaries each track will produce
     DeviceVector<size_type> alloc_size;
     // Whether the track is alive
-    DeviceVector<int> alive;
+    DeviceVector<char> alive;
 };
 
 //! Output data

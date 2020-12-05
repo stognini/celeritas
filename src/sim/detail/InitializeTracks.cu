@@ -45,8 +45,10 @@ __global__ void init_tracks_kernel(const StatePointers            states,
                                    const ParamPointers            params,
                                    const TrackInitializerPointers inits)
 {
+    size_type count
+        = min<size_type>(inits.vacancies.size(), inits.initializers.size());
     auto thread_id = KernelParamCalculator::thread_id().get();
-    if (thread_id < inits.vacancies.size())
+    if (thread_id < count)
     {
         // Get the track initializer from the back of the vector. Since new
         // initializers are pushed to the back of the vector, these will be the
@@ -56,7 +58,8 @@ __global__ void init_tracks_kernel(const StatePointers            states,
             = inits.initializers[inits.initializers.size() - thread_id - 1];
 
         // Index of the empty slot to create the new track in
-        ThreadId slot_id(inits.vacancies[thread_id]);
+        ThreadId slot_id(
+            inits.vacancies[inits.vacancies.size() - thread_id - 1]);
 
         // Initialize the simulation state
         SimTrackView sim(states.sim, slot_id);
