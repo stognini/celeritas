@@ -39,10 +39,7 @@ list(APPEND SOURCES
   physics/material/MaterialStateStore.cc
   physics/material/detail/Utils.cc
   random/cuda/RngStateStore.cc
-  sim/ParamStore.cc
   sim/SimStateStore.cc
-  sim/StateStore.cc
-  sim/TrackInitializerStore.cc
 )
 
 if(CELERITAS_USE_CUDA)
@@ -86,6 +83,9 @@ if(CELERITAS_USE_VecGeom)
   list(APPEND SOURCES
     geometry/GeoParams.cc
     geometry/GeoStateStore.cc
+    sim/ParamStore.cc
+    sim/StateStore.cc
+    sim/TrackInitializerStore.cc
   )
   list(APPEND PRIVATE_DEPS VecGeom::vgdml VecGeom::vecgeom)
   if(CELERITAS_USE_CUDA)
