@@ -23,10 +23,10 @@ __global__ void interact_kernel(StatePointers              states,
                                 SecondaryAllocatorPointers secondaries,
                                 ITTestInputPointers        input)
 {
-    auto thread_id = celeritas::KernelParamCalculator::thread_id().get();
+    auto thread_id = celeritas::KernelParamCalculator::thread_id();
     if (thread_id < states.size())
     {
-        SimTrackView sim(states.sim, ThreadId(thread_id));
+        SimTrackView sim(states.sim, thread_id);
 
         // There may be more track slots than active tracks; only active tracks
         // should interact
@@ -35,18 +35,20 @@ __global__ void interact_kernel(StatePointers              states,
             // Allow the particle to interact and create secondaries
             SecondaryAllocatorView allocate_secondaries(secondaries);
             Interactor             interact(allocate_secondaries,
-                                input.alloc_size[thread_id]);
-            states.interactions[thread_id] = interact();
+                                input.alloc_size[thread_id.get()],
+                                input.alive[thread_id.get()]);
+            states.interactions[thread_id.get()] = interact();
 
             // Kill the selected tracks
-            if (!input.alive[thread_id])
+            if (!input.alive[thread_id.get()])
             {
                 sim.alive() = false;
             }
         }
         else
         {
-            states.interactions[thread_id] = Interaction::from_absorption();
+            states.interactions[thread_id.get()]
+                = Interaction::from_absorption();
         }
     }
 }
@@ -54,7 +56,7 @@ __global__ void interact_kernel(StatePointers              states,
 __global__ void tracks_test_kernel(StatePointers states, unsigned int* output)
 {
     auto thread_id = celeritas::KernelParamCalculator::thread_id();
-    if (thread_id.get() < states.size())
+    if (thread_id < states.size())
     {
         SimTrackView sim(states.sim, thread_id);
         output[thread_id.get()] = sim.track_id().get();
@@ -64,21 +66,21 @@ __global__ void tracks_test_kernel(StatePointers states, unsigned int* output)
 __global__ void
 initializers_test_kernel(TrackInitializerPointers inits, unsigned int* output)
 {
-    auto thread_id = celeritas::KernelParamCalculator::thread_id().get();
+    auto thread_id = celeritas::KernelParamCalculator::thread_id();
     if (thread_id < inits.initializers.size())
     {
-        TrackInitializer& init = inits.initializers[thread_id];
-        output[thread_id]      = init.sim.track_id.get();
+        TrackInitializer& init  = inits.initializers[thread_id.get()];
+        output[thread_id.get()] = init.sim.track_id.get();
     }
 }
 
 __global__ void
 vacancies_test_kernel(TrackInitializerPointers inits, size_type* output)
 {
-    auto thread_id = celeritas::KernelParamCalculator::thread_id().get();
+    auto thread_id = celeritas::KernelParamCalculator::thread_id();
     if (thread_id < inits.vacancies.size())
     {
-        output[thread_id] = inits.vacancies[thread_id];
+        output[thread_id.get()] = inits.vacancies[thread_id.get()];
     }
 }
 

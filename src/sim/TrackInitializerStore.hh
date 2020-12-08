@@ -23,17 +23,11 @@ namespace celeritas
 class TrackInitializerStore
 {
   public:
-    //@{
-    //!
-    using constVecPrimary = const std::vector<Primary>;
-    //@}
-
-  public:
     // Construct with the number of tracks, the maximum number of track
     // initializers to store on device, and the primary particles
-    explicit TrackInitializerStore(size_type        num_tracks,
-                                   size_type        capacity,
-                                   constVecPrimary& primaries);
+    explicit TrackInitializerStore(size_type            num_tracks,
+                                   size_type            capacity,
+                                   std::vector<Primary> primaries);
 
     // Get a view to the managed data
     TrackInitializerPointers device_pointers();
@@ -45,7 +39,7 @@ class TrackInitializerStore
     size_type num_vacancies() const { return vacancies_.size(); }
 
     // Number of primary particles left to be initialized on device
-    size_type num_primaries() const { return num_primaries_; }
+    size_type num_primaries() const { return primaries_.size(); }
 
     // Create track initializers on device from primary particles
     void extend_from_primaries();
@@ -70,13 +64,10 @@ class TrackInitializerStore
     DeviceVector<size_type> secondary_counts_;
 
     // Track ID counter for each event
-    DeviceVector<ull_int> track_counter_;
+    DeviceVector<TrackId::value_type> track_counter_;
 
     // Host-side primary particles
-    constVecPrimary& primaries_;
-
-    // Number of host-side primaries that have not been initialized on device
-    size_type num_primaries_;
+    std::vector<Primary> primaries_;
 };
 
 //---------------------------------------------------------------------------//

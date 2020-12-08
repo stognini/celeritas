@@ -17,15 +17,14 @@ namespace celeritas
  * Construct with the number of tracks and the maximum number of elements to
  * allocate on device.
  */
-TrackInitializerStore::TrackInitializerStore(size_type        num_tracks,
-                                             size_type        capacity,
-                                             constVecPrimary& primaries)
+TrackInitializerStore::TrackInitializerStore(size_type            num_tracks,
+                                             size_type            capacity,
+                                             std::vector<Primary> primaries)
     : initializers_(capacity)
     , parent_(capacity)
     , vacancies_(num_tracks)
     , secondary_counts_(num_tracks)
     , primaries_(primaries)
-    , num_primaries_(primaries.size())
 {
     // Start with an empty vector of track initializers and parent thread IDs
     initializers_.resize(0);
@@ -38,7 +37,7 @@ TrackInitializerStore::TrackInitializerStore(size_type        num_tracks,
 
     // Initialize the track counter for each event as the number of primary
     // particles in that event
-    std::vector<ull_int> host_track_counter;
+    std::vector<TrackId::value_type> host_track_counter;
     for (const auto& primary : primaries_)
     {
         const auto event_id = primary.event_id.get();
@@ -48,7 +47,8 @@ TrackInitializerStore::TrackInitializerStore(size_type        num_tracks,
         }
         ++host_track_counter[event_id];
     }
-    track_counter_ = DeviceVector<ull_int>(host_track_counter.size());
+    track_counter_
+        = DeviceVector<TrackId::value_type>(host_track_counter.size());
     track_counter_.copy_to_device(make_span(host_track_counter));
 }
 
@@ -82,19 +82,19 @@ void TrackInitializerStore::extend_from_primaries()
 {
     // Number of primaries to copy to device
     size_type count = std::min(initializers_.capacity() - initializers_.size(),
-                               num_primaries_);
+                               primaries_.size());
     if (count)
     {
         // Allocate memory on device and copy primaries
         DeviceVector<Primary> primaries(count);
         primaries.copy_to_device(
-            {primaries_.data() + primaries_.size() - num_primaries_, count});
+            {primaries_.data() + primaries_.size() - count, count});
 
         // Launch a kernel to create track initializers from primaries
         detail::process_primaries(primaries.device_pointers(),
                                   this->device_pointers());
         initializers_.resize(initializers_.size() + count);
-        num_primaries_ -= count;
+        primaries_.resize(primaries_.size() - count);
     }
 }
 

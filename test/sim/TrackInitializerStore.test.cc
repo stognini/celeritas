@@ -220,9 +220,7 @@ TEST_F(TrackInitTest, primaries)
     ITTestOutput output, expected;
     output.track_id = tracks_test(states.device_pointers());
     expected.track_id.resize(num_tracks);
-    std::iota(expected.track_id.begin(),
-              expected.track_id.end(),
-              num_primaries - capacity);
+    std::iota(expected.track_id.begin(), expected.track_id.end(), 0);
     EXPECT_VEC_EQ(expected.track_id, output.track_id);
 
     EXPECT_EQ(track_init.num_primaries(), 0);
