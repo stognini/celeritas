@@ -7,16 +7,17 @@
 //---------------------------------------------------------------------------//
 #include "Logger.hh"
 
-#include <mutex>
+#include <algorithm>
+#include <functional>
+#include <string>
 #include <G4RunManager.hh>
 #include <G4Threading.hh>
 #include <G4ios.hh>
 
 #include "corecel/Assert.hh"
-#include "corecel/cont/Range.hh"
 #include "corecel/io/ColorUtils.hh"
 #include "corecel/io/Logger.hh"
-#include "corecel/sys/Environment.hh"
+#include "corecel/io/LoggerTypes.hh"
 #include "corecel/sys/MpiCommunicator.hh"
 
 namespace celeritas
@@ -53,7 +54,7 @@ void MtLogger::operator()(Provenance prov, LogLevel lev, std::string msg)
 
         // Output problem line/file for debugging or high level
         cerr << color_code('x')
-               << std::string(last_slash.base(), prov.file.end());
+             << std::string(last_slash.base(), prov.file.end());
         if (prov.line)
             cerr << ':' << prov.line;
         cerr << color_code(' ') << ": ";
@@ -64,7 +65,7 @@ void MtLogger::operator()(Provenance prov, LogLevel lev, std::string msg)
     {
         // Threading is initialized
         cerr << color_code('W') << '[' << G4Threading::G4GetThreadId() << '/'
-               << num_threads_ << "] " << color_code('x');
+             << num_threads_ << "] " << color_code('x');
     }
 
     // clang-format off
@@ -81,8 +82,8 @@ void MtLogger::operator()(Provenance prov, LogLevel lev, std::string msg)
         case LogLevel::size_: CELER_ASSERT_UNREACHABLE();
     };
     // clang-format on
-    cerr << color_code(c) << to_cstring(lev) << ": " << color_code(' ')
-           << msg << std::endl;
+    cerr << color_code(c) << to_cstring(lev) << ": " << color_code(' ') << msg
+         << std::endl;
 }
 //---------------------------------------------------------------------------//
 } // namespace

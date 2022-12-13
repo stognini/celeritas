@@ -10,10 +10,15 @@
 #include <G4Event.hh>
 
 #include "corecel/Assert.hh"
-#include "corecel/io/Logger.hh"
 
 namespace celeritas
 {
+//---------------------------------------------------------------------------//
+/*!
+ * Construct with Celeritas shared data.
+ */
+EventAction::EventAction() {}
+
 //---------------------------------------------------------------------------//
 /*!
  * Initialize Celeritas.
@@ -21,10 +26,8 @@ namespace celeritas
 void EventAction::BeginOfEventAction(const G4Event* event)
 {
     CELER_EXPECT(event);
-    CELER_LOG_LOCAL(debug) << "EventAction::BeginOfEventAction for event "
-                           << event->GetEventID();
 
-    // Set event ID in local transporter
+    // TODO: Set event ID in local transporter
 }
 
 //---------------------------------------------------------------------------//
@@ -33,9 +36,7 @@ void EventAction::BeginOfEventAction(const G4Event* event)
  */
 void EventAction::EndOfEventAction(const G4Event*)
 {
-    CELER_LOG_LOCAL(debug) << "EventAction::EndOfEventAction";
-
-    // Transport any tracks left in the buffer
+    // TODO: Transport any tracks left in the buffer
 }
 
 //---------------------------------------------------------------------------//

@@ -3,45 +3,37 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file accel/detail/LocalTransporter.hh
+//! \file demo-geant-integration/ActionInitialization.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
-namespace celeritas
-{
-namespace detail
+#include <memory>
+#include <G4VUserActionInitialization.hh>
+
+#include "accel/SharedParams.hh"
+
+namespace demo_geant
 {
 //---------------------------------------------------------------------------//
 /*!
- * Brief class description.
- *
- * Optional detailed class description, and possibly example usage:
- * \code
-    LocalTransporter ...;
-   \endcode
+ * Set up demo-specific action initializations.
  */
-class LocalTransporter
+class ActionInitialization final : public G4VUserActionInitialization
 {
   public:
     //!@{
     //! \name Type aliases
+    using SPParams = std::shared_ptr<celeritas::SharedParams>;
     //!@}
 
   public:
-    // Construct with shared (MT) params
-    LocalTransporter(SharedParams, SPCOptions, ...);
-
-    // Convert a Geant4 track to a Celeritas and add to buffer
-    void add(const G4Track&);
-
-    // Transport all buffered tracks to completion
-    void flush();
+    ActionInitialization();
+    void BuildForMaster() const final {}
+    void Build() const final;
 
   private:
-    std::vector<Primary> buffer_;
-    std::shared_ptr<StepperInterface> stepper_;
+    SPParams params_;
 };
 
 //---------------------------------------------------------------------------//
-} // namespace detail
-} // namespace celeritas
+} // namespace demo_geant

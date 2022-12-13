@@ -9,6 +9,8 @@
 
 #include <G4UserEventAction.hh>
 
+#include "SharedParams.hh"
+
 namespace celeritas
 {
 //---------------------------------------------------------------------------//
@@ -25,6 +27,8 @@ class EventAction final : public G4UserEventAction
     //!@}
 
   public:
+    EventAction();
+
     void BeginOfEventAction(const G4Event* event) final;
     void EndOfEventAction(const G4Event* event) final;
 };

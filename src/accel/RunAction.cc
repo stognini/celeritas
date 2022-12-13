@@ -7,18 +7,24 @@
 //---------------------------------------------------------------------------//
 #include "RunAction.hh"
 
+#include <G4AutoLock.hh>
 #include <G4Run.hh>
+#include <G4Threading.hh>
 
 #include "corecel/Assert.hh"
-#include "corecel/io/Logger.hh"
+
+namespace
+{
+G4Mutex mutex = G4MUTEX_INITIALIZER;
+}
 
 namespace celeritas
 {
 //---------------------------------------------------------------------------//
 /*!
- * Construct with Celeritas setup options.
+ * Construct with Celeritas setup options and shared data.
  */
-RunAction::RunAction(SPCOptions options) : options_(std::move(options))
+RunAction::RunAction(SPCOptions options) : options_(options)
 {
     CELER_EXPECT(options_);
 }
@@ -30,21 +36,35 @@ RunAction::RunAction(SPCOptions options) : options_(std::move(options))
 void RunAction::BeginOfRunAction(const G4Run* run)
 {
     CELER_EXPECT(run);
-    CELER_LOG_LOCAL(debug) << "RunAction::BeginOfRunAction for run "
-                           << run->GetRunID()
-                           << (this->IsMaster() ? " (master)" : "");
 
-    // TODO: set up physics and geometry if master?
-    // or if first thread to hit (via mutex?)
+    if (false)
+    {
+        // Maybe the first thread to run: build and store core params
+        this->build_core_params();
+    }
+
+    // TODO: Construct thread-local transporter
 }
 
 //---------------------------------------------------------------------------//
 /*!
  * Finalize Celeritas.
  */
-void RunAction::EndOfRunAction(const G4Run*)
+void RunAction::EndOfRunAction(const G4Run*) {}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Finalize Celeritas.
+ */
+void RunAction::build_core_params()
 {
-    CELER_LOG_LOCAL(debug) << "RunAction::EndOfRunAction";
+    G4AutoLock lock(&mutex);
+    if (false)
+    {
+        // Some other thread constructed params between the thread-unsafe check
+        // and this thread-safe check
+        return;
+    }
 }
 
 //---------------------------------------------------------------------------//

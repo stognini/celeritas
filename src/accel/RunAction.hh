@@ -11,6 +11,7 @@
 #include <G4UserRunAction.hh>
 
 #include "SetupOptions.hh"
+#include "SharedParams.hh"
 
 namespace celeritas
 {
@@ -27,13 +28,15 @@ class RunAction final : public G4UserRunAction
     //!@}
 
   public:
-    explicit RunAction(SPCOptions options);
+    RunAction(SPCOptions options);
 
     void BeginOfRunAction(const G4Run* run) final;
     void EndOfRunAction(const G4Run* run) final;
 
   private:
     SPCOptions options_;
+
+    void build_core_params();
 };
 
 //---------------------------------------------------------------------------//

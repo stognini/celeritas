@@ -3,38 +3,36 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file accel/ActionInitialization.hh
+//! \file demo-geant-integration/DetectorConstruction.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
 #include <memory>
-#include <G4VUserActionInitialization.hh>
+#include <string>
+#include <utility>
+#include <vector>
+#include <G4VUserDetectorConstruction.hh>
 
-#include "SetupOptions.hh"
+class G4LogicalVolume;
 
-namespace celeritas
+namespace demo_geant
 {
 //---------------------------------------------------------------------------//
 /*!
- * Set up Celeritas for EM offloading.
+ * Construct a detector from a GDML filename set in GlobalSetup.
  */
-class ActionInitialization final : public G4VUserActionInitialization
+class DetectorConstruction final : public G4VUserDetectorConstruction
 {
   public:
-    //!@{
-    //! \name Type aliases
-    using SPCOptions = std::shared_ptr<const SetupOptions>;
-    //!@}
+    DetectorConstruction() = default;
 
-  public:
-    explicit ActionInitialization(SPCOptions options);
-
-    void BuildForMaster() const final;
-    void Build() const final;
+    G4VPhysicalVolume* Construct() final;
+    void               ConstructSDandField() final;
 
   private:
-    SPCOptions options_;
+    std::unique_ptr<G4VPhysicalVolume>                    world_;
+    std::vector<std::pair<G4LogicalVolume*, std::string>> detectors_;
 };
 
 //---------------------------------------------------------------------------//
-} // namespace celeritas
+} // namespace demo_geant

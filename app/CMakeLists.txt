@@ -239,6 +239,10 @@ if(CELERITAS_BUILD_DEMOS)
   if(CELERITAS_USE_OpenMP)
     list(APPEND _demo_loop_libs OpenMP::OpenMP_CXX)
   endif()
+  if(CELERITAS_USE_ROOT)
+    list(APPEND _demo_loop_src demo-loop/LDemoIO.root.cc)
+    list(APPEND _demo_loop_libs ROOT::Core ROOT::Tree)
+  endif()
 
   # Add the executable
   add_executable(demo-loop ${_demo_loop_src})
@@ -256,13 +260,15 @@ if(CELERITAS_BUILD_DEMOS)
     set(_driver "${CMAKE_CURRENT_SOURCE_DIR}/demo-loop/simple-driver.py")
     set(_gdml_inp "${CMAKE_CURRENT_SOURCE_DIR}/data/simple-cms.gdml")
     set(_hepmc3_inp "${CMAKE_CURRENT_SOURCE_DIR}/data/input.hepmc3")
+    set(_mctruth_out "")
     set(_geant_exporter_env "CELER_EXPORT_GEANT_EXE=")
     if(CELERITAS_USE_ROOT)
-      set(_geant_exporter_env "CELER_EXPORT_GEANT_EXE=$<TARGET_FILE:celer-export-geant>")
+      set(_geant_exporter_env
+        "CELER_EXPORT_GEANT_EXE=$<TARGET_FILE:celer-export-geant>")
     endif()
     add_test(NAME "app/demo-loop"
       COMMAND "${_python_exe}"
-      "${_driver}" "${_gdml_inp}" "${_hepmc3_inp}"
+      "${_driver}" "${_gdml_inp}" "${_hepmc3_inp}" "${_mctruth_out}"
     )
     set(_env
       "CELERITAS_DEMO_EXE=$<TARGET_FILE:demo-loop>"
@@ -292,9 +298,13 @@ if(CELERITAS_BUILD_DEMOS)
       )
     endif()
 
+    # Enable ROOT output for the demo-loop-cpu test when ROOT is available
+    if(CELERITAS_USE_ROOT)
+      set(_mctruth_out "${CMAKE_CURRENT_BINARY_DIR}/mctruth_output.root")
+    endif()
     add_test(NAME "app/demo-loop-cpu"
       COMMAND "${_python_exe}"
-      "${_driver}" "${_gdml_inp}" "${_hepmc3_inp}"
+      "${_driver}" "${_gdml_inp}" "${_hepmc3_inp}" "${_mctruth_out}"
     )
     set(_env
       "CELERITAS_DEMO_EXE=$<TARGET_FILE:demo-loop>"
@@ -329,25 +339,34 @@ endif()
 if(CELERITAS_BUILD_DEMOS AND CELERITAS_USE_Geant4)
   add_executable(demo-geant-integration
     demo-geant-integration/demo-geant-integration.cc
-    demo-geant-integration/DemoActionInitialization.cc
+    demo-geant-integration/ActionInitialization.cc
+    demo-geant-integration/DetectorConstruction.cc
+    demo-geant-integration/GlobalSetup.cc
+    demo-geant-integration/PrimaryGeneratorAction.cc
+    demo-geant-integration/SensitiveDetector.cc
   )
   celeritas_target_link_libraries(demo-geant-integration Celeritas::accel)
 
   if(CELERITAS_BUILD_TESTS)
-    set(_geant_test_inp "${CMAKE_CURRENT_SOURCE_DIR}/data/simple-cms.gdml")
-
+    configure_file(
+      "demo-geant-integration/simple-cms-test.mac.in"
+      "simple-cms-test.mac" @ONLY
+    )
     add_test(NAME "app/demo-geant-integration"
       COMMAND "$<TARGET_FILE:demo-geant-integration>"
-      "${_geant_test_inp}"
+      "simple-cms-test.mac"
     )
     set(_env
       "CELER_LOG_LOCAL=debug"
       "CELER_DISABLE_PARALLEL=1"
+      "NUM_THREADS=2"
       ${_geant_test_env}
     )
+    if(CELERITAS_USE_OpenMP)
+      list(APPEND _env "OMP_NUM_THREADS=1")
+    endif()
     set_tests_properties("app/demo-geant-integration" PROPERTIES
       ENVIRONMENT "${_env}"
-      REQUIRED_FILES "${_geant_test_inp}"
       LABELS "app"
     )
   endif()
