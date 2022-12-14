@@ -48,7 +48,6 @@ void ActionInitialization::Build() const
     // Initialize primary generator
     if (hepmc3_reader_)
     {
-        // Use HepMC3
         this->SetUserAction(new PrimaryGeneratorAction(hepmc3_reader_));
     }
     else

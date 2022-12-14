@@ -29,7 +29,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct by setting up a default particle gun.
+ * Construct by initializing the HepMC3 reader.
  */
 PrimaryGeneratorAction::PrimaryGeneratorAction(
     std::shared_ptr<G4VPrimaryGenerator> hepmc3_reader)
@@ -39,7 +39,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction(
 
 //---------------------------------------------------------------------------//
 /*!
- * Generate primaries based on the particle gun data.
+ * Generate primaries from HepMC3 or particle gun.
  */
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* event)
 {
