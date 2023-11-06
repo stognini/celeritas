@@ -94,6 +94,11 @@ bool SensitiveDetector::ProcessHits(G4Step* g4step, G4TouchableHistory*)
     hit.energy_dep = convert_from_geant(edep, CLHEP::MeV);
     hit.time = convert_from_geant(pre_step->GetGlobalTime(), CLHEP::s);
 
+    // Fill histograms
+    auto& hists = RootIO::Instance()->GetHistograms();
+    hists.energy_dep->Fill(hit.energy_dep);
+    hists.time->Fill(hit.time);
+
     collection_->insert(new SensitiveHit(hit));
     return true;
 }

@@ -65,6 +65,12 @@ RootIO::RootIO()
         tree_.reset(new TTree(
             this->TreeName(), "event_hits", this->SplitLevel(), file_.get()));
     }
+
+    // TODO: Only initialize if histogram option is on
+    // TODO: Set up binning from json
+    hists_.energy_dep
+        = new TH1D("energy_dep", "energy deposition", 100, 0, 100);
+    hists_.time = new TH1D("time", "global time", 100, 0, 22e-9);
 }
 
 //---------------------------------------------------------------------------//
@@ -168,6 +174,7 @@ void RootIO::Close()
     {
         CELER_LOG(info) << "Writing hit ROOT output to " << file_name_;
         CELER_ASSERT(tree_);
+        this->StoreSdMap(file_.get());
         file_->Write("", TObject::kOverwrite);
     }
     else
@@ -207,12 +214,20 @@ void RootIO::Merge()
     CELER_LOG_LOCAL(info) << "Merging hit root files from " << nthreads
                           << " threads into \"" << file_name_ << "\"";
 
-    for (int i = 0; i < nthreads; ++i)
+    Histograms merged_hists;
+    merged_hists.energy_dep
+        = new TH1D("energy_dep", "energy deposition", 100, 0, 100);
+    merged_hists.time = new TH1D("time", "global time", 100, 0, 22e-9);
+
+    for (auto i : celeritas::range(nthreads))
     {
         std::string file_name = file_name_ + std::to_string(i);
         files.push_back(TFile::Open(file_name.c_str()));
-        trees.push_back((TTree*)(files[i]->Get(this->TreeName())));
+        trees.push_back(files[i]->Get<TTree>(this->TreeName()));
         list->Add(trees[i]);
+
+        merged_hists.energy_dep->Add(files[i]->Get<TH1D>("energy_dep"));
+        merged_hists.time->Add(files[i]->Get<TH1D>("time"));
 
         if (i == nthreads - 1)
         {
@@ -222,8 +237,14 @@ void RootIO::Merge()
             auto* tree = TTree::MergeTrees(list.get());
             tree->SetName(this->TreeName());
 
-            // Store sensitive detector map branch
+            // Store sensitive detector map ttree
             this->StoreSdMap(file);
+
+            // Store histograms
+            file->mkdir("hists");
+            file->Cd("hists");
+            merged_hists.energy_dep->Write();
+            merged_hists.time->Write();
 
             // Write both the TFile and TTree meta-data
             file->Write();

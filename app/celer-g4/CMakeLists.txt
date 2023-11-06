@@ -41,7 +41,7 @@ if(CELERITAS_USE_ROOT AND CELERITAS_USE_Geant4)
   list(APPEND SOURCES
     RootIO.cc
   )
-  list(APPEND LIBRARIES ROOT::Tree)
+  list(APPEND LIBRARIES ROOT::Tree ROOT::Hist)
 endif()
 
 celeritas_add_executable(celer-g4 ${SOURCES})

@@ -12,9 +12,11 @@
 #include <vector>
 #include <G4ThreadLocalSingleton.hh>
 #include <G4Types.hh>
+#include <TH1D.h>
 
 #include "celeritas_config.h"
 #include "corecel/Assert.hh"
+#include "celeritas/ext/RootUniquePtr.hh"
 #include "celeritas/io/EventData.hh"
 
 class TFile;
@@ -35,6 +37,12 @@ class RootIO
     friend class G4ThreadLocalSingleton<RootIO>;
 
   public:
+    struct Histograms
+    {
+        TH1D* energy_dep;
+        TH1D* time;
+    };
+
     // Return non-owning pointer to a singleton
     static RootIO* Instance();
 
@@ -43,6 +51,9 @@ class RootIO
 
     // Add detector name to map of sensitive detectors
     void AddSensitiveDetector(std::string name);
+
+    // Fetch histograms
+    Histograms& GetHistograms() { return hists_; }
 
     // Close or merge output files
     void Close();
@@ -86,6 +97,9 @@ class RootIO
     // Used by celeritas/io/EventData.hh
     int detector_id_{-1};
     std::map<std::string, int> detector_name_id_map_;
+
+    // Histograms
+    Histograms hists_;
 };
 
 //---------------------------------------------------------------------------//
