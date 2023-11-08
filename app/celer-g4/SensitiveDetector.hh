@@ -7,6 +7,7 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <memory>
 #include <G4THitsCollection.hh>
 #include <G4VSensitiveDetector.hh>
 
@@ -43,6 +44,7 @@ class SensitiveDetector final : public G4VSensitiveDetector
   private:
     int hcid_;
     SensitiveHitsCollection* collection_;
+    bool write_hits_;
 };
 
 //---------------------------------------------------------------------------//

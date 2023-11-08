@@ -80,6 +80,9 @@ class RootIO
     // Store a new TTree mapping detector ID and name
     void StoreSdMap(TFile* file);
 
+    // Store histograms into a directory
+    void StoreHistograms(TFile* file, Histograms const& hists);
+
     //! ROOT TTree split level
     static constexpr short int SplitLevel() { return 99; }
 

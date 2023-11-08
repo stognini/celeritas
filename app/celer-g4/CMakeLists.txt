@@ -25,6 +25,7 @@ if(CELERITAS_USE_Geant4)
   if(CELERITAS_USE_JSON)
     list(APPEND SOURCES
       RunInputIO.json.cc
+      RootHistogramIO.json.cc
     )
     list(APPEND LIBRARIES
       nlohmann_json::nlohmann_json

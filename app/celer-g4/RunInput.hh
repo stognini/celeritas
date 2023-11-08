@@ -16,6 +16,8 @@
 #include "celeritas/field/FieldDriverOptions.hh"
 #include "celeritas/phys/PrimaryGeneratorOptions.hh"
 
+#include "RootHistogramIO.hh"
+
 namespace celeritas
 {
 namespace app
@@ -81,6 +83,7 @@ struct RunInput
     int root_buffer_size{128000};
     bool write_sd_hits{false};
     bool strip_gdml_pointers{true};
+    RootHistograms histograms{{100, 0, 100}, {100, 0, 1e-7}};
 
     // Geant4 diagnostics
     bool step_diagnostic{false};

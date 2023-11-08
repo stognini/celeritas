@@ -14,6 +14,8 @@
 #include "celeritas/field/FieldDriverOptionsIO.json.hh"
 #include "celeritas/phys/PrimaryGeneratorOptionsIO.json.hh"
 
+#include "RootHistogramIO.json.hh"
+
 namespace celeritas
 {
 namespace app
@@ -75,6 +77,7 @@ void from_json(nlohmann::json const& j, RunInput& v)
     RI_LOAD_OPTION(macro_file);
     RI_LOAD_OPTION(root_buffer_size);
     RI_LOAD_OPTION(write_sd_hits);
+    RI_LOAD_OPTION(histograms);
     RI_LOAD_OPTION(strip_gdml_pointers);
 
     RI_LOAD_OPTION(step_diagnostic);

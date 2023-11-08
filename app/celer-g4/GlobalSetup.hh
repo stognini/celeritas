@@ -51,6 +51,7 @@ class GlobalSetup
     {
         return input_.physics_options;
     }
+    RootHistograms GetHistograms() const { return input_.histograms; }
     bool StepDiagnostic() const { return input_.step_diagnostic; }
     int GetStepDiagnosticBins() const { return input_.step_diagnostic_bins; }
     std::string const& GetFieldType() const { return input_.field_type; }

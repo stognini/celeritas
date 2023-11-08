@@ -13,6 +13,7 @@
 #include <G4SDManager.hh>
 #include <G4Step.hh>
 #include <G4StepPoint.hh>
+#include <G4Threading.hh>
 #include <G4VPhysicalVolume.hh>
 #include <G4VTouchable.hh>
 
@@ -31,14 +32,13 @@ namespace app
  * Construct with sensitive detector name.
  */
 SensitiveDetector::SensitiveDetector(std::string name)
-    : G4VSensitiveDetector(name), hcid_{-1}, collection_{nullptr}
+    : G4VSensitiveDetector(name)
+    , hcid_{-1}
+    , collection_{nullptr}
+    , write_hits_(GlobalSetup::Instance()->GetWriteSDHits())
 {
     this->collectionName.insert(name);
-
-    if (GlobalSetup::Instance()->GetWriteSDHits())
-    {
-        RootIO::Instance()->AddSensitiveDetector(name);
-    }
+    RootIO::Instance()->AddSensitiveDetector(name);
 }
 
 //---------------------------------------------------------------------------//
@@ -73,33 +73,42 @@ void SensitiveDetector::Initialize(G4HCofThisEvent* hce)
 bool SensitiveDetector::ProcessHits(G4Step* g4step, G4TouchableHistory*)
 {
     CELER_ASSERT(g4step);
-    auto const edep = g4step->GetTotalEnergyDeposit();
+    auto const edep
+        = convert_from_geant(g4step->GetTotalEnergyDeposit(), CLHEP::MeV);
 
-    if (edep == 0)
+    if (!edep)
     {
         return false;
     }
 
     auto* pre_step = g4step->GetPreStepPoint();
     CELER_ASSERT(pre_step);
-    auto const* phys_vol = pre_step->GetPhysicalVolume();
-    CELER_ASSERT(phys_vol);
-    auto const* log_vol = phys_vol->GetLogicalVolume();
-    CELER_ASSERT(log_vol);
+    auto const time = convert_from_geant(pre_step->GetGlobalTime(), CLHEP::s);
 
-    // Insert hit (use pre-step time since post-steps can be undefined)
-    EventHitData hit;
-    hit.volume = log_vol->GetInstanceID();
-    hit.copy_num = phys_vol->GetCopyNo();
-    hit.energy_dep = convert_from_geant(edep, CLHEP::MeV);
-    hit.time = convert_from_geant(pre_step->GetGlobalTime(), CLHEP::s);
+    if (GlobalSetup::Instance()->GetHistograms())
+    {
+        // Fill histograms
+        auto hists = RootIO::Instance()->GetHistograms();
+        hists.energy_dep->Fill(edep);
+        hists.time->Fill(time);
+    }
 
-    // Fill histograms
-    auto& hists = RootIO::Instance()->GetHistograms();
-    hists.energy_dep->Fill(hit.energy_dep);
-    hists.time->Fill(hit.time);
+    if (write_hits_)
+    {
+        auto const* phys_vol = pre_step->GetPhysicalVolume();
+        CELER_ASSERT(phys_vol);
+        auto const* log_vol = phys_vol->GetLogicalVolume();
+        CELER_ASSERT(log_vol);
 
-    collection_->insert(new SensitiveHit(hit));
+        // Insert hit (use pre-step time since post-steps can be undefined)
+        EventHitData hit;
+        hit.volume = log_vol->GetInstanceID();
+        hit.copy_num = phys_vol->GetCopyNo();
+        hit.energy_dep = edep;
+        hit.time = time;
+        collection_->insert(new SensitiveHit(hit));
+    }
+
     return true;
 }
 

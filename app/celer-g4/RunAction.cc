@@ -104,11 +104,8 @@ void RunAction::EndOfRunAction(G4Run const*)
 {
     ExceptionConverter call_g4exception{"celer0005"};
 
-    if (GlobalSetup::Instance()->GetWriteSDHits())
-    {
-        // Close ROOT output of sensitive hits
-        CELER_TRY_HANDLE(RootIO::Instance()->Close(), call_g4exception);
-    }
+    // Close ROOT output
+    CELER_TRY_HANDLE(RootIO::Instance()->Close(), call_g4exception);
 
     if (transport_ && !disable_offloading_)
     {

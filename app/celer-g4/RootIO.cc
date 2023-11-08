@@ -38,11 +38,10 @@ namespace app
 RootIO::RootIO()
 {
     ROOT::EnableThreadSafety();
+    auto const& gs = GlobalSetup::Instance();
 
     file_name_ = std::regex_replace(
-        GlobalSetup::Instance()->GetSetupOptions()->output_file,
-        std::regex("\\.json$"),
-        ".root");
+        gs->GetSetupOptions()->output_file, std::regex("\\.json$"), ".root");
 
     if (file_name_.empty())
     {
@@ -66,11 +65,20 @@ RootIO::RootIO()
             this->TreeName(), "event_hits", this->SplitLevel(), file_.get()));
     }
 
-    // TODO: Only initialize if histogram option is on
-    // TODO: Set up binning from json
-    hists_.energy_dep
-        = new TH1D("energy_dep", "energy deposition", 100, 0, 100);
-    hists_.time = new TH1D("time", "global time", 100, 0, 22e-9);
+    auto const hdef = gs->GetHistograms();
+    if (hdef)
+    {
+        hists_.energy_dep = new TH1D("energy_dep",
+                                     "energy deposition",
+                                     hdef.energy_dep.nbins,
+                                     hdef.energy_dep.min,
+                                     hdef.energy_dep.max);
+        hists_.time = new TH1D("time",
+                               "global time",
+                               hdef.time.nbins,
+                               hdef.time.min,
+                               hdef.time.max);
+    }
 }
 
 //---------------------------------------------------------------------------//
@@ -98,24 +106,28 @@ void RootIO::Write(G4Event const* event)
 
     // Populate EventData using the collections of sensitive hits
     EventData event_data;
-    event_data.hits.resize(detector_name_id_map_.size());
 
-    event_data.event_id = event->GetEventID();
-    for (auto i : celeritas::range(hit_cols->GetNumberOfCollections()))
+    if (GlobalSetup::Instance()->GetWriteSDHits())
     {
-        auto const* hc_id = hit_cols->GetHC(i);
-        std::vector<EventHitData> hits;
-        hits.resize(hc_id->GetSize());
+        event_data.hits.resize(detector_name_id_map_.size());
 
-        for (auto j : celeritas::range(hc_id->GetSize()))
+        event_data.event_id = event->GetEventID();
+        for (auto i : celeritas::range(hit_cols->GetNumberOfCollections()))
         {
-            auto* hit_id = dynamic_cast<SensitiveHit*>(hc_id->GetHit(j));
-            hits[j] = hit_id->data();
-        }
+            auto const* hc_id = hit_cols->GetHC(i);
+            std::vector<EventHitData> hits;
+            hits.resize(hc_id->GetSize());
 
-        auto const iter = detector_name_id_map_.find(hc_id->GetName());
-        CELER_ASSERT(iter != detector_name_id_map_.end());
-        event_data.hits[iter->second] = std::move(hits);
+            for (auto j : celeritas::range(hc_id->GetSize()))
+            {
+                auto* hit_id = dynamic_cast<SensitiveHit*>(hc_id->GetHit(j));
+                hits[j] = hit_id->data();
+            }
+
+            auto const iter = detector_name_id_map_.find(hc_id->GetName());
+            CELER_ASSERT(iter != detector_name_id_map_.end());
+            event_data.hits[iter->second] = std::move(hits);
+        }
     }
 
     this->WriteObject(&event_data);
@@ -175,6 +187,10 @@ void RootIO::Close()
         CELER_LOG(info) << "Writing hit ROOT output to " << file_name_;
         CELER_ASSERT(tree_);
         this->StoreSdMap(file_.get());
+        if (GlobalSetup::Instance()->GetHistograms())
+        {
+            this->StoreHistograms(file_.get(), hists_);
+        }
         file_->Write("", TObject::kOverwrite);
     }
     else
@@ -214,10 +230,22 @@ void RootIO::Merge()
     CELER_LOG_LOCAL(info) << "Merging hit root files from " << nthreads
                           << " threads into \"" << file_name_ << "\"";
 
+    auto const& gs_hists = GlobalSetup::Instance()->GetHistograms();
+
     Histograms merged_hists;
-    merged_hists.energy_dep
-        = new TH1D("energy_dep", "energy deposition", 100, 0, 100);
-    merged_hists.time = new TH1D("time", "global time", 100, 0, 22e-9);
+    if (gs_hists)
+    {
+        merged_hists.energy_dep = new TH1D("energy_dep",
+                                           "energy deposition",
+                                           gs_hists.energy_dep.nbins,
+                                           gs_hists.energy_dep.min,
+                                           gs_hists.energy_dep.max);
+        merged_hists.time = new TH1D("time",
+                                     "global time",
+                                     gs_hists.time.nbins,
+                                     gs_hists.time.min,
+                                     gs_hists.time.max);
+    }
 
     for (auto i : celeritas::range(nthreads))
     {
@@ -226,8 +254,11 @@ void RootIO::Merge()
         trees.push_back(files[i]->Get<TTree>(this->TreeName()));
         list->Add(trees[i]);
 
-        merged_hists.energy_dep->Add(files[i]->Get<TH1D>("energy_dep"));
-        merged_hists.time->Add(files[i]->Get<TH1D>("time"));
+        if (gs_hists)
+        {
+            merged_hists.energy_dep->Add(files[i]->Get<TH1D>("energy_dep"));
+            merged_hists.time->Add(files[i]->Get<TH1D>("time"));
+        }
 
         if (i == nthreads - 1)
         {
@@ -241,10 +272,10 @@ void RootIO::Merge()
             this->StoreSdMap(file);
 
             // Store histograms
-            file->mkdir("hists");
-            file->Cd("hists");
-            merged_hists.energy_dep->Write();
-            merged_hists.time->Write();
+            if (gs_hists)
+            {
+                this->StoreHistograms(file, merged_hists);
+            }
 
             // Write both the TFile and TTree meta-data
             file->Write();
@@ -278,6 +309,18 @@ void RootIO::StoreSdMap(TFile* file)
         id = iter.second;
         tree->Fill();
     }
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Store histograms in the ROOT file.
+ */
+void RootIO::StoreHistograms(TFile* file, Histograms const& hists)
+{
+    file->mkdir("hists");
+    file->Cd("hists");
+    hists.energy_dep->Write();
+    hists.time->Write();
 }
 
 //---------------------------------------------------------------------------//
