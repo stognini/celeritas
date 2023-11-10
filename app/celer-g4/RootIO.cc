@@ -23,6 +23,8 @@
 #include "corecel/io/Logger.hh"
 #include "celeritas/ext/Convert.geant.hh"
 #include "celeritas/ext/GeantSetup.hh"
+#include "celeritas/ext/GeantUtils.hh"
+#include "celeritas/ext/RootFileManager.hh"
 #include "accel/ExceptionConverter.hh"
 #include "accel/SetupOptions.hh"
 
@@ -35,10 +37,26 @@ namespace app
 {
 //---------------------------------------------------------------------------//
 /*!
+ * Whether ROOT interfacing is enabled.
+ *
+ * This is true unless the \c CELER_DISABLE_ROOT environment variable is
+ * set to a non-empty value.
+ */
+bool RootIO::use_root()
+{
+    return RootFileManager::use_root();
+}
+
+//---------------------------------------------------------------------------//
+/*!
  * Create a ROOT output file for each worker thread in MT.
  */
 RootIO::RootIO()
 {
+    CELER_VALIDATE(RootFileManager::use_root(),
+                   << "cannot interface with ROOT (disabled by user "
+                      "environment)");
+
     ROOT::EnableThreadSafety();
     auto const& gs = GlobalSetup::Instance();
 
@@ -99,7 +117,8 @@ void RootIO::Write(G4Event const* event)
     // Populate EventData using the collections of sensitive hits
     EventData event_data;
 
-    if (GlobalSetup::Instance()->GetWriteSDHits())
+    // UPDATE THIS TO if (GlobalSetup::Instance()->WriteSD()) OR SIMILAR
+    if (true)
     {
         event_data.hits.resize(detector_name_id_map_.size());
 
@@ -129,19 +148,18 @@ void RootIO::Write(G4Event const* event)
 /*!
  * Fill event tree with event data.
  *
- * \note
- * `tree_->Fill()` will import the data from *all* existing TBranches. So this
- * code expects to have only one TBranch in this TTree.
+ * \note `tree_->Fill()` will import the data from *all* existing TBranches. So
+ * this code expects to have only one TBranch in this TTree.
  */
 void RootIO::WriteObject(EventData* event_data)
 {
     if (!event_branch_)
     {
-        event_branch_
-            = tree_->Branch("event",
-                            &event_data,
-                            GlobalSetup::Instance()->GetRootBufferSize(),
-                            this->SplitLevel());
+        // TODO: expose as environment variable if needed
+        int const root_buffer_size{128000};
+
+        event_branch_ = tree_->Branch(
+            "event", &event_data, root_buffer_size, this->SplitLevel());
     }
     else
     {
@@ -214,7 +232,7 @@ void RootIO::Close()
  */
 void RootIO::Merge()
 {
-    auto const nthreads = get_num_threads(*G4RunManager::GetRunManager());
+    auto const nthreads = get_geant_num_threads(*G4RunManager::GetRunManager());
     std::vector<TFile*> files;
     std::vector<TTree*> trees;
     std::unique_ptr<TList> list(new TList);

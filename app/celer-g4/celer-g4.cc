@@ -18,6 +18,7 @@
 #include <G4Version.hh>
 
 #include "accel/HepMC3PrimaryGenerator.hh"
+#include "accel/SharedParams.hh"
 
 #include "GlobalSetup.hh"
 
@@ -84,8 +85,8 @@ void run(int argc, char** argv)
     CELER_LOG(info) << "Run manager type: "
                     << TypeDemangler<G4RunManager>{}(*run_manager);
 
-    // Construct singleton, also making it available to UI
-    GlobalSetup::Instance();
+    // Construct singleton, making options available to UI
+    auto& setup = *GlobalSetup::Instance();
 
     // Read user input
     std::string_view filename{argv[1]};
@@ -97,7 +98,7 @@ void run(int argc, char** argv)
     }
     else
     {
-        GlobalSetup::Instance()->ReadInput(std::string(filename));
+        setup.ReadInput(std::string(filename));
     }
 
     std::vector<std::string> ignore_processes = {"CoulombScat"};
@@ -108,11 +109,15 @@ void run(int argc, char** argv)
                               "Geant4@11.1: disabling Rayleigh scattering";
         ignore_processes.push_back("Rayl");
     }
-    GlobalSetup::Instance()->SetIgnoreProcesses(ignore_processes);
+    setup.SetIgnoreProcesses(ignore_processes);
+
+    // Create params, which need to be shared with detectors as well as
+    // initialization
+    auto params = std::make_shared<SharedParams>();
 
     // Construct geometry, SD factory, physics, actions
-    run_manager->SetUserInitialization(new DetectorConstruction{});
-    switch (GlobalSetup::Instance()->GetPhysicsList())
+    run_manager->SetUserInitialization(new DetectorConstruction{params});
+    switch (setup.input().physics_list)
     {
         case PhysicsListSelection::ftfp_bert: {
             run_manager->SetUserInitialization(
@@ -120,7 +125,7 @@ void run(int argc, char** argv)
             break;
         }
         case PhysicsListSelection::geant_physics_list: {
-            auto opts = GlobalSetup::Instance()->GetPhysicsOptions();
+            auto opts = setup.GetPhysicsOptions();
             if (std::find(
                     ignore_processes.begin(), ignore_processes.end(), "Rayl")
                 != ignore_processes.end())
@@ -134,21 +139,14 @@ void run(int argc, char** argv)
         default:
             CELER_ASSERT_UNREACHABLE();
     }
-    run_manager->SetUserInitialization(new ActionInitialization());
+    run_manager->SetUserInitialization(new ActionInitialization(params));
 
     // Initialize run and process events
     ScopedProfiling profile_this{"celer-g4"};
     CELER_LOG(status) << "Initializing run manager";
     run_manager->Initialize();
 
-    if (!celeritas::getenv("CELER_DISABLE").empty())
-    {
-        CELER_LOG(info)
-            << "Disabling Celeritas offloading since the 'CELER_DISABLE' "
-               "environment variable is present and non-empty";
-    }
-
-    auto num_events = GlobalSetup::Instance()->GetNumEvents();
+    auto num_events = setup.GetNumEvents();
     CELER_LOG(status) << "Transporting " << num_events << " events";
     run_manager->BeamOn(num_events);
 }
@@ -174,6 +172,7 @@ int main(int argc, char* argv[])
                   << "  G4FORCENUMBEROFTHREADS: set CPU worker thread count\n"
                   << "  CELER_DISABLE: nonempty disables offloading\n"
                   << "  CELER_DISABLE_DEVICE: nonempty disables CUDA\n"
+                  << "  CELER_DISABLE_ROOT: nonempty disables ROOT I/O\n"
                   << "  CELER_LOG: global logging level\n"
                   << "  CELER_LOG_LOCAL: thread-local logging level\n"
                   << std::endl;
