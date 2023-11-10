@@ -8,6 +8,7 @@
 #include "RootUniquePtr.hh"
 
 #include <TFile.h>
+#include <TH1D.h>
 #include <TTree.h>
 
 #include "corecel/io/Logger.hh"
@@ -60,6 +61,7 @@ void ExternDeleter<T>::operator()(T* ptr)
 //---------------------------------------------------------------------------//
 template struct ExternDeleter<TFile>;
 template struct ExternDeleter<TTree>;
+template struct ExternDeleter<TH1D>;
 
 //---------------------------------------------------------------------------//
 }  // namespace celeritas

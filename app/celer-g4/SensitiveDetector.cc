@@ -87,10 +87,7 @@ bool SensitiveDetector::ProcessHits(G4Step* g4step, G4TouchableHistory*)
 
     if (GlobalSetup::Instance()->GetHistograms())
     {
-        // Fill histograms
-        auto hists = RootIO::Instance()->GetHistograms();
-        hists.energy_dep->Fill(edep);
-        hists.time->Fill(time);
+        RootIO::Instance()->FillHistograms(g4step);
     }
 
     if (write_hits_)

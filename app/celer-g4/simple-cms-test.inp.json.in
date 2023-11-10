@@ -24,4 +24,16 @@
  "write_sd_hits": @CELERG4_WRITE_SD_HITS@,
  "step_diagnostic": false,
  "step_diagnostic_bins": 200
+ "histograms": {
+  "energy_dep": {
+   "nbins": 100,
+   "min": 0,
+   "max": 20
+  },
+  "time": {
+   "nbins": 100,
+   "min": 0,
+   "max": 1e-8
+  }
+ }
 }

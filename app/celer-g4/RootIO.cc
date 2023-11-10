@@ -14,12 +14,14 @@
 #include <G4Threading.hh>
 #include <TBranch.h>
 #include <TFile.h>
+#include <TH1D.h>
 #include <TObject.h>
 #include <TROOT.h>
 #include <TTree.h>
 
 #include "corecel/Macros.hh"
 #include "corecel/io/Logger.hh"
+#include "celeritas/ext/Convert.geant.hh"
 #include "celeritas/ext/GeantSetup.hh"
 #include "accel/ExceptionConverter.hh"
 #include "accel/SetupOptions.hh"
@@ -65,19 +67,9 @@ RootIO::RootIO()
             this->TreeName(), "event_hits", this->SplitLevel(), file_.get()));
     }
 
-    auto const hdef = gs->GetHistograms();
-    if (hdef)
+    if (gs->GetHistograms())
     {
-        hists_.energy_dep = new TH1D("energy_dep",
-                                     "energy deposition",
-                                     hdef.energy_dep.nbins,
-                                     hdef.energy_dep.min,
-                                     hdef.energy_dep.max);
-        hists_.time = new TH1D("time",
-                               "global time",
-                               hdef.time.nbins,
-                               hdef.time.min,
-                               hdef.time.max);
+        this->InitHistograms(hists_);
     }
 }
 
@@ -189,7 +181,7 @@ void RootIO::Close()
         this->StoreSdMap(file_.get());
         if (GlobalSetup::Instance()->GetHistograms())
         {
-            this->StoreHistograms(file_.get(), hists_);
+            this->WriteHistograms(file_.get(), hists_);
         }
         file_->Write("", TObject::kOverwrite);
     }
@@ -235,16 +227,7 @@ void RootIO::Merge()
     Histograms merged_hists;
     if (gs_hists)
     {
-        merged_hists.energy_dep = new TH1D("energy_dep",
-                                           "energy deposition",
-                                           gs_hists.energy_dep.nbins,
-                                           gs_hists.energy_dep.min,
-                                           gs_hists.energy_dep.max);
-        merged_hists.time = new TH1D("time",
-                                     "global time",
-                                     gs_hists.time.nbins,
-                                     gs_hists.time.min,
-                                     gs_hists.time.max);
+        this->InitHistograms(merged_hists);
     }
 
     for (auto i : celeritas::range(nthreads))
@@ -274,7 +257,7 @@ void RootIO::Merge()
             // Store histograms
             if (gs_hists)
             {
-                this->StoreHistograms(file, merged_hists);
+                this->WriteHistograms(file, merged_hists);
             }
 
             // Write both the TFile and TTree meta-data
@@ -315,12 +298,47 @@ void RootIO::StoreSdMap(TFile* file)
 /*!
  * Store histograms in the ROOT file.
  */
-void RootIO::StoreHistograms(TFile* file, Histograms const& hists)
+void RootIO::WriteHistograms(TFile* file, Histograms const& hists)
 {
     file->mkdir("hists");
     file->Cd("hists");
     hists.energy_dep->Write();
     hists.time->Write();
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Initialize histograms.
+ */
+void RootIO::InitHistograms(Histograms& hists)
+{
+    auto hdef = GlobalSetup::Instance()->GetHistograms();
+    CELER_ASSERT(hdef);
+    CELER_ASSERT(hdef.energy_dep.min < hdef.energy_dep.max);
+    CELER_ASSERT(hdef.time.min < hdef.time.max);
+
+    hists.energy_dep = new TH1D("energy_dep",
+                                "energy deposition",
+                                hdef.energy_dep.nbins,
+                                hdef.energy_dep.min,
+                                hdef.energy_dep.max);
+    hists.time = new TH1D(
+        "time", "global time", hdef.time.nbins, hdef.time.min, hdef.time.max);
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Fill histograms.
+ */
+void RootIO::FillHistograms(G4Step* g4step)
+{
+    CELER_EXPECT(g4step);
+    auto pre_step = g4step->GetPreStepPoint();
+    CELER_ASSERT(pre_step);
+
+    hists_.energy_dep->Fill(
+        convert_from_geant(g4step->GetTotalEnergyDeposit(), CLHEP::MeV));
+    hists_.time->Fill(convert_from_geant(pre_step->GetGlobalTime(), CLHEP::s));
 }
 
 //---------------------------------------------------------------------------//

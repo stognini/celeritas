@@ -10,17 +10,17 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <G4Step.hh>
 #include <G4ThreadLocalSingleton.hh>
 #include <G4Types.hh>
-#include <TH1D.h>
 
 #include "celeritas_config.h"
 #include "corecel/Assert.hh"
-#include "celeritas/ext/RootUniquePtr.hh"
 #include "celeritas/io/EventData.hh"
 
 class TFile;
 class TTree;
+class TH1D;
 class TBranch;
 class G4Event;
 
@@ -52,8 +52,8 @@ class RootIO
     // Add detector name to map of sensitive detectors
     void AddSensitiveDetector(std::string name);
 
-    // Fetch histograms
-    Histograms& GetHistograms() { return hists_; }
+    // Fill histogram data
+    void FillHistograms(G4Step* g4step);
 
     // Close or merge output files
     void Close();
@@ -80,8 +80,11 @@ class RootIO
     // Store a new TTree mapping detector ID and name
     void StoreSdMap(TFile* file);
 
+    // Initialize RootIO histograms
+    void InitHistograms(Histograms& hists);
+
     // Store histograms into a directory
-    void StoreHistograms(TFile* file, Histograms const& hists);
+    void WriteHistograms(TFile* file, Histograms const& hists);
 
     //! ROOT TTree split level
     static constexpr short int SplitLevel() { return 99; }
@@ -118,6 +121,11 @@ inline void RootIO::Write(G4Event const*)
 }
 
 inline void RootIO::AddSensitiveDetector(std::string)
+{
+    CELER_NOT_CONFIGURED("ROOT");
+}
+
+inline void RootIO::FillHistograms(G4Step*)
 {
     CELER_NOT_CONFIGURED("ROOT");
 }
