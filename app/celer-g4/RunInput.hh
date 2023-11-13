@@ -15,7 +15,7 @@
 #include "celeritas/field/FieldDriverOptions.hh"
 #include "celeritas/phys/PrimaryGeneratorOptions.hh"
 
-#include "RootHistogramIO.hh"
+#include "RootHistogramData.hh"
 
 namespace celeritas
 {
@@ -88,7 +88,8 @@ struct RunInput
     std::string physics_output_file;  //!< Save physics data
     std::string offload_output_file;  //!< Save offloaded tracks to HepMC3/ROOT
     std::string macro_file;  //!< Load additional Geant4 commands
-    RootHistograms histograms{{100, 0, 100}, {100, 0, 1e-7}}; //!< Save histograms to ROOT
+    //! Save histograms to ROOT
+    RootHistogramInput histograms{{100, 0, 100}, {100, 0, 1e-7}, {100, 0, 100}};
 
     // Geant4 diagnostics
     bool step_diagnostic{false};

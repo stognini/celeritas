@@ -16,7 +16,7 @@
 #include "celeritas/field/FieldDriverOptionsIO.json.hh"
 #include "celeritas/phys/PrimaryGeneratorOptionsIO.json.hh"
 
-#include "RootHistogramIO.json.hh"
+#include "RootHistogramData.json.hh"
 
 namespace celeritas
 {

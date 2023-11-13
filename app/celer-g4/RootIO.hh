@@ -18,9 +18,10 @@
 #include "corecel/Assert.hh"
 #include "celeritas/io/EventData.hh"
 
+#include "RootHistogramData.hh"
+
 class TFile;
 class TTree;
-class TH1D;
 class TBranch;
 class G4Event;
 
@@ -37,12 +38,6 @@ class RootIO
     friend class G4ThreadLocalSingleton<RootIO>;
 
   public:
-    struct Histograms
-    {
-        TH1D* energy_dep;
-        TH1D* time;
-    };
-
 #if CELERITAS_USE_ROOT
     // Whether ROOT output is enabled
     static bool use_root();
@@ -89,10 +84,10 @@ class RootIO
     void StoreSdMap(TFile* file);
 
     // Initialize RootIO histograms
-    void InitHistograms(Histograms& hists);
+    void InitHistograms(RootHistograms& hists);
 
     // Store histograms into a directory
-    void WriteHistograms(TFile* file, Histograms const& hists);
+    void WriteHistograms(TFile* file, RootHistograms& hists);
 
     //! ROOT TTree split level
     static constexpr short int SplitLevel() { return 99; }
@@ -103,17 +98,14 @@ class RootIO
     //// DATA ////
 
     std::string file_name_;
-    std::unique_ptr<TFile> file_;
+    RootHistograms hists_;
     std::unique_ptr<TTree> tree_;
+    std::unique_ptr<TFile> file_;
     TBranch* event_branch_{nullptr};
 
-    // Map sensitive detectors to contiguous IDs
-    // Used by celeritas/io/EventData.hh
+    // Map sensitive detectors to contiguous IDs [celeritas/io/EventData.hh]
     int detector_id_{-1};
     std::map<std::string, int> detector_name_id_map_;
-
-    // Histograms
-    Histograms hists_;
 };
 
 //---------------------------------------------------------------------------//

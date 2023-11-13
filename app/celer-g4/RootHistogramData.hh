@@ -3,9 +3,13 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file celer-g4/RootHistogramIO.hh
+//! \file celer-g4/RootHistogramData.hh
 //---------------------------------------------------------------------------//
 #pragma once
+
+#include "celeritas/ext/RootUniquePtr.hh"
+
+class TH1D;
 
 namespace celeritas
 {
@@ -15,7 +19,7 @@ namespace app
 /*!
  * ROOT histogram binning data.
  */
-struct RootHistogramDef
+struct RootHistogramInputDef
 {
     std::size_t nbins{0};
     double min{0};
@@ -26,14 +30,27 @@ struct RootHistogramDef
 
 //---------------------------------------------------------------------------//
 /*!
- * List of ROOT histograms.
+ * ROOT histogram definitions input.
+ */
+struct RootHistogramInput
+{
+    RootHistogramInputDef energy_dep;  //!< SD energy deposition [MeV]
+    RootHistogramInputDef time;  //!< SD pre-step global time [s]
+    RootHistogramInputDef step_len;  //!< SD step length [cm]
+
+    explicit operator bool() const { return energy_dep && time && step_len; }
+};
+
+//---------------------------------------------------------------------------//
+/*!
+ * Histogram objects written to the ROOT file.
+ * TODO: update to UPExtern when RootIO is overhauled.
  */
 struct RootHistograms
 {
-    RootHistogramDef energy_dep;  //!< SD energy deposition [MeV]
-    RootHistogramDef time;  //!< SD pre-step global time [s]
-
-    explicit operator bool() const { return energy_dep && time; }
+    TH1D* energy_dep;
+    TH1D* time;
+    TH1D* step_len;
 };
 
 //---------------------------------------------------------------------------//

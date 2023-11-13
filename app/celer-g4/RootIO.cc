@@ -242,7 +242,7 @@ void RootIO::Merge()
 
     auto const& gs_hists = GlobalSetup::Instance()->GetHistograms();
 
-    Histograms merged_hists;
+    RootHistograms merged_hists;
     if (gs_hists)
     {
         this->InitHistograms(merged_hists);
@@ -272,9 +272,9 @@ void RootIO::Merge()
             // Store sensitive detector map ttree
             this->StoreSdMap(file);
 
-            // Store histograms
             if (gs_hists)
             {
+                // Store histograms
                 this->WriteHistograms(file, merged_hists);
             }
 
@@ -316,24 +316,26 @@ void RootIO::StoreSdMap(TFile* file)
 /*!
  * Store histograms in the ROOT file.
  */
-void RootIO::WriteHistograms(TFile* file, Histograms const& hists)
+void RootIO::WriteHistograms(TFile* file, RootHistograms& hists)
 {
     file->mkdir("hists");
     file->Cd("hists");
     hists.energy_dep->Write();
     hists.time->Write();
+    hists.step_len->Write();
 }
 
 //---------------------------------------------------------------------------//
 /*!
  * Initialize histograms.
  */
-void RootIO::InitHistograms(Histograms& hists)
+void RootIO::InitHistograms(RootHistograms& hists)
 {
     auto hdef = GlobalSetup::Instance()->GetHistograms();
-    CELER_ASSERT(hdef);
+    CELER_EXPECT(hdef);
     CELER_ASSERT(hdef.energy_dep.min < hdef.energy_dep.max);
     CELER_ASSERT(hdef.time.min < hdef.time.max);
+    CELER_ASSERT(hdef.step_len.min < hdef.step_len.max);
 
     hists.energy_dep = new TH1D("energy_dep",
                                 "energy deposition",
@@ -342,6 +344,11 @@ void RootIO::InitHistograms(Histograms& hists)
                                 hdef.energy_dep.max);
     hists.time = new TH1D(
         "time", "global time", hdef.time.nbins, hdef.time.min, hdef.time.max);
+    hists.step_len = new TH1D("step_len",
+                              "step length",
+                              hdef.step_len.nbins,
+                              hdef.step_len.min,
+                              hdef.step_len.max);
 }
 
 //---------------------------------------------------------------------------//
@@ -357,6 +364,8 @@ void RootIO::FillHistograms(G4Step* g4step)
     hists_.energy_dep->Fill(
         convert_from_geant(g4step->GetTotalEnergyDeposit(), CLHEP::MeV));
     hists_.time->Fill(convert_from_geant(pre_step->GetGlobalTime(), CLHEP::s));
+    hists_.step_len->Fill(
+        convert_from_geant(g4step->GetStepLength(), CLHEP::cm));
 }
 
 //---------------------------------------------------------------------------//
