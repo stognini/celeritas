@@ -72,6 +72,13 @@ void SensitiveDetector::Initialize(G4HCofThisEvent* hce)
 bool SensitiveDetector::ProcessHits(G4Step* g4step, G4TouchableHistory*)
 {
     CELER_ASSERT(g4step);
+
+    if (GlobalSetup::Instance()->GetHistograms())
+    {
+        RootIO::Instance()->FillHistograms(g4step);
+        return true;
+    }
+
     auto const edep
         = convert_from_geant(g4step->GetTotalEnergyDeposit(), CLHEP::MeV);
 
@@ -83,11 +90,6 @@ bool SensitiveDetector::ProcessHits(G4Step* g4step, G4TouchableHistory*)
     auto* pre_step = g4step->GetPreStepPoint();
     CELER_ASSERT(pre_step);
     auto const time = convert_from_geant(pre_step->GetGlobalTime(), CLHEP::s);
-
-    if (GlobalSetup::Instance()->GetHistograms())
-    {
-        RootIO::Instance()->FillHistograms(g4step);
-    }
 
     if (write_hits_)
     {

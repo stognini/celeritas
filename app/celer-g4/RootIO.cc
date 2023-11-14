@@ -252,33 +252,40 @@ void RootIO::Merge()
     {
         std::string file_name = file_name_ + std::to_string(i);
         files.push_back(TFile::Open(file_name.c_str()));
-        trees.push_back(files[i]->Get<TTree>(this->TreeName()));
-        list->Add(trees[i]);
 
         if (gs_hists)
         {
+            // Merge histograms
             merged_hists.energy_dep->Add(files[i]->Get<TH1D>("energy_dep"));
             merged_hists.time->Add(files[i]->Get<TH1D>("time"));
+        }
+        else
+        {
+            // Merge trees
+            trees.push_back(files[i]->Get<TTree>(this->TreeName()));
+            list->Add(trees[i]);
         }
 
         if (i == nthreads - 1)
         {
+            // Generate ROOT file with merged data on last thread id
             auto* file = TFile::Open(file_name_.c_str(), "recreate");
             CELER_VALIDATE(file->IsOpen(), << "failed to open " << file_name_);
-
-            auto* tree = TTree::MergeTrees(list.get());
-            tree->SetName(this->TreeName());
-
-            // Store sensitive detector map ttree
-            this->StoreSdMap(file);
 
             if (gs_hists)
             {
                 // Store histograms
                 this->WriteHistograms(file, merged_hists);
             }
+            else
+            {
+                auto* tree = TTree::MergeTrees(list.get());
+                tree->SetName(this->TreeName());
 
-            // Write both the TFile and TTree meta-data
+                // Store sensitive detector map ttree
+                this->StoreSdMap(file);
+            }
+            // Write meta-data and close ROOT file
             file->Write();
             file->Close();
         }

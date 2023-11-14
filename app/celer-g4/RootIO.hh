@@ -98,9 +98,9 @@ class RootIO
     //// DATA ////
 
     std::string file_name_;
-    RootHistograms hists_;
     std::unique_ptr<TTree> tree_;
     std::unique_ptr<TFile> file_;
+    RootHistograms hists_;
     TBranch* event_branch_{nullptr};
 
     // Map sensitive detectors to contiguous IDs [celeritas/io/EventData.hh]
