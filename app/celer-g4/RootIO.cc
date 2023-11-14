@@ -226,6 +226,9 @@ void RootIO::Close()
 /*!
  * Merging output root files from multiple threads using TTree::MergeTrees.
  *
+ * If histograms are set, only histograms are stored to the ROOT file. If
+ * they're not, the events TTree is writted.
+ *
  * TODO: use TBufferMerger and follow the example described in the ROOT
  * tutorials/multicore/mt103_fillNtupleFromMultipleThreads.C which stores
  * TBuffer data in memory and writes 32MB compressed output concurrently.
@@ -258,6 +261,7 @@ void RootIO::Merge()
             // Merge histograms
             merged_hists.energy_dep->Add(files[i]->Get<TH1D>("energy_dep"));
             merged_hists.time->Add(files[i]->Get<TH1D>("time"));
+            merged_hists.step_len->Add(files[i]->Get<TH1D>("step_len"));
         }
         else
         {
