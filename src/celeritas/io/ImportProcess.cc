@@ -46,6 +46,7 @@ char const* to_cstring(ImportProcessClass value)
 {
     static EnumStringMapper<ImportProcessClass> const to_cstring_impl{
         "",
+        // EM
         "ion_ioni",
         "msc",
         "h_ioni",
@@ -63,7 +64,14 @@ char const* to_cstring(ImportProcessClass value)
         "mu_brems",
         "mu_pair_prod",
         "gamma_general",
+        // Neutron
         "neutron_elastic",
+        // Optical
+        "cerenkov",
+        "scintillation",
+        "wavelength_shift",
+        "optical_absorption",
+        "optical_boundary",
     };
     return to_cstring_impl(value);
 }
@@ -75,7 +83,8 @@ char const* to_cstring(ImportProcessClass value)
 char const* to_geant_name(ImportProcessClass value)
 {
     static EnumStringMapper<ImportProcessClass> const to_name_impl{
-        "",  // unknown,
+        "",  // other,
+        // EM
         "ionIoni",  // ion_ioni,
         "msc",  // msc,
         "hIoni",  // h_ioni,
@@ -93,7 +102,14 @@ char const* to_geant_name(ImportProcessClass value)
         "muBrems",  // mu_brems,
         "muPairProd",  // mu_pair_prod,
         "GammaGeneralProc",  // gamma_general,
+        // Neutron
         "neutronElasticProc",  // neutron_elastic,
+        // Optical
+        "Cerenkov",  // cerenkov,
+        "Scintillation",  // scintillation,
+        "OpWLS",  // wavelength_shift,
+        "OpAbsorption",  // optical_absorption,
+        "OpBoundary",  // optical_boundary,
     };
     return to_name_impl(value);
 }

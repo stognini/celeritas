@@ -29,6 +29,7 @@
 #include <G4MscStepLimitType.hh>
 #include <G4Navigator.hh>
 #include <G4NucleiProperties.hh>
+#include <G4OpticalPhoton.hh>
 #include <G4ParticleDefinition.hh>
 #include <G4ParticleTable.hh>
 #include <G4ProcessManager.hh>
@@ -782,6 +783,24 @@ auto import_processes(GeantImporter::DataSelection::Flags process_flags,
             msc_models.insert(msc_models.end(),
                               std::make_move_iterator(new_msc_models.begin()),
                               std::make_move_iterator(new_msc_models.end()));
+        }
+        else if (auto const* opt_process
+                 = dynamic_cast<G4VProcess const*>(&process))
+        {
+            if (opt_process->GetProcessType() == G4ProcessType::fOptical)
+            {
+                CELER_ASSERT(particle.GetPDGEncoding()
+                             == G4OpticalPhoton::OpticalPhotonDefinition()
+                                    ->GetPDGEncoding());
+
+                ImportProcess import_opt_process;
+                import_opt_process.particle_pdg = particle.GetPDGEncoding();
+                import_opt_process.process_type = ImportProcessType::optical;
+                import_opt_process.process_class
+                    = geant_name_to_import_process_class(
+                        process.GetProcessName());
+                processes.push_back(std::move(import_opt_process));
+            }
         }
         else
         {

@@ -73,6 +73,12 @@ enum class ImportProcessClass
     gamma_general,  // Will be decomposed into other processes
     // Neutron
     neutron_elastic,
+    // Optical
+    cerenkov,
+    scintillation,
+    wavelength_shift,
+    optical_absorption,
+    optical_boundary,
     size_
 };
 
