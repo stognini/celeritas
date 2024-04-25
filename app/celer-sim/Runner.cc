@@ -47,6 +47,10 @@
 #include "celeritas/io/ImportData.hh"
 #include "celeritas/io/RootEventReader.hh"
 #include "celeritas/mat/MaterialParams.hh"
+#include "celeritas/optical/CerenkovParams.hh"
+#include "celeritas/optical/OpticalCollector.hh"
+#include "celeritas/optical/OpticalPropertyParams.hh"
+#include "celeritas/optical/ScintillationParams.hh"
 #include "celeritas/phys/CutoffParams.hh"
 #include "celeritas/phys/ParticleParams.hh"
 #include "celeritas/phys/PhysicsParams.hh"
@@ -116,14 +120,32 @@ size_type calc_num_streams(RunnerInput const& inp, size_type num_events)
  */
 Runner::Runner(RunnerInput const& inp, SPOutputRegistry output)
 {
+    CELER_EXPECT(inp);
     CELER_EXPECT(output);
+    ScopedRootErrorHandler scoped_root_error;
+
+    // Load Geant4 and retain to use geometry
+    std::string const& filename
+        = !inp.physics_file.empty() ? inp.physics_file : inp.geometry_file;
+    GeantSetup setup(filename, inp.physics_options);
+    std::unique_ptr<G4VPhysicalVolume const> g4world;
+    auto import
+        = [&inp, &setup, &g4world]() -> std::shared_ptr<ImporterInterface> {
+        if (ends_with(inp.physics_file, ".root"))
+        {
+            // Load from ROOT file
+            return std::make_shared<RootImporter>(inp.physics_file);
+        }
+        g4world.reset(setup.world());
+        return std::make_shared<GeantImporter>(std::move(setup));
+    }();
+    ImportData const imported = (*import)();
 
     this->setup_globals(inp);
-
-    ScopedRootErrorHandler scoped_root_error;
-    this->build_core_params(inp, std::move(output));
+    this->build_core_params(inp, g4world, imported, std::move(output));
     this->build_diagnostics(inp);
     this->build_step_collectors(inp);
+    this->build_optical_collector(imported);
     this->build_transporter_input(inp);
     use_device_ = inp.use_device;
 
@@ -244,34 +266,16 @@ void Runner::setup_globals(RunnerInput const& inp) const
  * Construct core parameters.
  */
 void Runner::build_core_params(RunnerInput const& inp,
+                               std::unique_ptr<G4VPhysicalVolume const>& g4world,
+                               ImportData const& imported,
                                SPOutputRegistry&& outreg)
 {
-    using SPImporter = std::shared_ptr<ImporterInterface>;
-
     CELER_LOG(status) << "Loading input and initializing problem data";
     ScopedMem record_mem("Runner.build_core_params");
     ScopedProfiling profile_this{"construct-params"};
     CoreParams::Input params;
 
     // Possible Geant4 world volume so we can reuse geometry
-    G4VPhysicalVolume const* g4world{nullptr};
-
-    // Import data and load geometry
-    auto import = [&inp, &g4world]() -> SPImporter {
-        if (ends_with(inp.physics_file, ".root"))
-        {
-            // Load from ROOT file
-            return std::make_shared<RootImporter>(inp.physics_file);
-        }
-
-        std::string const& filename
-            = !inp.physics_file.empty() ? inp.physics_file : inp.geometry_file;
-
-        // Load Geant4 and retain to use geometry
-        GeantSetup setup(filename, inp.physics_options);
-        g4world = setup.world();
-        return std::make_shared<GeantImporter>(std::move(setup));
-    }();
 
     // Create action manager
     params.action_reg = std::make_shared<ActionRegistry>();
@@ -288,9 +292,6 @@ void Runner::build_core_params(RunnerInput const& inp,
                               "safety algorithm: multiple scattering may "
                               "result in arbitrarily small steps";
     }
-
-    // Import physics
-    ImportData const imported = (*import)();
 
     // Load materials
     params.material = MaterialParams::from_import(imported);
@@ -601,6 +602,26 @@ auto Runner::get_transporter_ptr(StreamId stream) const
 {
     CELER_EXPECT(stream < transporters_.size());
     return transporters_[stream.get()].get();
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Construct optical collector. This *must* be called *after*
+ * \c this->build_core_params .
+ */
+void Runner::build_optical_collector(RunnerInput const& inp,
+                                     ImportData const& imported)
+{
+    OpticalCollector::Input oc_inp;
+    oc_inp.action_registry = core_params_->action_reg().get();
+    oc_inp.buffer_capacity = inp.optical_buffer_capacity;
+    oc_inp.properties = OpticalPropertyParams::from_import(imported);
+    oc_inp.cerenkov = std::make_shared<CerenkovParams>(oc_inp.properties);
+    oc_inp.num_streams = core_params_->max_streams();
+    oc_inp.scintillation
+        = ScintillationParams::from_import(imported, core_params_->particle());
+
+    optical_collector_ = std::make_shared<OpticalCollector>(std::move(oc_inp));
 }
 
 //---------------------------------------------------------------------------//

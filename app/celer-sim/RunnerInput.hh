@@ -68,6 +68,7 @@ struct RunnerInput
     size_type num_track_slots{};  //!< Divided among streams
     size_type max_steps{unspecified};
     size_type initializer_capacity{};  //!< Divided among streams
+    size_type optical_buffer_capacity{};
     real_type secondary_stack_factor{};
     bool use_device{};
     bool sync{};
