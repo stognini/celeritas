@@ -31,7 +31,6 @@
 #include "celeritas/Units.hh"
 #include "celeritas/em/params/UrbanMscParams.hh"
 #include "celeritas/ext/GeantImporter.hh"
-#include "celeritas/ext/GeantSetup.hh"
 #include "celeritas/ext/RootFileManager.hh"
 #include "celeritas/ext/RootImporter.hh"
 #include "celeritas/ext/ScopedRootErrorHandler.hh"
@@ -124,6 +123,11 @@ Runner::Runner(RunnerInput const& inp, SPOutputRegistry output)
     CELER_EXPECT(output);
     ScopedRootErrorHandler scoped_root_error;
 
+    // Cant include G4VPhysicalVolume directly. Dont want to call
+    // build_optical_collector inside build_core_params
+    // May need to use a dynamic cast to figure out the type of the importer
+    // interface and update the g4world volume accordingly
+
     // Load Geant4 and retain to use geometry
     std::string const& filename
         = !inp.physics_file.empty() ? inp.physics_file : inp.geometry_file;
@@ -145,7 +149,7 @@ Runner::Runner(RunnerInput const& inp, SPOutputRegistry output)
     this->build_core_params(inp, g4world, imported, std::move(output));
     this->build_diagnostics(inp);
     this->build_step_collectors(inp);
-    this->build_optical_collector(imported);
+    this->build_optical_collector(inp, imported);
     this->build_transporter_input(inp);
     use_device_ = inp.use_device;
 
@@ -606,12 +610,13 @@ auto Runner::get_transporter_ptr(StreamId stream) const
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct optical collector. This *must* be called *after*
- * \c this->build_core_params .
+ * Construct optical collector. This *MUST* be called *AFTER*
+ * \c this->build_core_params , as it depends on this->core_params_.
  */
 void Runner::build_optical_collector(RunnerInput const& inp,
                                      ImportData const& imported)
 {
+    CELER_EXPECT(core_params_);
     OpticalCollector::Input oc_inp;
     oc_inp.action_registry = core_params_->action_reg().get();
     oc_inp.buffer_capacity = inp.optical_buffer_capacity;

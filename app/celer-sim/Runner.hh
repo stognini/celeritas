@@ -14,6 +14,7 @@
 
 #include "corecel/Types.hh"
 #include "corecel/sys/ThreadId.hh"
+#include "celeritas/ext/GeantSetup.hh"
 #include "celeritas/phys/Primary.hh"
 
 #include "Transporter.hh"
@@ -21,6 +22,7 @@
 namespace celeritas
 {
 class CoreParams;
+struct ImportData;
 class OpticalCollector;
 class OutputRegistry;
 class ParticleParams;
