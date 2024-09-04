@@ -7,12 +7,12 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include "celeritas/mat/MaterialParams.hh"
 #include "celeritas/mucf/data/DTMuMinusAtomCaptureData.hh"
 #include "celeritas/mucf/executor/DTMuMinusAtomCaptureExecutor.hh"  // IWYU pragma: associated
 #include "celeritas/phys/InteractionApplier.hh"  // IWYU pragma: associated
 #include "celeritas/phys/Model.hh"
 #include "celeritas/phys/ParticleParams.hh"
-
 
 namespace celeritas
 {
@@ -23,14 +23,10 @@ namespace celeritas
 class DTMuMinusAtomCaptureModel final : public Model, public ConcreteAction
 {
   public:
-    //!@{
-    //! \name Type aliases
-    //!@}
-
-  public:
     // Construct with defaults
     inline DTMuMinusAtomCaptureModel(ActionId id,
-                                     ParticleParams const& particles);
+                                     ParticleParams const& particles,
+                                     MaterialParams const& materials);
 
     // Particle types and energy ranges that this model applies to
     SetApplicability applicability() const final;

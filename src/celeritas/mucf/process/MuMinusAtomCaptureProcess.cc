@@ -20,9 +20,15 @@ namespace celeritas
 /*!
  * Construct from host data.
  */
-MuMinusAtomCaptureProcess::MuMinusAtomCaptureProcess()
+MuMinusAtomCaptureProcess::MuMinusAtomCaptureProcess(SPConstParticles particles,
+                                                     SPConstMaterials materials)
+    : particles_(particles)
+    , materials_(materials)
+    , muon_id_(particles_->find(pdg::mu_minus()))
 {
-    // TBD
+    CELER_EXPECT(particles_);
+    CELER_EXPECT(materials_);
+    CELER_EXPECT(muon_id_);
 }
 
 //---------------------------------------------------------------------------//
@@ -32,17 +38,18 @@ MuMinusAtomCaptureProcess::MuMinusAtomCaptureProcess()
 auto MuMinusAtomCaptureProcess::build_models(ActionIdIter start_id) const
     -> VecModel
 {
-    return {std::make_shared<DTMuMinusAtomCaptureModel>(*start_id++)};
+    return {std::make_shared<DTMuMinusAtomCaptureModel>(
+        *start_id++, *particles_, *materials_)};
 }
 
 //---------------------------------------------------------------------------//
 /*!
  * Get the interaction cross sections for the given energy range.
  */
-auto MuMinusAtomCaptureProcess::step_limits(Applicability range) const
+auto MuMinusAtomCaptureProcess::step_limits(Applicability applicability) const
     -> StepLimitBuilders
 {
-    CELER_EXPECT(range.particle == muon_id_);
+    CELER_EXPECT(applicability.particle == muon_id_);
 
     StepLimitBuilders builders;
     builders[ValueGridType::macro_xs] = std::make_unique<ValueGridOTFBuilder>();

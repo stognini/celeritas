@@ -9,6 +9,7 @@
 
 #include "corecel/Macros.hh"
 #include "celeritas/global/CoreTrackView.hh"
+#include "celeritas/mat/ElementSelector.hh"
 #include "celeritas/mucf/data/DTMuMinusAtomCaptureData.hh"
 #include "celeritas/mucf/interactor/DTMuMinusAtomCaptureInteractor.hh"
 
@@ -20,7 +21,7 @@ struct DTMuMinusAtomCaptureExecutor
     inline CELER_FUNCTION Interaction
     operator()(celeritas::CoreTrackView const& track);
 
-    DTMuMinusAtomCaptureData params;
+    DTMuMinusAtomCaptureData model_data;
 };
 
 //---------------------------------------------------------------------------//
@@ -30,10 +31,24 @@ struct DTMuMinusAtomCaptureExecutor
 CELER_FUNCTION Interaction
 DTMuMinusAtomCaptureExecutor::operator()(celeritas::CoreTrackView const& track)
 {
+    auto allocate_secondaries
+        = track.make_physics_step_view().make_secondary_allocator();
     auto particle = track.make_particle_view();
-    auto const& dir = track.make_geo_view().dir();
+    auto material = track.make_material_view().make_material_view();
 
-    DTMuMinusAtomCaptureInteractor interact(params, particle);
+    auto elcomp_id = track.make_physics_step_view().element();
+    if (!elcomp_id)
+    {
+        // Sample an element
+    }
+
+    auto elem_id = material.element_id(elcomp_id);
+    CELER_ASSERT(elem_id == model_data.deuterium
+                 || elem_id == model_data.tritium);
+    auto element = material.make_element_view(elcomp_id);
+
+    DTMuMinusAtomCaptureInteractor interact(
+        model_data, particle, material, element, allocate_secondaries);
     auto rng = track.make_rng_engine();
     return interact(rng);
 }

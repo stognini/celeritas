@@ -20,12 +20,20 @@ namespace celeritas
  * Construct from model ID and other necessary data.
  */
 DTMuMinusAtomCaptureModel::DTMuMinusAtomCaptureModel(
-    ActionId id, ParticleParams const& particles)
-    : ConcreteAction(
-          id, "dt-mu-capture", "interact by muon yielding a muonic d or t atom")
+    ActionId id,
+    ParticleParams const& particles,
+    MaterialParams const& materials)
+    : ConcreteAction(id,
+                     "dt-mu-capture",
+                     "interact by muon generating a muonic d or t atom")
 {
     CELER_EXPECT(id);
+
     data_.muon = particles.find(pdg::mu_minus());
+    // TODO: better than string?
+    data_.deuterium = materials.find_element("deuterium");
+    data_.tritium = materials.find_element("tritium");
+    CELER_ASSERT(data_);
 
     CELER_VALIDATE(data_.muon,
                    << "missing negative muon (required for "

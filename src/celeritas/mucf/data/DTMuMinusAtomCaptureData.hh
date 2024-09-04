@@ -18,11 +18,15 @@ namespace celeritas
  */
 struct DTMuMinusAtomCaptureData
 {
-    //! ID of a negative muon
     ParticleId muon;
+    ElementId deuterium;
+    ElementId tritium;
 
     //! Check whether the data is assigned
-    explicit CELER_FUNCTION operator bool() const { return muon; }
+    explicit CELER_FUNCTION operator bool() const
+    {
+        return muon && (deuterium || tritium);
+    }
 };
 
 using DTMuMinusCaptureHostRef = DTMuMinusAtomCaptureData;
