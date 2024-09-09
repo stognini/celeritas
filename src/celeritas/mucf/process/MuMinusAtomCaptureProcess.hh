@@ -46,7 +46,7 @@ class MuMinusAtomCaptureProcess final : public Process
 
   private:
     SPConstParticles particles_;
-    SPConstParticles materials_;
+    SPConstMaterials materials_;
     ParticleId muon_id_;
 };
 

@@ -49,6 +49,9 @@ enum class ImportProcessType
  * Enumerator for the available physics processes.
  *
  * This enum was created to safely access the many physics tables imported.
+ * Equivalent to the \c ProcessSubType in Geant4:
+ * EM: \c G4EmProcessSubType.hh
+ * Hadronic: \c G4HadronicProcessType.hh
  */
 enum class ImportProcessClass
 {
@@ -73,6 +76,8 @@ enum class ImportProcessClass
     gamma_general,  // Will be decomposed into other processes
     // Neutron
     neutron_elastic,
+    // Hadronic
+    muon_atomic_capture,
     size_
 };
 

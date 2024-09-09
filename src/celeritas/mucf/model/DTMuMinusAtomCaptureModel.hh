@@ -19,6 +19,11 @@ namespace celeritas
 //---------------------------------------------------------------------------//
 /*!
  * Muon capture by a deuterium or tritium atom in the material.
+ *
+ * In this model the muon is responsible for both ionizing the d or t atom
+ * *and* bind to the atom, forming a \f$ d_\mu \f$ or \f$ t_\mu \f$ atom.
+ *
+ * \note This model is only applicable at rest.
  */
 class DTMuMinusAtomCaptureModel final : public Model, public ConcreteAction
 {

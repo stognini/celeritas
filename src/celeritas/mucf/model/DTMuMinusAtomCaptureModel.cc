@@ -33,6 +33,7 @@ DTMuMinusAtomCaptureModel::DTMuMinusAtomCaptureModel(
     // TODO: better than string?
     data_.deuterium = materials.find_element("deuterium");
     data_.tritium = materials.find_element("tritium");
+    // TODO: This asserts that d or t is present; build model without d or t?
     CELER_ASSERT(data_);
 
     CELER_VALIDATE(data_.muon,
