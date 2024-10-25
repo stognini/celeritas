@@ -3,28 +3,36 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file corecel/sys/Counter.hh
-//! \brief Numeric tracing counter
+//! \file corecel/sys/TraceCounter.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include "corecel/Config.hh"
+#include <cstddef>
 
-#include "corecel/Macros.hh"
+#include "corecel/Config.hh"
 
 namespace celeritas
 {
-#if CELERITAS_USE_PERFETTO
 //---------------------------------------------------------------------------//
 // Simple tracing counter
 template<class T>
-CELER_FUNCTION void trace_counter(char const* name, T value);
+void trace_counter(char const* name, T value);
+
+#if CELERITAS_USE_PERFETTO
+// Explicit instantiations
+extern template void trace_counter(char const*, unsigned int);
+extern template void trace_counter(char const*, std::size_t);
+extern template void trace_counter(char const*, float);
+extern template void trace_counter(char const*, double);
+
 #else
-//! No tracing backend - noop
+
+// Ignore if Perfetto is unavailable
 template<class T>
-CELER_FUNCTION inline void trace_counter(char const*, T)
+inline void trace_counter(char const*, T)
 {
 }
+
 #endif
 
 //---------------------------------------------------------------------------//
