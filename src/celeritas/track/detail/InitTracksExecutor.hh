@@ -51,7 +51,7 @@ struct InitTracksExecutor
 
     ParamsPtr params;
     StatePtr state;
-    size_type num_new_tracks;
+    size_type num_new_tracks{};
     CoreStateCounters counters;
 
     //// FUNCTIONS ////
@@ -75,7 +75,7 @@ CELER_FUNCTION void InitTracksExecutor::operator()(ThreadId tid) const
     auto const& data = state->init;
 
     auto get_idx = [&](size_type size) {
-        if (params->init.track_order == TrackOrder::partition_charge)
+        if (params->init.track_order == TrackOrder::init_charge)
         {
             // Get the index into the track initializer or parent track slot ID
             // array from the sorted indices
@@ -95,7 +95,7 @@ CELER_FUNCTION void InitTracksExecutor::operator()(ThreadId tid) const
     // View to the new track to be initialized
     CoreTrackView vacancy{
         *params, *state, [&] {
-            if (params->init.track_order == TrackOrder::partition_charge)
+            if (params->init.track_order == TrackOrder::init_charge)
             {
                 return data.vacancies[TrackSlotId(
                     index_partitioned(num_new_tracks,
@@ -142,8 +142,8 @@ CELER_FUNCTION void InitTracksExecutor::operator()(ThreadId tid) const
                 {
                     // Print an error message if initialization was
                     // "successful" but track is outside
-                    CELER_LOG_LOCAL(error) << "Track started outside the "
-                                              "geometry";
+                    CELER_LOG_LOCAL(error)
+                        << R"(Track started outside the geometry)";
                 }
                 else
                 {

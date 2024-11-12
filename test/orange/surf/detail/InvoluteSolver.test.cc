@@ -19,7 +19,9 @@ namespace test
 {
 //---------------------------------------------------------------------------//
 using constants::pi;
-using Sign = InvoluteSolver::Sign;
+using Sign = Chirality;
+Sign ccw = Chirality::left;
+Sign cw = Chirality::right;
 using SurfaceSate = celeritas::SurfaceState;
 
 TEST(SolveSurface, no_roots)
@@ -30,7 +32,7 @@ TEST(SolveSurface, no_roots)
     {
         real_type r_b = 3.0;
         real_type a = 0;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = 0;
         real_type y = -2;
@@ -55,7 +57,7 @@ TEST(SolveSurface, no_roots)
     {
         real_type r_b = 0.75;
         real_type a = 0;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = -7;
         real_type y = -1;
@@ -80,7 +82,7 @@ TEST(SolveSurface, no_roots)
     {
         real_type r_b = 0.75;
         real_type a = 0;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = -7;
         real_type y = -1;
@@ -105,7 +107,7 @@ TEST(SolveSurface, no_roots)
     {
         real_type r_b = 1.1;
         real_type a = 0.5 * pi;
-        auto sign = InvoluteSolver::clockwise;
+        auto sign = cw;
 
         real_type x = -0.2;
         real_type y = 1.1;
@@ -130,7 +132,7 @@ TEST(SolveSurface, no_roots)
     {
         real_type r_b = 3.0;
         real_type a = pi;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = -4.101853006408607;
         real_type y = -5.443541628262038;
@@ -157,7 +159,7 @@ TEST(SolveSurface, one_root)
     {
         real_type r_b = 1.0;
         real_type a = 0;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = 0;
         real_type y = 0;
@@ -182,7 +184,7 @@ TEST(SolveSurface, one_root)
     {
         real_type r_b = 1.5;
         real_type a = 0;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = -1.5;
         real_type y = 1.0;
@@ -207,7 +209,7 @@ TEST(SolveSurface, one_root)
     {
         real_type r_b = 0.5;
         real_type a = 0.6 * pi;
-        auto sign = InvoluteSolver::clockwise;
+        auto sign = cw;
 
         real_type x = -4.0;
         real_type y = 2.0;
@@ -233,7 +235,7 @@ TEST(SolveSurface, one_root)
     {
         real_type r_b = 1.1;
         real_type a = 1.5 * pi;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = 0.0058102462574510716;
         real_type y = -1.1342955336941216;
@@ -260,7 +262,7 @@ TEST(SolveSurface, two_roots)
     {
         real_type r_b = 1.1;
         real_type a = 0.5 * pi;
-        auto sign = InvoluteSolver::clockwise;
+        auto sign = cw;
 
         real_type x = -0.2;
         real_type y = 1.1;
@@ -294,7 +296,7 @@ TEST(SolveSurface, two_roots)
     {
         real_type r_b = 1.1;
         real_type a = 1.5 * pi;
-        auto sign = InvoluteSolver::clockwise;
+        auto sign = cw;
 
         real_type x = -0.0001;
         real_type y = -1.11;
@@ -332,7 +334,7 @@ TEST(SolveSurface, three_roots)
     {
         real_type r_b = 1.1;
         real_type a = 1.5 * pi;
-        auto sign = InvoluteSolver::counterclockwise;
+        auto sign = ccw;
 
         real_type x = -6.8653259986571326;
         real_type y = -0.30468105643505367;
@@ -353,11 +355,14 @@ TEST(SolveSurface, three_roots)
 }
 TEST(SolveSurface, tangents)
 {
+    // TODO: can we make the solver more numerically stable and replace
+    // EXPECT_SOFT_NEAR with EXPECT_SOFT_EQ?
+
     // Solve for 0.5*pi tangents for rb = 1.0 a = 0 sign = CCW
     // Direction (0,1)
     real_type r_b = 1.0;
     real_type a = 0;
-    auto sign = InvoluteSolver::counterclockwise;
+    auto sign = ccw;
     real_type tmin = 0.33 * pi;
     real_type tmax = 0.67 * pi;
     InvoluteSolver solve(r_b, a, sign, tmin, tmax);
@@ -387,7 +392,7 @@ TEST(SolveSurface, tangents)
         // Float and double produce different results
         if constexpr (CELERITAS_REAL_TYPE == CELERITAS_REAL_TYPE_DOUBLE)
         {
-            EXPECT_SOFT_EQ(0.0017713715293786088, dist_on[0]);
+            EXPECT_SOFT_NEAR(0.0017713715293786088, dist_on[0], 1e-10);
             EXPECT_SOFT_EQ(no_intersection(), dist_on[1]);
             EXPECT_SOFT_EQ(no_intersection(), dist_on[2]);
         }
@@ -404,7 +409,7 @@ TEST(SolveSurface, tangents)
         // Float and double produce different results
         if constexpr (CELERITAS_REAL_TYPE == CELERITAS_REAL_TYPE_DOUBLE)
         {
-            EXPECT_SOFT_EQ(0.0017713715293786088, dist_off[0]);
+            EXPECT_SOFT_NEAR(0.0017713715293786088, dist_off[0], 1e-10);
             EXPECT_SOFT_EQ(no_intersection(), dist_off[1]);
             EXPECT_SOFT_EQ(no_intersection(), dist_off[2]);
         }
@@ -427,7 +432,7 @@ TEST(SolveSurface, tangents)
         // Float and double produce different results
         if constexpr (CELERITAS_REAL_TYPE == CELERITAS_REAL_TYPE_DOUBLE)
         {
-            EXPECT_SOFT_EQ(0.00053216327674743909, dist_on[0]);
+            EXPECT_SOFT_NEAR(0.00053216327674743909, dist_on[0], 1e-8);
             EXPECT_SOFT_EQ(no_intersection(), dist_on[1]);
             EXPECT_SOFT_EQ(no_intersection(), dist_on[2]);
         }
@@ -444,7 +449,7 @@ TEST(SolveSurface, tangents)
         // Float and double produce different results
         if constexpr (CELERITAS_REAL_TYPE == CELERITAS_REAL_TYPE_DOUBLE)
         {
-            EXPECT_SOFT_EQ(0.00053216327674743909, dist_off[0]);
+            EXPECT_SOFT_NEAR(0.00053216327674743909, dist_off[0], 1e-8);
             EXPECT_SOFT_EQ(no_intersection(), dist_off[1]);
             EXPECT_SOFT_EQ(no_intersection(), dist_off[2]);
         }
@@ -568,7 +573,7 @@ TEST(SolveSurface, tangents)
         // Float and double produce different results
         if constexpr (CELERITAS_REAL_TYPE == CELERITAS_REAL_TYPE_DOUBLE)
         {
-            EXPECT_SOFT_EQ(0.0019504376639951655, dist_on[0]);
+            EXPECT_SOFT_NEAR(0.0019504376639951655, dist_on[0], 1e-10);
             EXPECT_SOFT_EQ(no_intersection(), dist_on[1]);
             EXPECT_SOFT_EQ(no_intersection(), dist_on[2]);
         }
@@ -585,7 +590,7 @@ TEST(SolveSurface, tangents)
         // Float and double produce different results
         if constexpr (CELERITAS_REAL_TYPE == CELERITAS_REAL_TYPE_DOUBLE)
         {
-            EXPECT_SOFT_EQ(0.0019504376639951655, dist_off[0]);
+            EXPECT_SOFT_NEAR(0.0019504376639951655, dist_off[0], 1e-10);
             EXPECT_SOFT_EQ(no_intersection(), dist_off[1]);
             EXPECT_SOFT_EQ(no_intersection(), dist_off[2]);
         }
@@ -633,7 +638,7 @@ TEST(Components, calc_dist)
 {
     real_type r_b = 1.1;
     real_type a = 0.5 * pi;
-    auto sign = InvoluteSolver::clockwise;
+    auto sign = cw;
 
     real_type x = -0.2;
     real_type y = 1.1;

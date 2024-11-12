@@ -48,16 +48,16 @@ TEST_F(OneVolumeTest, params)
 {
     OrangeParams const& geo = this->params();
 
-    EXPECT_EQ(1, geo.num_universes());
-    EXPECT_EQ(1, geo.num_volumes());
-    EXPECT_EQ(0, geo.num_surfaces());
+    EXPECT_EQ(1, geo.universes().size());
+    EXPECT_EQ(1, geo.volumes().size());
+    EXPECT_EQ(0, geo.surfaces().size());
     EXPECT_TRUE(geo.supports_safety());
 
-    EXPECT_EQ("one volume", geo.id_to_label(UniverseId{0}).name);
-    EXPECT_EQ(UniverseId{0}, geo.find_universe("one volume"));
+    EXPECT_EQ("one volume", geo.universes().at(UniverseId{0}).name);
+    EXPECT_EQ(UniverseId{0}, geo.universes().find_unique("one volume"));
 
-    EXPECT_EQ("infinite", geo.id_to_label(VolumeId{0}).name);
-    EXPECT_EQ(VolumeId{0}, geo.find_volume("infinite"));
+    EXPECT_EQ("infinite", geo.volumes().at(VolumeId{0}).name);
+    EXPECT_EQ(VolumeId{0}, geo.volumes().find_unique("infinite"));
 }
 
 TEST_F(OneVolumeTest, track_view)
@@ -103,6 +103,33 @@ TEST_F(OneVolumeTest, track_view)
     EXPECT_SOFT_EQ(inf, geo.find_safety());
 }
 
+TEST_F(OneVolumeTest, obz)
+{
+    auto const& data = this->params().host_ref();
+    auto const& obz_record
+        = data.obz_records[OpaqueId<OrientedBoundingZoneRecord>{0}];
+
+    // Check half widths, with a large tolerance to account for intentional
+    // bounding box bumps
+    EXPECT_VEC_NEAR(
+        FastReal3({1.0f, 1.5f, 2.f}), obz_record.half_widths[0], 2e-3f);
+    EXPECT_VEC_NEAR(
+        FastReal3({1.1f, 1.6f, 2.1f}), obz_record.half_widths[1], 2e-3f);
+
+    // Check offsets
+    auto inner_offset = data.transforms[obz_record.offset_ids[0]].data_offset;
+    auto outer_offset = data.transforms[obz_record.offset_ids[1]].data_offset;
+
+    ItemRange<celeritas::real_type> inner_range{inner_offset, inner_offset + 3};
+    ItemRange<celeritas::real_type> outer_range{outer_offset, outer_offset + 3};
+
+    EXPECT_VEC_SOFT_EQ(Real3({2, 2.5, 3}), data.reals[inner_range]);
+    EXPECT_VEC_SOFT_EQ(Real3({3.1, 3.6, 4.1}), data.reals[outer_range]);
+
+    // Check translation id
+    EXPECT_EQ(10, obz_record.transform_id.get());
+}
+
 //---------------------------------------------------------------------------//
 class TwoVolumeTest : public OrangeTest
 {
@@ -118,12 +145,12 @@ TEST_F(TwoVolumeTest, params)
 {
     OrangeParams const& geo = this->params();
 
-    EXPECT_EQ(2, geo.num_volumes());
-    EXPECT_EQ(1, geo.num_surfaces());
+    EXPECT_EQ(2, geo.volumes().size());
+    EXPECT_EQ(1, geo.surfaces().size());
     EXPECT_TRUE(geo.supports_safety());
 
-    EXPECT_EQ("sphere", geo.id_to_label(SurfaceId{0}).name);
-    EXPECT_EQ(SurfaceId{0}, geo.find_surface("sphere"));
+    EXPECT_EQ("sphere", geo.surfaces().at(SurfaceId{0}).name);
+    EXPECT_EQ(SurfaceId{0}, geo.surfaces().find_unique("sphere"));
 
     auto const& bbox = geo.bbox();
     EXPECT_VEC_SOFT_EQ((Real3{-1.5, -1.5, -1.5}), bbox.lower());

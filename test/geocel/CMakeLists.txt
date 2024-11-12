@@ -56,7 +56,7 @@ celeritas_target_link_libraries(testcel_geocel
 #-----------------------------------------------------------------------------#
 
 celeritas_setup_tests(SERIAL
-  LINK_LIBRARIES testcel_geocel testcel_core Celeritas::geocel
+  LINK_LIBRARIES testcel_geocel testcel_core Celeritas::geocel Celeritas::corecel
 )
 
 #-----------------------------------------------------------------------------#
@@ -82,6 +82,7 @@ if(CELERITAS_USE_VecGeom)
       # TODO: vecgeom surface doesn't support some of these shapes
       list(APPEND _vecgeom_tests
         "FourLevelsTest.*"
+        "MultiLevelTest.*"
         "SolidsTest.*"
         "CmseTest.*"
       )
@@ -90,6 +91,7 @@ if(CELERITAS_USE_VecGeom)
   if(CELERITAS_USE_Geant4)
     list(APPEND _vecgeom_tests
       "FourLevelsGeantTest.*"
+      "MultiLevelGeantTest.*"
       "SolidsGeantTest.*"
       "ZnenvGeantTest.*"
     )
@@ -113,7 +115,10 @@ if(CELERITAS_USE_Geant4)
 endif()
 
 if(CELERITAS_USE_Geant4 AND CELERITAS_REAL_TYPE STREQUAL "double")
+  # These all require the Geant4 geometry wrappers which only are built when
+  # double-precision is enabled
   celeritas_add_test(g4/GeantGeo.test.cc LINK_LIBRARIES ${_g4_geo_libs})
+  celeritas_add_test(g4/VisitGeantVolumes.test.cc LINK_LIBRARIES ${_g4_geo_libs})
   celeritas_add_test(GeantGeoUtils.test.cc LINK_LIBRARIES ${_g4_geo_libs})
 endif()
 

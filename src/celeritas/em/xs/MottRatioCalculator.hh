@@ -20,29 +20,36 @@ namespace celeritas
 /*!
  * Calculates the ratio of Mott cross section to the Rutherford cross section.
  *
- * The ratio is an interpolated approximation developed in
- * T. Lijian, H. Quing and L. Zhengming, Radiat. Phys. Chem. 45 (1995),
- *   235-245
- * and described in the Geant Physics Reference Manual [PRM] (Release 1.11)
- * section 8.4.
+ * This ratio is an adjustment of the cross section from a purely classical
+ * treatment of a point nucleus in an electronic cloud (Rutherford scattering)
+ * to a quantum mechanical treatment. The implementation is an interpolated
+ * approximation developed in [LQZ95] and described in the Geant Physics
+ * Reference Manual [PRM] (Release 1.11) section 8.4
  *
- * The parameter cos_theta is the cosine of the
- * scattered angle in the z-aligned momentum frame.
+ * [LQZ95] T. Lijian, H. Quing and L. Zhengming, Radiat. Phys. Chem. 45 (1995),
+ *     235-245
  *
- * For 1 <= Z <= 92, an interpolated expression is used [PRM 8.48].
+ * The parameter \c cos_theta is the cosine of the scattered angle in the
+ * z-aligned momentum frame.
  */
 class MottRatioCalculator
 {
   public:
+    //!@{
+    //! \name Type aliases
+    using MottCoeffMatrix = MottElementData::MottCoeffMatrix;
+    //!@}
+
+  public:
     // Construct with state data
     inline CELER_FUNCTION
-    MottRatioCalculator(MottElementData const& element_data, real_type beta);
+    MottRatioCalculator(MottCoeffMatrix const& coeffs, real_type beta);
 
     // Ratio of Mott and Rutherford cross sections
     inline CELER_FUNCTION real_type operator()(real_type cos_t) const;
 
   private:
-    MottElementData const& element_data_;
+    MottCoeffMatrix const& coeffs_;
     real_type beta_;
 };
 
@@ -53,9 +60,9 @@ class MottRatioCalculator
  * Construct with state data.
  */
 CELER_FUNCTION
-MottRatioCalculator::MottRatioCalculator(MottElementData const& element_data,
+MottRatioCalculator::MottRatioCalculator(MottCoeffMatrix const& coeffs,
                                          real_type beta)
-    : element_data_(element_data), beta_(beta)
+    : coeffs_(coeffs), beta_(beta)
 {
     CELER_EXPECT(0 <= beta_ && beta_ < 1);
 }
@@ -82,7 +89,7 @@ real_type MottRatioCalculator::operator()(real_type cos_theta) const
     MottElementData::ThetaArray theta_coeffs;
     for (auto i : range(theta_coeffs.size()))
     {
-        theta_coeffs[i] = PolyEvaluator(element_data_.mott_coeff[i])(beta0);
+        theta_coeffs[i] = PolyEvaluator(coeffs_[i])(beta0);
     }
     real_type result = PolyEvaluator(theta_coeffs)(fcos_t);
     CELER_ENSURE(result >= 0);

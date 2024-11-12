@@ -10,7 +10,6 @@
       "generator": "Ninja",
       "cacheVariables": {
         "BUILD_SHARED_LIBS":     {"type": "BOOL", "value": "ON"},
-        "CELERITAS_BUILD_DEMOS": {"type": "BOOL", "value": "ON"},
         "CELERITAS_BUILD_TESTS": {"type": "BOOL", "value": "ON"},
         "CELERITAS_BUILD_DOCS":  {"type": "BOOL", "value": "OFF"},
         "CELERITAS_USE_Geant4":  {"type": "BOOL", "value": "ON"},
@@ -69,13 +68,17 @@
       "description": "Build tests in debug with vecgeom",
       "inherits": [".vecgeom", "base"],
       "cacheVariables": {
-        "CELERITAS_USE_OpenMP": {"type": "BOOL", "value": "OFF"}
+        "CELERITAS_USE_OpenMP": {"type": "BOOL", "value": "OFF"},
+        "CELERITAS_DEVICE_DEBUG": {"type": "BOOL", "value": "ON"}
       }
     },
     {
       "name": "reldeb-vecgeom",
       "description": "Build with RelWithDebInfo, assertions, and VecGeom",
-      "inherits": [".reldeb", ".vecgeom", "base"]
+      "inherits": [".reldeb", ".vecgeom", "base"],
+      "cacheVariables": {
+        "CELERITAS_DEVICE_DEBUG": {"type": "BOOL", "value": "ON"}
+      }
     },
     {
       "name": "ndebug-vecgeom",
@@ -83,7 +86,6 @@
       "inherits": [".ndebug", ".vecgeom", "base"],
       "cacheVariables": {
         "BUILD_TESTING":  {"type": "BOOL", "value": "ON"},
-        "CELERITAS_BUILD_DEMOS": {"type": "BOOL", "value": "ON"},
         "CELERITAS_BUILD_TESTS": {"type": "BOOL", "value": "OFF"}
       }
     }

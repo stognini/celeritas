@@ -70,6 +70,17 @@ TEST_F(BoundingBoxUtilsTest, center)
     }
 }
 
+TEST_F(BoundingBoxUtilsTest, half_widths)
+{
+    BBox bbox = {{-10, -20, -30}, {1, 2, 3}};
+    EXPECT_VEC_SOFT_EQ(Real3({5.5, 11, 16.5}), calc_half_widths(bbox));
+
+    if (CELERITAS_DEBUG)
+    {
+        EXPECT_THROW(calc_half_widths(BBox{}), DebugError);
+    }
+}
+
 TEST_F(BoundingBoxUtilsTest, surface_area)
 {
     BBox bbox = {{-1, -2, -3}, {6, 4, 5}};
@@ -161,6 +172,39 @@ TEST_F(BoundingBoxUtilsTest, bbox_intersection)
         auto dibox = calc_intersection(BBox{{-inf, -2, -inf}, {inf, 2, inf}},
                                        BBox{{-inf, 3, -inf}, {inf, 10, inf}});
         EXPECT_FALSE(dibox);
+    }
+}
+
+TEST_F(BoundingBoxUtilsTest, bbox_dist_to_inside)
+{
+    using Real3 = Array<double, 3>;
+
+    auto bbox = BBox{{0., 0., 0.}, {1, 1, 1}};
+
+    // Basic case
+    Real3 pos{1.1, 0.5, 0.5};
+    Real3 dir{-1, 0, 0};
+    EXPECT_SOFT_EQ(0.1, calc_dist_to_inside(bbox, pos, dir));
+
+    // Coming in from an angle
+    dir = Real3{-std::sqrt(2) / 2, -std::sqrt(2) / 2, 0};
+    EXPECT_SOFT_EQ(0.1 * std::sqrt(2), calc_dist_to_inside(bbox, pos, dir));
+
+    // First intersection point occurs outside box, but second intersection
+    // point is valid
+    pos = Real3{3, 2.5, 0.5};
+    EXPECT_SOFT_EQ(2 * std::sqrt(2), calc_dist_to_inside(bbox, pos, dir));
+
+    // No intersection
+    dir = Real3{0, -1, 0};
+    EXPECT_EQ(numeric_limits<double>::infinity(),
+              calc_dist_to_inside(bbox, pos, dir));
+
+    // Already inside
+    if (CELERITAS_DEBUG)
+    {
+        pos = Real3{0.5, 0.6, 0.7};
+        EXPECT_THROW(calc_dist_to_inside(bbox, pos, dir), DebugError);
     }
 }
 

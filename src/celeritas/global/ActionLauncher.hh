@@ -7,6 +7,8 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <utility>
+
 #include "corecel/Config.hh"
 
 #include "corecel/Assert.hh"
@@ -41,10 +43,11 @@ void launch_core(std::string_view label,
                  F&& execute_thread)
 {
     MultiExceptionHandler capture_exception;
+    size_type const size = state.size();
 #if defined(_OPENMP) && CELERITAS_OPENMP == CELERITAS_OPENMP_TRACK
 #    pragma omp parallel for
 #endif
-    for (size_type i = 0, size = state.size(); i != size; ++i)
+    for (size_type i = 0; i < size; ++i)
     {
         CELER_TRY_HANDLE_CONTEXT(
             execute_thread(ThreadId{i}),

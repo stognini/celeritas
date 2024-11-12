@@ -6,8 +6,11 @@
 //! \file celeritas/optical/OpticalRayleigh.test.cc
 //---------------------------------------------------------------------------//
 #include "celeritas/optical/interactor/RayleighInteractor.hh"
+#include "celeritas/optical/model/RayleighMfpCalculator.hh"
+#include "celeritas/optical/model/RayleighModel.hh"
 
 #include "InteractorHostTestBase.hh"
+#include "MockImportedData.hh"
 #include "celeritas_test.hh"
 
 namespace celeritas
@@ -17,7 +20,8 @@ namespace optical
 namespace test
 {
 using namespace ::celeritas::test;
-
+//---------------------------------------------------------------------------//
+// TEST HARNESS
 //---------------------------------------------------------------------------//
 
 class RayleighInteractorTest : public InteractorHostTestBase
@@ -27,7 +31,7 @@ class RayleighInteractorTest : public InteractorHostTestBase
     {
         // Check incident quantities are valid
         this->check_direction_polarization(
-            this->direction(), this->photon_track().polarization());
+            this->direction(), this->particle_track().polarization());
     }
 
     void sanity_check(Interaction const& interaction) const
@@ -38,11 +42,31 @@ class RayleighInteractorTest : public InteractorHostTestBase
     }
 };
 
+class RayleighModelTest : public MockImportedData
+{
+  protected:
+    void SetUp() override {}
+
+    //! Create Rayleigh model from mock data
+    std::shared_ptr<RayleighModel const> create_model()
+    {
+        auto models = this->create_imported_models();
+        import_model_id_ = models->builtin_model_id(ImportModelClass::rayleigh);
+        return std::make_shared<RayleighModel const>(ActionId{0}, models);
+    }
+
+    ImportedModels::ImportedModelId import_model_id_;
+};
+
+//---------------------------------------------------------------------------//
+// TESTS
+//---------------------------------------------------------------------------//
+// Basic tests for Rayleigh scattering interaction
 TEST_F(RayleighInteractorTest, basic)
 {
     int const num_samples = 4;
 
-    RayleighInteractor interact{this->photon_track(), this->direction()};
+    RayleighInteractor interact{this->particle_track(), this->direction()};
 
     auto& rng_engine = this->rng();
 
@@ -55,8 +79,8 @@ TEST_F(RayleighInteractorTest, basic)
         this->sanity_check(result);
 
         dir_angle.push_back(dot_product(result.direction, this->direction()));
-        pol_angle.push_back(dot_product(result.polarization,
-                                        this->photon_track().polarization()));
+        pol_angle.push_back(dot_product(
+            result.polarization, this->particle_track().polarization()));
     }
 
     static real_type const expected_dir_angle[] = {
@@ -77,11 +101,13 @@ TEST_F(RayleighInteractorTest, basic)
     EXPECT_VEC_SOFT_EQ(expected_pol_angle, pol_angle);
 }
 
+//---------------------------------------------------------------------------//
+// Test statistical consistency over larger number of samples
 TEST_F(RayleighInteractorTest, stress_test)
 {
     int const num_samples = 1'000;
 
-    RayleighInteractor interact{this->photon_track(), this->direction()};
+    RayleighInteractor interact{this->particle_track(), this->direction()};
 
     auto& rng_engine = this->rng();
 
@@ -97,8 +123,8 @@ TEST_F(RayleighInteractorTest, stress_test)
         dir_moment[0] += dir_angle;
         dir_moment[1] += ipow<2>(dir_angle);
 
-        real_type pol_angle = dot_product(result.polarization,
-                                          this->photon_track().polarization());
+        real_type pol_angle = dot_product(
+            result.polarization, this->particle_track().polarization());
         pol_moment[0] += pol_angle;
         pol_moment[1] += ipow<2>(pol_angle);
     }
@@ -114,6 +140,34 @@ TEST_F(RayleighInteractorTest, stress_test)
     EXPECT_VEC_SOFT_EQ(expected_dir_moment, dir_moment);
     EXPECT_VEC_SOFT_EQ(expected_pol_moment, pol_moment);
     EXPECT_EQ(12200, rng_engine.count());
+}
+
+//---------------------------------------------------------------------------//
+// Check model name and description are properly initialized
+TEST_F(RayleighModelTest, description)
+{
+    auto model = create_model();
+
+    EXPECT_EQ(ActionId{0}, model->action_id());
+    EXPECT_EQ("optical-rayleigh", model->label());
+    EXPECT_EQ("interact by optical Rayleigh", model->description());
+}
+
+//---------------------------------------------------------------------------//
+// Check Rayleigh model MFP tables match imported ones
+TEST_F(RayleighModelTest, interaction_mfp)
+{
+    auto model = create_model();
+    auto builder = this->create_mfp_builder();
+
+    for (auto mat : range(OpticalMaterialId(import_materials().size())))
+    {
+        model->build_mfps(mat, builder);
+    }
+
+    this->check_built_table_exact(
+        this->import_models()[import_model_id_.get()].mfp_table,
+        builder.grid_ids());
 }
 
 //---------------------------------------------------------------------------//

@@ -106,6 +106,9 @@ class Device
     //! Number of execution units per compute unit (1 for NVIDIA, 4 for AMD)
     unsigned int eu_per_cu() const { return eu_per_cu_; }
 
+    //! CUDA/HIP capability: major * 10 + minor
+    unsigned int capability() const { return capability_; }
+
     //! Additional potentially interesting diagnostics
     MapStrInt const& extra() const { return extra_; }
 
@@ -140,13 +143,14 @@ class Device
     int max_threads_per_cu_{};
     unsigned int threads_per_warp_{};
     bool can_map_host_memory_{};
+    unsigned int capability_{0};
     unsigned int eu_per_cu_{};
     MapStrInt extra_;
     UPStreamStorage streams_;
 };
 
 //---------------------------------------------------------------------------//
-// FREE FUNCTIONS
+// CELERITAS SHARED DEVICE
 //---------------------------------------------------------------------------//
 // Global active device (default is inactive/false)
 Device const& device();
@@ -154,7 +158,7 @@ Device const& device();
 // Set and initialize the active GPU
 void activate_device(Device&& device);
 
-// Initialize the first device if available, when not using MPI
+// Initialize the first device if available using celeritas::comm_world
 void activate_device();
 
 // Initialize a device in a round-robin fashion from a communicator.
@@ -163,6 +167,9 @@ void activate_device(MpiCommunicator const&);
 // Call cudaSetDevice using the existing device, for thread-local safety
 void activate_device_local();
 
+//---------------------------------------------------------------------------//
+// FREE FUNCTIONS
+//---------------------------------------------------------------------------//
 // Print device info
 std::ostream& operator<<(std::ostream&, Device const&);
 

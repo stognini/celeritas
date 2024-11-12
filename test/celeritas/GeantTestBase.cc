@@ -7,12 +7,12 @@
 //---------------------------------------------------------------------------//
 #include "GeantTestBase.hh"
 
-#include <cstring>
 #include <string>
 
 #include "corecel/Config.hh"
 
 #include "corecel/io/Logger.hh"
+#include "corecel/io/StringUtils.hh"
 #include "corecel/sys/ActionRegistry.hh"
 #include "geocel/ScopedGeantExceptionHandler.hh"
 #include "celeritas/em/params/UrbanMscParams.hh"
@@ -29,18 +29,6 @@ namespace celeritas
 namespace test
 {
 //---------------------------------------------------------------------------//
-namespace
-{
-//---------------------------------------------------------------------------//
-//! Test for equality of two C strings
-bool cstring_equal(char const* lhs, char const* rhs)
-{
-    return std::strcmp(lhs, rhs) == 0;
-}
-
-//---------------------------------------------------------------------------//
-}  // namespace
-
 struct GeantTestBase::ImportHelper
 {
     // NOTE: the import function must be static for now so that Vecgeom or
@@ -126,7 +114,7 @@ auto GeantTestBase::build_init() -> SPConstTrackInit
     TrackInitParams::Input input;
     input.capacity = 4096 * 2;
     input.max_events = 4096;
-    input.track_order = TrackOrder::unsorted;
+    input.track_order = TrackOrder::none;
     return std::make_shared<TrackInitParams>(input);
 }
 
@@ -189,6 +177,7 @@ auto GeantTestBase::imported_data() const -> ImportData const&
         i.scoped_exceptions = std::make_unique<ScopedGeantExceptionHandler>();
         i.imported = (*i.import)(sel);
         i.options.verbose = false;
+        i.selection = sel;
     }
     else
     {
@@ -196,15 +185,14 @@ auto GeantTestBase::imported_data() const -> ImportData const&
         opts.verbose = false;
 
         static char const explanation[]
-            = " (Geant4 cannot be set up twice in one execution: see issue "
-              "#462)";
+            = R"( (Geant4 cannot be set up twice in one execution: see issue #462))";
         CELER_VALIDATE(this->geometry_basename() == i.geometry_basename,
                        << "cannot load new geometry '"
                        << this->geometry_basename() << "' when another '"
                        << i.geometry_basename << "' was already set up"
                        << explanation);
         CELER_VALIDATE(opts == i.options,
-                       << "cannot change physics options after "
+                       << "cannot change physics options after setup "
                        << explanation);
 
         if (sel != i.selection)
@@ -220,7 +208,10 @@ auto GeantTestBase::imported_data() const -> ImportData const&
 //---------------------------------------------------------------------------//
 GeantImportDataSelection GeantTestBase::build_import_data_selection() const
 {
-    return {};
+    // By default, don't try to import optical data
+    GeantImportDataSelection result;
+    result.processes &= (~GeantImportDataSelection::optical);
+    return result;
 }
 
 //---------------------------------------------------------------------------//

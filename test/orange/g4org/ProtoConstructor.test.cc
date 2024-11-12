@@ -82,6 +82,52 @@ class ProtoConstructorTest : public ::celeritas::test::Test
 };
 
 //---------------------------------------------------------------------------//
+TEST_F(ProtoConstructorTest, one_box)
+{
+    LogicalVolume world = this->load("one-box.gdml");
+    auto global_proto = ProtoConstructor(/* verbose = */ true)(world);
+    ProtoMap protos{*global_proto};
+    ASSERT_EQ(1, protos.size());
+    {
+        SCOPED_TRACE("global");
+        auto u = this->build_unit(protos, UniverseId{0});
+
+        static char const* const expected_surface_strings[] = {
+            "Plane: x=-500",
+            "Plane: x=500",
+            "Plane: y=-500",
+            "Plane: y=500",
+            "Plane: z=-500",
+            "Plane: z=500",
+        };
+        static char const* const expected_volume_strings[] = {
+            "!all(+0, -1, +2, -3, +4, -5)",
+            "all(+0, -1, +2, -3, +4, -5)",
+        };
+        static char const* const expected_md_strings[] = {
+            "",
+            "",
+            "world_box@mx",
+            "world_box@px",
+            "",
+            "world_box@my",
+            "world_box@py",
+            "",
+            "world_box@mz",
+            "world_box@pz",
+            "",
+            "world_box",
+            "[EXTERIOR]",
+        };
+
+        EXPECT_VEC_EQ(expected_surface_strings, surface_strings(u));
+        EXPECT_VEC_EQ(expected_volume_strings, volume_strings(u));
+        EXPECT_VEC_EQ(expected_md_strings, md_strings(u));
+        EXPECT_EQ(GeoMaterialId{}, u.background);
+    }
+}
+
+//---------------------------------------------------------------------------//
 TEST_F(ProtoConstructorTest, two_boxes)
 {
     LogicalVolume world = this->load("two-boxes.gdml");
@@ -271,7 +317,7 @@ TEST_F(ProtoConstructorTest, testem3)
     auto global_proto = ProtoConstructor(/* verbose = */ false)(world);
     ProtoMap protos{*global_proto};
 
-    static std::string const expected_proto_names[] = {"World0x0", "Layer0x0"};
+    static std::string const expected_proto_names[] = {"world0x0", "layer0x0"};
     EXPECT_VEC_EQ(expected_proto_names, get_proto_names(protos));
 
     ASSERT_EQ(2, protos.size());
@@ -331,9 +377,9 @@ TEST_F(ProtoConstructorTest, testem3)
             "",
             "Absorber1",
             "Absorber2",
-            "Layer0x0.children",
+            "layer0x0.children",
             "",
-            "Layer0x0",
+            "layer0x0",
         };
 
         EXPECT_VEC_EQ(expected_surface_strings, surface_strings(u));

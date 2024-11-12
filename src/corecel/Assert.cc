@@ -18,6 +18,7 @@
 #include <utility>
 
 #include "io/ColorUtils.hh"
+#include "io/StringUtils.hh"
 #include "sys/Environment.hh"  // IWYU pragma: keep
 
 namespace celeritas
@@ -42,18 +43,6 @@ std::string build_debug_error_msg(DebugErrorDetails const& d)
     }
     msg << color_code(' ');
     return msg.str();
-}
-
-//---------------------------------------------------------------------------//
-/*!
- * Test C strings for equality allowing null pointers for LHS.
- */
-bool cstring_equal(char const* lhs, char const* rhs)
-{
-    CELER_EXPECT(rhs);
-    if (!lhs)
-        return false;
-    return std::strcmp(lhs, rhs) == 0;
 }
 
 //---------------------------------------------------------------------------//
@@ -164,6 +153,10 @@ DebugError::DebugError(DebugErrorDetails&& d)
 }
 
 //---------------------------------------------------------------------------//
+// Default destructor to anchor vtable
+DebugError::~DebugError() = default;
+
+//---------------------------------------------------------------------------//
 /*!
  * Construct a runtime error from detailed descriptions.
  */
@@ -171,6 +164,10 @@ RuntimeError::RuntimeError(RuntimeErrorDetails&& d)
     : std::runtime_error(build_runtime_error_msg(d)), details_(std::move(d))
 {
 }
+
+//---------------------------------------------------------------------------//
+// Default destructor to anchor vtable
+RuntimeError::~RuntimeError() = default;
 
 //---------------------------------------------------------------------------//
 // String constants for throwing

@@ -1,6 +1,6 @@
 {
-  "version": 3,
-  "cmakeMinimumRequired": {"major": 3, "minor": 21, "patch": 0},
+  "version": 6,
+  "cmakeMinimumRequired": {"major": 3, "minor": 23, "patch": 0},
   "configurePresets": [
     {
       "name": "base",
@@ -10,7 +10,6 @@
       "generator": "Ninja",
       "cacheVariables": {
         "BUILD_SHARED_LIBS":     {"type": "BOOL", "value": "ON"},
-        "CELERITAS_BUILD_DEMOS": {"type": "BOOL", "value": "ON"},
         "CELERITAS_BUILD_TESTS": {"type": "BOOL", "value": "ON"},
         "CELERITAS_BUILD_DOCS":  {"type": "BOOL", "value": "OFF"},
         "CELERITAS_DEBUG":       {"type": "BOOL", "value": "ON"},
@@ -26,7 +25,8 @@
         "CELERITAS_USE_ROOT":    {"type": "BOOL", "value": "OFF"},
         "CELERITAS_USE_VecGeom": {"type": "BOOL", "value": "OFF"},
         "CELERITAS_HOSTNAME": "ubuntu-github",
-        "CMAKE_BUILD_TYPE":      "Release",
+        "CELERITAS_TEST_XML": "$env{GITHUB_WORKSPACE}/test-output/google/",
+        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_CXX_EXTENSIONS": {"type": "BOOL", "value": "OFF"},
         "CMAKE_CXX_FLAGS": "-Wall -Wextra -pedantic -Werror -Wno-error=deprecated-declarations",
@@ -60,7 +60,6 @@
       "cacheVariables": {
         "BUILD_TESTING": {"type": "BOOL", "value": "ON"},
         "CELERITAS_DEBUG":       {"type": "BOOL", "value": "OFF"},
-        "CELERITAS_BUILD_DEMOS": {"type": "BOOL", "value": "OFF"},
         "CELERITAS_BUILD_TESTS": {"type": "BOOL", "value": "OFF"}
       }
     },
@@ -83,12 +82,10 @@
       "inherits": ["spack"],
       "cacheVariables": {
         "CELERITAS_DEBUG":       {"type": "BOOL", "value": "ON"},
-        "CELERITAS_BUILD_DEMOS": {"type": "BOOL", "value": "OFF"},
         "CELERITAS_BUILD_TESTS": {"type": "BOOL", "value": "OFF"},
         "CELERITAS_USE_ROOT":    {"type": "BOOL", "value": "OFF"},
         "CMAKE_EXPORT_COMPILE_COMMANDS": {"type": "BOOL", "value": "ON"},
         "CMAKE_CXX_CLANG_TIDY": {"type": "PATH", "value": "$env{CLANG_TIDY}"}
-
       }
     },
     {
@@ -112,7 +109,6 @@
       "inherits": [".ndebug", ".vecgeom", "spack"],
       "cacheVariables": {
         "BUILD_TESTING":  {"type": "BOOL", "value": "ON"},
-        "CELERITAS_BUILD_DEMOS": {"type": "BOOL", "value": "ON"},
         "CELERITAS_BUILD_TESTS": {"type": "BOOL", "value": "OFF"}
       }
     },
@@ -121,7 +117,8 @@
       "description": "Build with Geant4 geometry",
       "inherits": ["spack"],
       "cacheVariables": {
-        "CELERITAS_CORE_GEO": "Geant4"
+        "CELERITAS_CORE_GEO": "Geant4",
+        "CELERITAS_UNITS": "CLHEP"
       }
     },
     {
@@ -158,6 +155,51 @@
         "CELERITAS_USE_SWIG": {"type": "BOOL", "value": "OFF"},
         "CELERITAS_REAL_TYPE": "float"
       }
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "configurePreset": "base",
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false,
+        "timeout": 15,
+        "jobs": 4
+      },
+      "output": {
+        "maxFailedTestOutputSize": 1048576,
+        "maxPassedTestOutputSize": 2048,
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "spack-unit",
+      "configurePreset": "spack",
+      "inherits": "base"
+    },
+    {
+      "name": "spack-app",
+      "configurePreset": "spack",
+      "inherits": "base",
+      "output": {
+        "outputJUnitFile": "$env{GITHUB_WORKSPACE}/test-output/ctest/all.xml"
+      }
+    },
+    {
+      "name": "fast-unit",
+      "configurePreset": "fast",
+      "inherits": "base"
+    },
+    {
+      "name": "fast-app",
+      "configurePreset": "fast",
+      "inherits": "spack-app"
+    },
+    {
+      "name": "ultralite",
+      "configurePreset": "ultralite",
+      "inherits": "base"
     }
   ]
 }

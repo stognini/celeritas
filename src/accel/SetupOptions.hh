@@ -13,6 +13,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "corecel/sys/Device.hh"
 #include "celeritas/Types.hh"
 #include "celeritas/global/ActionInterface.hh"
 
@@ -40,6 +41,9 @@ struct AlongStepFactoryInput;
  *   when the combination of options is enabled
  * - Track and Parent IDs will \em never be a valid value since Celeritas track
  *   counters are independent from Geant4 track counters.
+ * - Some within-step properties (material, material cuts couple, and
+ *   sensitive detector) are always updated. Post-step values for those are not
+ *   set.
  */
 struct SDSetupOptions
 {
@@ -110,24 +114,34 @@ struct SetupOptions
     std::string output_file;
     //! Filename for ROOT dump of physics data
     std::string physics_output_file;
-    //! Filename to dump a HepMC3 copy of offloaded tracks as events
+    //! Filename to dump a ROOT/HepMC3 copy of offloaded tracks as events
     std::string offload_output_file;
+    //! Filename to dump a GDML file for debugging inside frameworks
+    std::string geometry_output_file;
     //!@}
 
     //!@{
     //! \name Celeritas stepper options
     //! Number of track "slots" to be transported simultaneously
     size_type max_num_tracks{};
-    //! Maximum number of events in use
+    //! Maximum number of events in use (DEPRECATED: remove in v0.6)
     size_type max_num_events{};
-    //! Limit on number of step iterations before aborting
+    //! Limit on number of steps per track before killing
     size_type max_steps = no_max_steps();
+    //! Limit on number of step iterations before aborting
+    size_type max_step_iters = no_max_steps();
     //! Maximum number of track initializers (primaries+secondaries)
     size_type initializer_capacity{};
     //! At least the average number of secondaries per track slot
     real_type secondary_stack_factor{3.0};
     //! Number of tracks to buffer before offloading (if unset: max num tracks)
     size_type auto_flush{};
+    //!@}
+
+    //!@{
+    //! \name Track reordering options
+    TrackOrder track_order{Device::num_devices() ? TrackOrder::init_charge
+                                                 : TrackOrder::none};
     //!@}
 
     //! Set the number of streams (defaults to run manager # threads)
@@ -140,33 +154,34 @@ struct SetupOptions
 
     //!@{
     //! \name Field options
-    short int max_field_substeps{100};
+    size_type max_field_substeps{100};
     //!@}
 
-    //!@{
-    //! \name Sensitive detector options
+    //! Sensitive detector options
     SDSetupOptions sd;
-    //!@}
 
     //!@{
     //! \name Physics options
-    //! Ignore the following EM process names
+    //! Do not use Celeritas physics for the given Geant4 process names
     VecString ignore_processes;
     //!@}
 
     //!@{
     //! \name CUDA options
+    //! Per-thread stack size (may be needed for VecGeom) [B]
     size_type cuda_stack_size{};
+    //! Dynamic heap size (may be needed for VecGeom) [B]
     size_type cuda_heap_size{};
     //! Sync the GPU at every kernel for timing
     bool action_times{false};
-    //! Launch all kernels on the default stream
+    //! Launch all kernels on the default stream for debugging
     bool default_stream{false};
     //!@}
 
     //!@{
-    //! \name Track init options
-    TrackOrder track_order{TrackOrder::unsorted};
+    //! \name Diagnostic setup
+    //! Filename base for slot diagnostics
+    std::string slot_diagnostic_prefix;
     //!@}
 };
 

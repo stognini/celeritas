@@ -105,7 +105,7 @@ void OrangeGeoTestBase::build_geometry(std::string const& filename)
         = std::make_unique<Params>(this->test_data_path("orange", filename));
 
     static std::string const expected_log_levels[] = {"info"};
-    EXPECT_VEC_EQ(expected_log_levels, scoped_log_.levels());
+    EXPECT_VEC_EQ(expected_log_levels, scoped_log_.levels()) << scoped_log_;
     ASSERT_TRUE(this->geometry());
 }
 
@@ -130,6 +130,12 @@ void OrangeGeoTestBase::build_geometry(OneVolInput inp)
                         : 0);
         vi.zorder = ZOrder::media;
         vi.label = "infinite";
+
+        // Fake OBZ
+        BBox inner{{1, 1, 1}, {3, 4, 5}};
+        BBox outer{{2, 2, 2}, {4.2, 5.2, 6.2}};
+        vi.obz = {inner, outer, TransformId{10}};
+
         return vi;
     }()};
 
@@ -183,6 +189,7 @@ void OrangeGeoTestBase::build_geometry(UnitInput input)
 {
     CELER_EXPECT(input);
     params_ = std::make_unique<Params>(to_input(std::move(input)));
+    // Base class will construct geometry from this call via build_geometry
     ASSERT_TRUE(this->geometry());
 }
 
@@ -229,7 +236,7 @@ void OrangeGeoTestBase::describe(std::ostream& os) const
     os << "# Surfaces\n";
 
     // Loop over all surfaces and apply
-    for (auto id : range(LocalSurfaceId{this->params().num_surfaces()}))
+    for (auto id : range(LocalSurfaceId{this->params().surfaces().size()}))
     {
         os << " - " << this->id_to_label(UniverseId{0}, id) << "(" << id.get()
            << "): ";
@@ -245,7 +252,7 @@ void OrangeGeoTestBase::describe(std::ostream& os) const
 VolumeId::size_type OrangeGeoTestBase::num_volumes() const
 {
     CELER_EXPECT(params_);
-    return params_->num_volumes();
+    return params_->volumes().size();
 }
 
 //---------------------------------------------------------------------------//
@@ -255,7 +262,7 @@ VolumeId::size_type OrangeGeoTestBase::num_volumes() const
 SurfaceId OrangeGeoTestBase::find_surface(std::string const& label) const
 {
     CELER_EXPECT(params_);
-    SurfaceId surface_id = params_->find_surface(label);
+    SurfaceId surface_id = params_->surfaces().find_unique(label);
     CELER_VALIDATE(surface_id,
                    << "nonexistent surface label '" << label << '\'');
     return surface_id;
@@ -268,7 +275,7 @@ SurfaceId OrangeGeoTestBase::find_surface(std::string const& label) const
 VolumeId OrangeGeoTestBase::find_volume(std::string const& label) const
 {
     CELER_EXPECT(params_);
-    VolumeId volume_id = params_->find_volume(label);
+    VolumeId volume_id = params_->volumes().find_unique(label);
     CELER_VALIDATE(volume_id, << "nonexistent volume label '" << label << '\'');
     return volume_id;
 }
@@ -284,7 +291,7 @@ OrangeGeoTestBase::id_to_label(UniverseId uid, LocalSurfaceId surfid) const
         return "[none]";
 
     detail::UniverseIndexer ui(this->params().host_ref().universe_indexer_data);
-    return params_->id_to_label(ui.global_surface(uid, surfid)).name;
+    return params_->surfaces().at(ui.global_surface(uid, surfid)).name;
 }
 
 //---------------------------------------------------------------------------//
@@ -307,7 +314,7 @@ OrangeGeoTestBase::id_to_label(UniverseId uid, LocalVolumeId volid) const
         return "[none]";
 
     detail::UniverseIndexer ui(this->params().host_ref().universe_indexer_data);
-    return params_->id_to_label(ui.global_volume(uid, volid)).name;
+    return params_->volumes().at(ui.global_volume(uid, volid)).name;
 }
 
 //---------------------------------------------------------------------------//

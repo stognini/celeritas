@@ -24,9 +24,9 @@ class ParticleParams;
 
 namespace detail
 {
-class HitProcessor;
 //---------------------------------------------------------------------------//
 
+class HitProcessor;
 //---------------------------------------------------------------------------//
 /*!
  * Manage the conversion of hits from Celeritas to Geant4.
@@ -37,11 +37,11 @@ class HitProcessor;
  * - Finds *all* logical volumes that have SDs attached (TODO: add list of
  *   exclusions for SDs that are implemented natively on GPU)
  * - Maps those volumes to VecGeom geometry
- * - Creates a HitProcessor for each Geant4 thread
  *
- * \warning Because of low-level problems with Geant4 allocators, the hit
- * processors must be allocated and deallocated on the same thread in which
- * they're used.
+ * Because of low-level use of Geant4 allocators through the associated Geant4
+ * objects, the hit processors \em must be allocated and deallocated on the
+ * same thread in which they're used, so \c make_local_processor is deferred
+ * until after construction and called in the \c LocalTransporter constructor.
  */
 class HitManager final : public StepInterface
 {
@@ -52,6 +52,7 @@ class HitManager final : public StepInterface
     using StepStateDeviceRef = DeviceRef<StepStateData>;
     using SPConstVecLV
         = std::shared_ptr<std::vector<G4LogicalVolume const*> const>;
+    using SPProcessor = std::shared_ptr<HitProcessor>;
     using VecVolId = std::vector<VolumeId>;
     using VecParticle = std::vector<G4ParticleDefinition const*>;
     //!@}
@@ -63,8 +64,13 @@ class HitManager final : public StepInterface
                SDSetupOptions const& setup,
                StreamId::size_type num_streams);
 
+    CELER_DEFAULT_MOVE_DELETE_COPY(HitManager);
+
     // Default destructor
     ~HitManager();
+
+    // Create local hit processor
+    SPProcessor make_local_processor(StreamId sid);
 
     // Selection of data required for this interface
     Filters filters() const final;
@@ -77,9 +83,6 @@ class HitManager final : public StepInterface
 
     // Process device-generated hits
     void process_steps(DeviceStepState) final;
-
-    // Destroy local data to avoid Geant4 crashes
-    void finalize(StreamId sid);
 
     //// ACCESSORS ////
 
@@ -104,7 +107,8 @@ class HitManager final : public StepInterface
     StepSelection selection_;
     bool locate_touchable_{};
 
-    std::vector<std::unique_ptr<HitProcessor>> processors_;
+    std::vector<std::weak_ptr<HitProcessor>> processor_weakptrs_;
+    std::vector<HitProcessor*> processors_;
 
     // Construct vecgeom/geant volumes
     void setup_volumes(GeoParams const& geo, SDSetupOptions const& setup);

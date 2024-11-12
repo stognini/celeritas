@@ -38,6 +38,12 @@ endfunction()
 file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}" CELERITAS_SOURCE_DIR)
 configure_file(celeritas_test_config.h.in celeritas_test_config.h @ONLY)
 
+if(CELERITAS_USE_MPI)
+  set(_mpi_libs MPI::MPI_CXX)
+else()
+  set(_mpi_libs)
+endif()
+
 set(_harness_sources
   Test.cc
   testdetail/JsonComparer.json.cc
@@ -49,13 +55,23 @@ celeritas_add_test_library(testcel_harness ${_harness_sources})
 target_compile_features(testcel_harness PUBLIC cxx_std_17)
 celeritas_target_link_libraries(testcel_harness
   PUBLIC Celeritas::corecel GTest::gtest
-  PRIVATE nlohmann_json::nlohmann_json
+  PRIVATE nlohmann_json::nlohmann_json ${_mpi_libs}
 )
 celeritas_target_include_directories(testcel_harness
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
 )
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+  # GCC 13 and 14 have false positives with array bounds checking, string bounds
+  # checking, initialization checking, ...
+  celeritas_target_compile_options(testcel_harness
+    PUBLIC
+    "$<$<COMPILE_LANGUAGE:CXX>:-Wno-array-bounds;-Wno-stringop-overflow;-Wno-uninitialized>"
+  )
+endif()
+
 
 #-----------------------------------------------------------------------------#
 # TEST OPTIONS
@@ -67,16 +83,6 @@ function(celeritas_add_device_test base)
   endif()
   celeritas_add_test("${base}.test.cc" ${_cuda_args} ${ARGN})
 endfunction()
-
-if(CELERITAS_USE_Geant4)
-  # Optional dependence on low-energy EM data and neutron data
-  set(CELERITASTEST_G4ENV)
-  foreach(_ds G4EMLOW G4ENSDFSTATE G4PARTICLEXS)
-    list(APPEND CELERITASTEST_G4ENV
-      "${Geant4_DATASET_${_ds}_ENVVAR}=${Geant4_DATASET_${_ds}_PATH}"
-    )
-  endforeach()
-endif()
 
 if(CELERITAS_UNITS STREQUAL "CGS")
   set(_fixme_cgs)

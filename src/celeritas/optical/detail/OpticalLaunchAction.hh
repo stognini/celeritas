@@ -17,10 +17,15 @@
 namespace celeritas
 {
 //---------------------------------------------------------------------------//
+template<class P, template<MemSpace M> class S>
+class ActionGroups;
 class CoreParams;
+
 namespace optical
 {
 class CoreParams;
+template<MemSpace M>
+class CoreState;
 class MaterialParams;
 }  // namespace optical
 
@@ -49,19 +54,28 @@ class OpticalLaunchAction : public AuxParamsInterface,
     using SPConstMaterial = std::shared_ptr<optical::MaterialParams const>;
     //!@}
 
+    struct Input
+    {
+        SPConstMaterial material;
+        SPOffloadParams offload;
+        size_type num_track_slots{};
+        size_type initializer_capacity{};
+
+        //! True if all input is assigned and valid
+        explicit operator bool() const
+        {
+            return material && offload && num_track_slots > 0
+                   && initializer_capacity > 0;
+        }
+    };
+
   public:
     // Construct and add to core params
     static std::shared_ptr<OpticalLaunchAction>
-    make_and_insert(CoreParams const& core,
-                    SPConstMaterial material,
-                    SPOffloadParams offload);
+    make_and_insert(CoreParams const&, Input&&);
 
     // Construct with IDs, core for copying params, offload gen data
-    OpticalLaunchAction(ActionId id,
-                        AuxId data_id,
-                        CoreParams const& core,
-                        SPConstMaterial material,
-                        SPOffloadParams offload);
+    OpticalLaunchAction(ActionId, AuxId, CoreParams const&, Input&&);
 
     //!@{
     //! \name Aux/action metadata interface
@@ -91,8 +105,12 @@ class OpticalLaunchAction : public AuxParamsInterface,
     void step(CoreParams const&, CoreStateDevice&) const final;
     //!@}
 
+    // TODO: local end run to flush initializers??
+
   private:
+    using ActionGroupsT = ActionGroups<optical::CoreParams, optical::CoreState>;
     using SPOpticalParams = std::shared_ptr<optical::CoreParams>;
+    using SPActionGroups = std::shared_ptr<ActionGroupsT>;
 
     //// DATA ////
 
@@ -100,6 +118,8 @@ class OpticalLaunchAction : public AuxParamsInterface,
     AuxId aux_id_;
     SPOffloadParams offload_params_;
     SPOpticalParams optical_params_;
+    SPActionGroups optical_actions_;
+    size_type state_size_;
 
     //// HELPERS ////
 

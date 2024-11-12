@@ -12,7 +12,6 @@
 #include "corecel/data/CollectionMirror.hh"
 #include "corecel/data/ParamsDataInterface.hh"
 #include "celeritas/em/data/WentzelOKVIData.hh"
-#include "celeritas/mat/IsotopeView.hh"
 #include "celeritas/phys/AtomicNumber.hh"
 
 namespace celeritas
@@ -66,19 +65,26 @@ class WentzelOKVIParams final : public ParamsDataInterface<WentzelOKVIData>
     DeviceRef const& device_ref() const final { return data_.device_ref(); }
 
   private:
+    //// TYPES ////
+
+    using CoeffMat = MottElementData::MottCoeffMatrix;
+
+    //// DATA ////
+
     // Host/device storage and reference
     CollectionMirror<WentzelOKVIData> data_;
+
+    //// HELPER METHODS ////
 
     // Construct per-element data (loads Mott coefficients)
     void build_data(HostVal<WentzelOKVIData>& host_data,
                     MaterialParams const& materials);
 
-    // Retrieve matrix of interpolated Mott coefficients
-    static MottElementData::MottCoeffMatrix
-    get_mott_coeff_matrix(AtomicNumber z);
+    // Retrieve matrix of interpolated Mott electron coefficients
+    static CoeffMat get_electron_mott_coeffs(AtomicNumber z);
 
-    // Calculate the nuclear form prefactor
-    static real_type calc_nuclear_form_prefactor(IsotopeView const& iso);
+    // Retrieve matrix of interpolated Mott positron coefficients
+    static CoeffMat get_positron_mott_coeffs(AtomicNumber z);
 };
 
 //---------------------------------------------------------------------------//

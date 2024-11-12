@@ -4,6 +4,12 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
+if(NOT CELERITAS_USE_HepMC3)
+  set(_needs_hepmc DISABLE)
+endif()
+
+#-----------------------------------------------------------------------------#
+
 celeritas_add_test_library(testcel_accel
   SDTestBase.cc
   SimpleSensitiveDetector.cc
@@ -26,12 +32,13 @@ celeritas_setup_tests(SERIAL
 
 celeritas_add_test(ExceptionConverter.test.cc)
 celeritas_add_test(HepMC3PrimaryGenerator.test.cc
-  ENVIRONMENT "${CELERITASTEST_G4ENV}")
+  ${_needs_hepmc}
+  ENVIRONMENT "${CELER_G4ENV}")
 celeritas_add_test(RZMapMagneticField.test.cc)
 celeritas_add_test(detail/HitManager.test.cc
-  ENVIRONMENT "${CELERITASTEST_G4ENV}")
+  ENVIRONMENT "${CELER_G4ENV}")
 celeritas_add_test(detail/HitProcessor.test.cc
-  ENVIRONMENT "${CELERITASTEST_G4ENV}")
+  ENVIRONMENT "${CELER_G4ENV}")
 if(CELERITAS_REAL_TYPE STREQUAL "double")
   # This test requires Geant4 *geometry* which is incompatible
   # with single-precision

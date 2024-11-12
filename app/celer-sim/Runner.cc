@@ -66,6 +66,7 @@
 #include "celeritas/user/ActionDiagnostic.hh"
 #include "celeritas/user/RootStepWriter.hh"
 #include "celeritas/user/SimpleCalo.hh"
+#include "celeritas/user/SlotDiagnostic.hh"
 #include "celeritas/user/StepCollector.hh"
 #include "celeritas/user/StepData.hh"
 #include "celeritas/user/StepDiagnostic.hh"
@@ -234,6 +235,8 @@ size_type Runner::num_events() const
  * Get the accumulated action times.
  *
  * This is a *mean* value over all streams.
+ *
+ * \todo Refactor action times gathering: see celeritas::ActionSequence .
  */
 auto Runner::get_action_times() const -> MapStrDouble
 {
@@ -290,8 +293,26 @@ void Runner::build_core_params(RunnerInput const& inp,
     params.output_reg = std::move(outreg);
 
     // Load geometry: use existing world volume or reload from geometry file
-    params.geometry = g4world ? std::make_shared<GeoParams>(g4world)
-                              : std::make_shared<GeoParams>(inp.geometry_file);
+    params.geometry = [&geo_file = inp.geometry_file, g4world] {
+        if constexpr (CELERITAS_CORE_GEO == CELERITAS_CORE_GEO_ORANGE)
+        {
+            static char const fi_hack_envname[] = "ORANGE_FORCE_INPUT";
+            auto const& filename = celeritas::getenv(fi_hack_envname);
+            if (!filename.empty())
+            {
+                CELER_LOG(warning)
+                    << "Using a temporary, unsupported, and dangerous hack to "
+                       "override the ORANGE geometry file: "
+                    << fi_hack_envname << "='" << filename << "'";
+                return std::make_shared<GeoParams>(filename);
+            }
+        }
+        if (g4world)
+        {
+            return std::make_shared<GeoParams>(g4world);
+        }
+        return std::make_shared<GeoParams>(geo_file);
+    }();
 
     if (!params.geometry->supports_safety())
     {
@@ -392,8 +413,12 @@ void Runner::build_core_params(RunnerInput const& inp,
     params.rng = std::make_shared<RngParams>(inp.seed);
 
     // Construct simulation params
-    params.sim = SimParams::from_import(
-        imported, params.particle, inp.field_options.max_substeps);
+    params.sim = std::make_shared<SimParams>([&] {
+        // TODO: use max_steps here instead of as step iteration?
+        auto input = SimParams::Input::from_import(
+            imported, params.particle, inp.field_options.max_substeps);
+        return input;
+    }());
 
     // Get the total number of events
     auto num_events = this->build_events(inp, params.particle);
@@ -543,9 +568,9 @@ void Runner::build_step_collectors(RunnerInput const& inp)
     if (!step_interfaces.empty())
     {
         step_collector_ = std::make_unique<StepCollector>(
-            std::move(step_interfaces),
             core_params_->geometry(),
-            core_params_->max_streams(),
+            std::move(step_interfaces),
+            core_params_->aux_reg().get(),
             core_params_->action_reg().get());
     }
 }
@@ -571,6 +596,9 @@ void Runner::build_optical_collector(RunnerInput const& inp,
         // No optical materials are present
         return;
     }
+    CELER_ASSERT(inp.optical);
+
+    size_type num_streams = core_params_->max_streams();
 
     OpticalCollector::Input oc_inp;
     oc_inp.material = MaterialParams::from_import(
@@ -578,7 +606,11 @@ void Runner::build_optical_collector(RunnerInput const& inp,
     oc_inp.cerenkov = std::make_shared<CerenkovParams>(oc_inp.material);
     oc_inp.scintillation
         = ScintillationParams::from_import(imported, core_params_->particle());
-    oc_inp.buffer_capacity = inp.optical_buffer_capacity;
+    oc_inp.num_track_slots = ceil_div(inp.optical.num_track_slots, num_streams);
+    oc_inp.buffer_capacity = ceil_div(inp.optical.buffer_capacity, num_streams);
+    oc_inp.initializer_capacity
+        = ceil_div(inp.optical.initializer_capacity, num_streams);
+    oc_inp.auto_flush = ceil_div(inp.optical.auto_flush, num_streams);
 
     CELER_ASSERT(oc_inp);
     optical_collector_
@@ -593,27 +625,19 @@ void Runner::build_diagnostics(RunnerInput const& inp)
 {
     if (inp.action_diagnostic)
     {
-        auto action_diagnostic = std::make_shared<ActionDiagnostic>(
-            core_params_->action_reg()->next_id());
-
-        // Add to action registry
-        core_params_->action_reg()->insert(action_diagnostic);
-        // Add to output interface
-        core_params_->output_reg()->insert(action_diagnostic);
+        ActionDiagnostic::make_and_insert(*core_params_);
     }
 
     if (inp.step_diagnostic)
     {
-        auto step_diagnostic = std::make_shared<StepDiagnostic>(
-            core_params_->action_reg()->next_id(),
-            core_params_->particle(),
-            inp.step_diagnostic_bins,
-            core_params_->max_streams());
+        StepDiagnostic::make_and_insert(*core_params_,
+                                        inp.step_diagnostic_bins);
+    }
 
-        // Add to action registry
-        core_params_->action_reg()->insert(step_diagnostic);
-        // Add to output interface
-        core_params_->output_reg()->insert(step_diagnostic);
+    if (!inp.slot_diagnostic_prefix.empty())
+    {
+        SlotDiagnostic::make_and_insert(*core_params_,
+                                        inp.slot_diagnostic_prefix);
     }
 }
 

@@ -30,21 +30,33 @@ struct DetectorStepOutput;
 
 namespace detail
 {
+class NaviTouchableUpdater;
+
 //---------------------------------------------------------------------------//
 /*!
  * Transfer Celeritas sensitive detector hits to Geant4.
  *
  * This serves a similar purpose to the \c G4FastSimHitMaker class for
- * generating hit objects. It \b must be thread-local because the sensitive
- * detectors it stores are thread-local, and additionally Geant4 makes
- * assumptions about object allocations that cause crashes if the HitProcessor
- * is allocated on one thread and destroyed on another.
+ * generating hit objects.
+ *
+ * \warning This class \b must be thread-local because the sensitive
+ * detectors it points to are thread-local objects. Furthermore, Geant4
+ * thread-local object allocators for the navigation state and tracks mean this
+ * class \b must be destroyed on the same thread on which it was created.
  *
  * Call operator:
  * - Loop over detector steps
  * - Update step attributes based on hit selection for the detector (TODO:
  *   selection is global for now)
  * - Call the local detector (based on detector ID from map) with the step
+ *
+ * Compare to Geant4 updating step/track info:
+ * - \c G4VParticleChange::UpdateStepInfo
+ * - \c G4ParticleChangeForTransport::UpdateStepForAlongStep
+ * - \c G4ParticleChangeForTransport::UpdateStepForPostStep
+ * - \c G4StackManager::PrepareNewEvent
+ * - \c G4SteppingManager::ProcessSecondariesFromParticleChange
+ * - \c G4Step::UpdateTrack
  */
 class HitProcessor
 {
@@ -65,7 +77,7 @@ class HitProcessor
                  StepSelection const& selection,
                  bool locate_touchable);
 
-    // Default destructor
+    // Log on destruction
     ~HitProcessor();
 
     // Process CPU-generated hits
@@ -95,10 +107,10 @@ class HitProcessor
     std::unique_ptr<G4Step> step_;
     //! Tracks for each particle type
     std::vector<std::unique_ptr<G4Track>> tracks_;
-    //! Navigator for finding points
-    std::unique_ptr<G4Navigator> navi_;
     //! Geant4 reference-counted pointer to a G4VTouchable
     G4TouchableHandle touch_handle_;
+    //! Navigator for finding points
+    std::unique_ptr<NaviTouchableUpdater> update_touchable_;
 
     //! Post-step selection for copying to track
     StepPointSelection post_step_selection_;

@@ -11,10 +11,10 @@
 #include <utility>
 #include <CLHEP/Units/SystemOfUnits.h>
 #include <G4LogicalVolume.hh>
-#include <G4Navigator.hh>
 #include <G4Step.hh>
 #include <G4StepPoint.hh>
 #include <G4ThreeVector.hh>
+#include <G4TouchableHandle.hh>
 #include <G4TouchableHistory.hh>
 #include <G4Track.hh>
 #include <G4TransportationManager.hh>
@@ -24,14 +24,16 @@
 #include "corecel/cont/EnumArray.hh"
 #include "corecel/cont/Range.hh"
 #include "corecel/io/Logger.hh"
-#include "geocel/g4/Convert.geant.hh"
+#include "corecel/sys/ScopedProfiling.hh"
+#include "corecel/sys/TraceCounter.hh"
+#include "geocel/g4/Convert.hh"
 #include "celeritas/Quantities.hh"
 #include "celeritas/Types.hh"
 #include "celeritas/ext/GeantUnits.hh"
 #include "celeritas/user/DetectorSteps.hh"
 #include "celeritas/user/StepData.hh"
 
-#include "TouchableUpdater.hh"
+#include "NaviTouchableUpdater.hh"
 
 namespace celeritas
 {
@@ -54,6 +56,10 @@ HitProcessor::HitProcessor(SPConstVecLV detector_volumes,
     CELER_VALIDATE(!locate_touchable || selection.points[StepPoint::pre].pos,
                    << "cannot set 'locate_touchable' because the pre-step "
                       "position is not being collected");
+
+    CELER_LOG_LOCAL(debug) << "Setting up hit processor for "
+                           << detector_volumes_->size()
+                           << " sensitive detectors";
 
     // Create step and step-owned structures
     step_ = std::make_unique<G4Step>();
@@ -88,15 +94,10 @@ HitProcessor::HitProcessor(SPConstVecLV detector_volumes,
                      && selection.points[StepPoint::pre].dir);
 
         // Create navigator
-        G4VPhysicalVolume* world_volume
-            = G4TransportationManager::GetTransportationManager()
-                  ->GetNavigatorForTracking()
-                  ->GetWorldVolume();
-        navi_ = std::make_unique<G4Navigator>();
-        navi_->SetWorldVolume(world_volume);
-
         touch_handle_ = new G4TouchableHistory;
         step_->GetPreStepPoint()->SetTouchableHandle(touch_handle_);
+        update_touchable_
+            = std::make_unique<NaviTouchableUpdater>(detector_volumes_);
     }
 
     // Create track if user requested particle types
@@ -110,8 +111,6 @@ HitProcessor::HitProcessor(SPConstVecLV detector_volumes,
     }
 
     // Convert logical volumes (global) to sensitive detectors (thread local)
-    CELER_LOG_LOCAL(debug) << "Setting up " << detector_volumes_->size()
-                           << " sensitive detectors";
     detectors_.resize(detector_volumes_->size());
     for (auto i : range(detectors_.size()))
     {
@@ -125,10 +124,22 @@ HitProcessor::HitProcessor(SPConstVecLV detector_volumes,
     }
 
     CELER_ENSURE(!detectors_.empty());
+    CELER_ENSURE(static_cast<bool>(update_touchable_) == locate_touchable);
 }
 
 //---------------------------------------------------------------------------//
-HitProcessor::~HitProcessor() = default;
+//! Log on destruction
+HitProcessor::~HitProcessor()
+{
+    try
+    {
+        CELER_LOG_LOCAL(debug) << "Deallocating hit processor";
+    }
+    catch (...)
+    {
+        // Ignore anything bad that happens while logging
+    }
+}
 
 //---------------------------------------------------------------------------//
 /*!
@@ -167,9 +178,12 @@ void HitProcessor::operator()(StepStateDeviceRef const& states)
 void HitProcessor::operator()(DetectorStepOutput const& out) const
 {
     CELER_EXPECT(!out.detector.empty());
-    CELER_ASSERT(!navi_ || !out.points[StepPoint::pre].pos.empty());
-    CELER_ASSERT(!navi_ || !out.points[StepPoint::pre].dir.empty());
+    CELER_ASSERT(!update_touchable_ || !out.points[StepPoint::pre].pos.empty());
+    CELER_ASSERT(!update_touchable_ || !out.points[StepPoint::pre].dir.empty());
     CELER_ASSERT(tracks_.empty() || !out.particle.empty());
+
+    ScopedProfiling profile_this{"process-hits"};
+    trace_counter("process-hits", out.size());
 
     CELER_LOG_LOCAL(debug) << "Processing " << out.size() << " hits";
 
@@ -187,7 +201,24 @@ void HitProcessor::operator()(DetectorStepOutput const& out) const
         }                                            \
     } while (0)
 
+        G4LogicalVolume const* lv = this->detector_volume(out.detector[i]);
+
         HP_SET(step_->SetTotalEnergyDeposit, out.energy_deposition, CLHEP::MeV);
+
+        if (update_touchable_)
+        {
+            // Update navigation state
+            bool success = (*update_touchable_)(out, i, touch_handle_());
+
+            if (CELER_UNLIKELY(!success))
+            {
+                // Inconsistent touchable: skip this energy deposition
+                CELER_LOG_LOCAL(error)
+                    << "Omitting energy deposition of "
+                    << step_->GetTotalEnergyDeposit() / CLHEP::MeV << " [MeV]";
+                continue;
+            }
+        }
 
         for (auto sp : range(StepPoint::size_))
         {
@@ -209,30 +240,12 @@ void HitProcessor::operator()(DetectorStepOutput const& out) const
         }
 #undef HP_SET
 
-        if (navi_)
-        {
-            G4LogicalVolume const* lv = this->detector_volume(out.detector[i]);
-
-            // Update navigation state
-            constexpr auto sp = StepPoint::pre;
-            TouchableUpdater update_touchable{navi_.get(), touch_handle_()};
-
-            bool success = update_touchable(
-                out.points[sp].pos[i], out.points[sp].dir[i], lv);
-            if (CELER_UNLIKELY(!success))
-            {
-                // Inconsistent touchable: skip this energy deposition
-                CELER_LOG_LOCAL(error)
-                    << "Omitting energy deposition of "
-                    << step_->GetTotalEnergyDeposit() / CLHEP::MeV << " [MeV]";
-                continue;
-            }
-
-            // Copy attributes from logical volume
-            points[sp]->SetMaterial(lv->GetMaterial());
-            points[sp]->SetMaterialCutsCouple(lv->GetMaterialCutsCouple());
-            points[sp]->SetSensitiveDetector(lv->GetSensitiveDetector());
-        }
+        // Copy attributes from logical volume
+        points[StepPoint::pre]->SetMaterial(lv->GetMaterial());
+        points[StepPoint::pre]->SetMaterialCutsCouple(
+            lv->GetMaterialCutsCouple());
+        points[StepPoint::pre]->SetSensitiveDetector(
+            lv->GetSensitiveDetector());
 
         if (!tracks_.empty())
         {

@@ -96,8 +96,9 @@ Volumetric processes
 Like other particles, optical photons undergo stochastic interactions inside
 optical materials.
 
-.. todo:: Add this section once rayleigh scattering, absorption, etc. are
-   completed.
+.. doxygenclass:: celeritas::optical::AbsorptionModel
+.. doxygenclass:: celeritas::optical::RayleighModel
+.. doxygenclass:: celeritas::optical::RayleighMfpCalculator
 
 Surface processes
 =================
@@ -115,7 +116,7 @@ Imported data
 In addition to the core :ref:`api_importdata`, these import parameters are used
 to provide cross sections, setup options, and other data to the optical physics.
 
-.. doxygenstruct:: celeritas::ImportOpticalAbsorption
+.. doxygenstruct:: celeritas::ImportOpticalModel
 .. doxygenstruct:: celeritas::ImportOpticalMaterial
 .. doxygenstruct:: celeritas::ImportOpticalParameters
 .. doxygenstruct:: celeritas::ImportOpticalProperty
