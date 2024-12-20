@@ -34,6 +34,22 @@ namespace celeritas
 {
 namespace app
 {
+namespace
+{
+//---------------------------------------------------------------------------//
+/*!
+ * Print progress after N events when requested.
+ */
+void progress(EventId const id, size_type const num_primaries)
+{
+    CELER_EXPECT(num_primaries > 0);
+    CELER_LOG_LOCAL(status)
+        << "Event " + std::to_string(id.unchecked_get()) + ": transporting "
+               + std::to_string(num_primaries)
+               + (num_primaries == 1 ? " primary" : " primaries");
+}
+};  // namespace
+
 //---------------------------------------------------------------------------//
 //! Default virtual destructor
 TransporterBase::~TransporterBase() = default;
@@ -51,6 +67,7 @@ Transporter<M>::Transporter(TransporterInput inp)
     , store_step_times_(inp.store_step_times)
 {
     CELER_EXPECT(inp);
+    CELER_VALIDATE(print_progress_ > 0, << "print_progress must be positive");
 
     // Create stepper
     CELER_LOG_LOCAL(status) << "Creating states";
@@ -129,7 +146,11 @@ auto Transporter<M>::operator()(SpanConstPrimary primaries) -> TransporterResult
     ScopedSignalHandler interrupted{SIGINT};
 #endif
 
-    this->progress(primaries.front().event_id, primaries.size());
+    auto const evt_id = primaries.front().event_id;
+    if (evt_id.get() % print_progress_ == 0)
+    {
+        progress(evt_id, primaries.size());
+    }
 
     StepTimer record_step_time{store_step_times_ ? &result.step_times
                                                  : nullptr};
@@ -202,33 +223,6 @@ void Transporter<M>::accum_action_times(MapStrDouble* result) const
         {
             (*result)[std::string{action_ptrs[i]->label()}] += times[i];
         }
-    }
-}
-//---------------------------------------------------------------------------//
-/*!
- * Print progress after N events when requested.
- */
-template<MemSpace M>
-void Transporter<M>::progress(EventId const id,
-                              size_type const num_primaries) const
-{
-    CELER_EXPECT(num_primaries > 0);
-
-    auto const id_val = id.unchecked_get();
-    std::string prim = (num_primaries == 1) ? " primary" : " primaries";
-    std::string msg = "Event " + std::to_string(id_val) + ": transporting "
-                      + std::to_string(num_primaries) + prim;
-
-    if (print_progress_)
-    {
-        if (id_val % print_progress_ == 0)
-        {
-            CELER_LOG_LOCAL(status) << msg;
-        }
-    }
-    else
-    {
-        CELER_LOG_LOCAL(status) << msg;
     }
 }
 

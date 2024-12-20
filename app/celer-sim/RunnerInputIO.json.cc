@@ -180,8 +180,8 @@ void to_json(nlohmann::json& j, RunnerInput const& v)
     LDIO_SAVE_OPTION(slot_diagnostic_prefix);
     LDIO_SAVE(write_track_counts);
     LDIO_SAVE(write_step_times);
-    LDIO_SAVE_OPTION(transporter_result);
-    LDIO_SAVE_OPTION(print_progress);
+    LDIO_SAVE(transporter_result);
+    LDIO_SAVE(print_progress);
 
     LDIO_SAVE(seed);
     LDIO_SAVE(num_track_slots);

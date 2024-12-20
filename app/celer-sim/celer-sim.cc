@@ -134,12 +134,14 @@ void run(std::istream* is, std::shared_ptr<OutputRegistry> output)
             activate_device_local();
 
             // Run a single event on a single thread
-            CELER_TRY_HANDLE(
-                (run_input->transporter_result)
-                    ? result.events[event] = run_stream(
-                          StreamId(get_openmp_thread()), EventId(event))
-                    : run_stream(StreamId(get_openmp_thread()), EventId(event)),
-                capture_exception);
+            TransporterResult event_result;
+            CELER_TRY_HANDLE(event_result = run_stream(
+                                 StreamId(get_openmp_thread()), EventId(event)),
+                             capture_exception);
+            if (run_input->transporter_result)
+            {
+                result.events[event] = event_result;
+            }
         }
         log_and_rethrow(std::move(capture_exception));
     }
