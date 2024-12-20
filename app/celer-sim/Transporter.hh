@@ -52,7 +52,8 @@ struct TransporterInput
     //! True if all params are assigned
     explicit operator bool() const
     {
-        return params && num_track_slots > 0 && max_steps > 0;
+        return params && num_track_slots > 0 && max_steps > 0
+               && print_progress > 0;
     }
 };
 
