@@ -140,7 +140,7 @@ void run(std::istream* is, std::shared_ptr<OutputRegistry> output)
                              capture_exception);
             if (run_input->transporter_result)
             {
-                result.events[event] = event_result;
+                result.events[event] = std::move(event_result);
             }
         }
         log_and_rethrow(std::move(capture_exception));

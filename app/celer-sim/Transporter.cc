@@ -48,7 +48,7 @@ void progress(EventId const id, size_type const num_primaries)
                + std::to_string(num_primaries)
                + (num_primaries == 1 ? " primary" : " primaries");
 }
-};  // namespace
+}  // namespace
 
 //---------------------------------------------------------------------------//
 //! Default virtual destructor
