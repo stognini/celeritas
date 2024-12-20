@@ -20,8 +20,8 @@
 #include "corecel/grid/VectorUtils.hh"
 #include "corecel/io/Logger.hh"
 #include "corecel/io/ScopedTimeLog.hh"
-#include "corecel/sys/TraceCounter.hh"
 #include "corecel/sys/ScopedSignalHandler.hh"
+#include "corecel/sys/TraceCounter.hh"
 #include "celeritas/Types.hh"
 #include "celeritas/global/ActionSequence.hh"
 #include "celeritas/global/CoreParams.hh"
@@ -46,6 +46,7 @@ template<MemSpace M>
 Transporter<M>::Transporter(TransporterInput inp)
     : max_steps_(inp.max_steps)
     , num_streams_(inp.params->max_streams())
+    , print_progress_(inp.print_progress)
     , store_track_counts_(inp.store_track_counts)
     , store_step_times_(inp.store_step_times)
 {
@@ -127,8 +128,8 @@ auto Transporter<M>::operator()(SpanConstPrimary primaries) -> TransporterResult
 #else
     ScopedSignalHandler interrupted{SIGINT};
 #endif
-    CELER_LOG_LOCAL(status)
-        << "Transporting " << primaries.size() << " primaries";
+
+    this->progress(primaries.front().event_id, primaries.size());
 
     StepTimer record_step_time{store_step_times_ ? &result.step_times
                                                  : nullptr};
@@ -201,6 +202,33 @@ void Transporter<M>::accum_action_times(MapStrDouble* result) const
         {
             (*result)[std::string{action_ptrs[i]->label()}] += times[i];
         }
+    }
+}
+//---------------------------------------------------------------------------//
+/*!
+ * Print progress after N events when requested.
+ */
+template<MemSpace M>
+void Transporter<M>::progress(EventId const id,
+                              size_type const num_primaries) const
+{
+    CELER_EXPECT(num_primaries > 0);
+
+    auto const id_val = id.unchecked_get();
+    std::string prim = (num_primaries == 1) ? " primary" : " primaries";
+    std::string msg = "Event " + std::to_string(id_val) + ": transporting "
+                      + std::to_string(num_primaries) + prim;
+
+    if (print_progress_)
+    {
+        if (id_val % print_progress_ == 0)
+        {
+            CELER_LOG_LOCAL(status) << msg;
+        }
+    }
+    else
+    {
+        CELER_LOG_LOCAL(status) << msg;
     }
 }
 

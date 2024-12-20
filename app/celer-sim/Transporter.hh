@@ -45,6 +45,7 @@ struct TransporterInput
     size_type max_steps{};
     bool store_track_counts{};  //!< Store track counts at each step
     bool store_step_times{};  //!< Store time elapsed for each step
+    size_type print_progress{};  //!< Print progress every N events
 
     StreamId stream_id{0};
 
@@ -135,11 +136,18 @@ class Transporter final : public TransporterBase
     void accum_action_times(MapStrDouble*) const final;
 
   private:
+    //// DATA ////
     std::shared_ptr<Stepper<M>> stepper_;
     size_type max_steps_;
     size_type num_streams_;
+    size_type print_progress_;
     bool store_track_counts_;
     bool store_step_times_;
+
+    //// HELPER FUNCTIONS ////
+
+    // Print progress
+    void progress(EventId const id, size_type const num_primaries) const;
 };
 
 //---------------------------------------------------------------------------//
