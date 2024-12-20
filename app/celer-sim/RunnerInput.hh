@@ -99,6 +99,7 @@ struct RunnerInput
     std::string slot_diagnostic_prefix;  //!< Base name for slot diagnostic
     bool write_track_counts{true};  //!< Output track counts for each step
     bool write_step_times{true};  //!< Output elapsed times for each step
+    bool transporter_result{true};  //!< Output transporter result event data
     size_type print_progress{};  //!< CELER_LOG progress every N events
 
     // Control
