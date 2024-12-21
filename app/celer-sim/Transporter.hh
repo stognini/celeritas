@@ -45,7 +45,7 @@ struct TransporterInput
     size_type max_steps{};
     bool store_track_counts{};  //!< Store track counts at each step
     bool store_step_times{};  //!< Store time elapsed for each step
-    size_type print_progress{};  //!< Print progress every N events
+    size_type log_progress{};  //!< CELER_LOG progress every N events
 
     StreamId stream_id{0};
 
@@ -53,7 +53,7 @@ struct TransporterInput
     explicit operator bool() const
     {
         return params && num_track_slots > 0 && max_steps > 0
-               && print_progress > 0;
+               && log_progress > 0;
     }
 };
 
@@ -140,7 +140,7 @@ class Transporter final : public TransporterBase
     std::shared_ptr<Stepper<M>> stepper_;
     size_type max_steps_;
     size_type num_streams_;
-    size_type print_progress_;
+    size_type log_progress_;
     bool store_track_counts_;
     bool store_step_times_;
 };

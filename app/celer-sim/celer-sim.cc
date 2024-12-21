@@ -116,10 +116,11 @@ void run(std::istream* is, std::shared_ptr<OutputRegistry> output)
 
     // Start profiling *after* initialization and warmup are complete
     Stopwatch get_transport_time;
-    if (run_input->transporter_result && run_input->merge_events)
+    if (run_input->merge_events)
     {
         // Run all events simultaneously on a single stream
-        result.events.front() = run_stream();
+        (run_input->transporter_result) ? result.events.front() = run_stream()
+                                        : run_stream();
     }
     else
     {

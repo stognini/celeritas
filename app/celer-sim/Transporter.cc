@@ -38,15 +38,15 @@ namespace
 {
 //---------------------------------------------------------------------------//
 /*!
- * Print progress after N events when requested.
+ * Log progress after N events when requested.
  */
-void progress(EventId const id, size_type const num_primaries)
+void log_progress(EventId const id, size_type const num_primaries)
 {
+    CELER_EXPECT(id);
     CELER_EXPECT(num_primaries > 0);
     CELER_LOG_LOCAL(status)
-        << "Event " + std::to_string(id.unchecked_get()) + ": transporting "
-               + std::to_string(num_primaries)
-               + (num_primaries == 1 ? " primary" : " primaries");
+        << "Event " << id.unchecked_get() << ": transporting " << num_primaries
+        << (num_primaries == 1 ? " primary" : " primaries");
 }
 }  // namespace
 
@@ -62,12 +62,12 @@ template<MemSpace M>
 Transporter<M>::Transporter(TransporterInput inp)
     : max_steps_(inp.max_steps)
     , num_streams_(inp.params->max_streams())
-    , print_progress_(inp.print_progress)
+    , log_progress_(inp.log_progress)
     , store_track_counts_(inp.store_track_counts)
     , store_step_times_(inp.store_step_times)
 {
     CELER_EXPECT(inp);
-    CELER_VALIDATE(print_progress_ > 0, << "print_progress must be positive");
+    CELER_VALIDATE(log_progress_ > 0, << "log_progress must be positive");
 
     // Create stepper
     CELER_LOG_LOCAL(status) << "Creating states";
@@ -146,10 +146,10 @@ auto Transporter<M>::operator()(SpanConstPrimary primaries) -> TransporterResult
     ScopedSignalHandler interrupted{SIGINT};
 #endif
 
-    auto const evt_id = primaries.front().event_id;
-    if (evt_id.get() % print_progress_ == 0)
+    if (auto const evt_id = primaries.front().event_id;
+        evt_id.get() % log_progress_ == 0)
     {
-        progress(evt_id, primaries.size());
+        log_progress(evt_id, primaries.size());
     }
 
     StepTimer record_step_time{store_step_times_ ? &result.step_times
