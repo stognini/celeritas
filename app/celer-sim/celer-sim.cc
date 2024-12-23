@@ -119,8 +119,11 @@ void run(std::istream* is, std::shared_ptr<OutputRegistry> output)
     if (run_input->merge_events)
     {
         // Run all events simultaneously on a single stream
-        (run_input->transporter_result) ? result.events.front() = run_stream()
-                                        : run_stream();
+        auto event_result = run_stream();
+        if (run_input->transporter_result)
+        {
+            result.events.front() = std::move(event_result);
+        }
     }
     else
     {
@@ -150,10 +153,7 @@ void run(std::istream* is, std::shared_ptr<OutputRegistry> output)
     result.action_times = run_stream.get_action_times();
     result.total_time = get_transport_time();
     record_mem = {};
-    if (run_input->transporter_result)
-    {
-        output->insert(std::make_shared<RunnerOutput>(std::move(result)));
-    }
+    output->insert(std::make_shared<RunnerOutput>(std::move(result)));
 }
 
 //---------------------------------------------------------------------------//
