@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/SetupOptions.cc
@@ -16,6 +15,11 @@ namespace celeritas
 //---------------------------------------------------------------------------//
 /*!
  * Find volumes by name for SDSetupOptions.
+ *
+ * Example:
+ * \code
+   setup.sd.force_volumes = FindVolumes({"foo", "bar"});
+ * \endcode
  */
 std::unordered_set<G4LogicalVolume const*>
 FindVolumes(std::unordered_set<std::string> names)

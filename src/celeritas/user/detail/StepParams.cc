@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/user/detail/StepParams.cc
@@ -109,16 +108,16 @@ StepParams::StepParams(AuxId aux_id,
                 temp_det.begin(), temp_det.end());
 
             host_data.nonzero_energy_deposition = nonzero_energy_deposition;
+        }
 
-            if (selection.points[StepPoint::pre].volume_instance_ids
-                || selection.points[StepPoint::post].volume_instance_ids)
-            {
-                host_data.volume_instance_depth = geo.max_depth();
-                CELER_VALIDATE(host_data.volume_instance_depth > 0,
-                               << "geometry type does not support volume "
-                                  "instance IDs: max depth is "
-                               << host_data.volume_instance_depth);
-            }
+        if (selection.points[StepPoint::pre].volume_instance_ids
+            || selection.points[StepPoint::post].volume_instance_ids)
+        {
+            host_data.volume_instance_depth = geo.max_depth();
+            CELER_VALIDATE(host_data.volume_instance_depth > 0,
+                           << "geometry type does not support volume "
+                              "instance IDs: max depth is "
+                           << host_data.volume_instance_depth);
         }
 
         return host_data;

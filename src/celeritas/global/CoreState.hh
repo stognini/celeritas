@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/global/CoreState.hh
@@ -90,7 +89,7 @@ class CoreState final : public CoreStateInterface
               size_type num_track_slots);
 
     // Default destructor
-    ~CoreState();
+    ~CoreState() final;
 
     // Prevent move/copy
     CELER_DELETE_COPY_MOVE(CoreState);

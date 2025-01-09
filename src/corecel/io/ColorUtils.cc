@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/io/ColorUtils.cc
@@ -102,7 +101,7 @@ char const* color_code(char abbrev)
             return "\033[31;1m";
         case 'W':
             return "\033[37;1m";
-        case ' ':
+        default:
             return "\033[0m";
     }
 

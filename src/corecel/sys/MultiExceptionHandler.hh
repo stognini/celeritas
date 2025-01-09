@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/sys/MultiExceptionHandler.hh
@@ -10,6 +9,8 @@
 #include <exception>
 #include <utility>
 #include <vector>
+
+#include "corecel/Config.hh"
 
 #include "corecel/Macros.hh"
 
@@ -53,7 +54,7 @@ class MultiExceptionHandler
     CELER_DEFAULT_COPY_MOVE(MultiExceptionHandler);
 
     // Terminate if destroyed without handling exceptions
-    inline ~MultiExceptionHandler();
+    inline ~MultiExceptionHandler() noexcept(!CELERITAS_DEBUG);
 
     // Thread-safe capture of the given exception
     void operator()(std::exception_ptr p);
@@ -62,7 +63,7 @@ class MultiExceptionHandler
     bool empty() const { return exceptions_.empty(); }
 
     //! Release exceptions for someone else to process (not thread safe)
-    VecExceptionPtr release() { return std::move(exceptions_); }
+    VecExceptionPtr release() && { return std::move(exceptions_); }
 
   private:
     VecExceptionPtr exceptions_;
@@ -99,7 +100,7 @@ inline void log_and_rethrow(MultiExceptionHandler&& exceptions)
 /*!
  * Terminate if destroyed without handling exceptions.
  */
-MultiExceptionHandler::~MultiExceptionHandler()
+MultiExceptionHandler::~MultiExceptionHandler() noexcept(!CELERITAS_DEBUG)
 {
     if (CELER_UNLIKELY(!exceptions_.empty()))
     {

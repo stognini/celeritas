@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/ext/GeantOpticalPhysicsOptions.hh
@@ -22,12 +21,12 @@ enum class WLSTimeProfileSelection
 };
 
 //---------------------------------------------------------------------------//
-//! Cerenkov process options
-struct CerenkovPhysicsOptions
+//! Cherenkov process options
+struct CherenkovPhysicsOptions
 {
     //! Enable the process
     bool enable{true};
-    //! Enable generation of Cerenkov photons
+    //! Enable generation of Cherenkov photons
     bool stack_photons{true};
     //! Track generated photons before parent
     bool track_secondaries_first{true};
@@ -44,7 +43,7 @@ struct CerenkovPhysicsOptions
 // TODO: when we require C++20, use `friend bool operator==(...) =
 // default;`
 constexpr bool
-operator==(CerenkovPhysicsOptions const& a, CerenkovPhysicsOptions const& b)
+operator==(CherenkovPhysicsOptions const& a, CherenkovPhysicsOptions const& b)
 {
     // clang-format off
     return a.enable == b.enable 
@@ -129,14 +128,16 @@ struct GeantOpticalPhysicsOptions
 {
     //!@{
     //! \name Optical photon creation physics
-    //! Cerenkov radiation options
-    CerenkovPhysicsOptions cerenkov;
+
+    //! Cherenkov radiation options
+    CherenkovPhysicsOptions cherenkov;
     //! Scintillation options
     ScintillationPhysicsOptions scintillation;
     //!@}
 
     //!@{
     //! \name Optical photon physics
+
     //! Enable wavelength shifting and select a time profile
     WLSTimeProfileSelection wavelength_shifting{WLSTimeProfileSelection::delta};
     //! Enable second wavelength shifting type and select a time profile (TODO:
@@ -159,7 +160,7 @@ struct GeantOpticalPhysicsOptions
     //! True if any process is activated
     explicit operator bool() const
     {
-        return cerenkov || scintillation
+        return cherenkov || scintillation
                || (wavelength_shifting != WLSTimeProfileSelection::none)
                || (wavelength_shifting2 != WLSTimeProfileSelection::none)
                || boundary || absorption || rayleigh_scattering
@@ -170,7 +171,7 @@ struct GeantOpticalPhysicsOptions
     static GeantOpticalPhysicsOptions deactivated()
     {
         GeantOpticalPhysicsOptions opts;
-        opts.cerenkov.enable = false;
+        opts.cherenkov.enable = false;
         opts.scintillation.enable = false;
         opts.wavelength_shifting = WLSTimeProfileSelection::none;
         opts.wavelength_shifting2 = WLSTimeProfileSelection::none;
@@ -189,7 +190,7 @@ constexpr bool operator==(GeantOpticalPhysicsOptions const& a,
                           GeantOpticalPhysicsOptions const& b)
 {
     // clang-format off
-    return a.cerenkov == b.cerenkov
+    return a.cherenkov == b.cherenkov
            && a.scintillation == b.scintillation
            && a.wavelength_shifting == b.wavelength_shifting 
            && a.wavelength_shifting2 == b.wavelength_shifting2 

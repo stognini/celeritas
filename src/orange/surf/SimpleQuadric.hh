@@ -1,17 +1,19 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/surf/SimpleQuadric.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include "corecel/Config.hh"
+
 #include "corecel/Types.hh"
 #include "corecel/cont/Array.hh"
 #include "corecel/cont/Span.hh"
 #include "corecel/math/ArrayUtils.hh"
 #include "orange/OrangeTypes.hh"
+#include "orange/SenseUtils.hh"
 
 #include "detail/QuadraticSolver.hh"
 
@@ -69,14 +71,14 @@ class SimpleQuadric
     explicit inline CELER_FUNCTION SimpleQuadric(Span<R, StorageSpan::extent>);
 
     // Promote from a plane
-    explicit SimpleQuadric(Plane const& other) noexcept;
+    explicit SimpleQuadric(Plane const& other) noexcept(!CELERITAS_DEBUG);
 
     // Promote from an axis-aligned cylinder
     template<Axis T>
     explicit SimpleQuadric(CylAligned<T> const& other) noexcept;
 
     // Promote from a sphere
-    explicit SimpleQuadric(Sphere const& other) noexcept;
+    explicit SimpleQuadric(Sphere const& other) noexcept(!CELERITAS_DEBUG);
 
     // Promote from a cone
     template<Axis T>

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/ImportedDataTestBase.hh
@@ -51,7 +50,7 @@ class ImportedDataTestBase : virtual public GlobalGeoTestBase
     SPConstPhysics build_physics() override;
     SPConstSim build_sim() override;
     SPConstWentzelOKVI build_wentzel() override;
-    SPConstCerenkov build_cerenkov() override;
+    SPConstCherenkov build_cherenkov() override;
     SPConstOpticalMaterial build_optical_material() override;
     SPConstScintillation build_scintillation() override;
 };

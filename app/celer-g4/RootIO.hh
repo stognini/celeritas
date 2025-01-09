@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-g4/RootIO.hh
@@ -51,13 +50,6 @@ class RootIO
   private:
     // Construct by initializing TFile and TTree on each worker thread
     RootIO();
-    RootIO(RootIO&&) = default;
-
-    // Assignment operator
-    RootIO& operator=(RootIO&&) = default;
-
-    // Default destructor
-    ~RootIO() = default;
 
     //// HELPER FUNCTIONS ////
 

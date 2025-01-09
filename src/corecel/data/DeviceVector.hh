@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/data/DeviceVector.hh
@@ -194,6 +193,7 @@ template<class T>
 void DeviceVector<T>::copy_to_device(SpanConstT data)
 {
     CELER_EXPECT(data.size() == this->size());
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     allocation_.copy_to_device({reinterpret_cast<std::byte const*>(data.data()),
                                 data.size() * sizeof(T)});
 }
@@ -207,6 +207,7 @@ void DeviceVector<T>::copy_to_host(SpanT data) const
 {
     CELER_EXPECT(data.size() == this->size());
     allocation_.copy_to_host(
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         {reinterpret_cast<std::byte*>(data.data()), data.size() * sizeof(T)});
 }
 
@@ -217,6 +218,7 @@ void DeviceVector<T>::copy_to_host(SpanT data) const
 template<class T>
 T* DeviceVector<T>::data()
 {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return reinterpret_cast<T*>(allocation_.device_ref().data());
 }
 
@@ -227,6 +229,7 @@ T* DeviceVector<T>::data()
 template<class T>
 T const* DeviceVector<T>::data() const
 {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return reinterpret_cast<T const*>(allocation_.device_ref().data());
 }
 

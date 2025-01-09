@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/em/xs/RBDiffXsCalculator.hh
@@ -123,6 +122,7 @@ RBDiffXsCalculator::RBDiffXsCalculator(RelativisticBremRef const& shared,
     , material_(material)
     , element_(material.make_element_view(elcomp_id))
     , total_energy_(value_as<Energy>(particle.total_energy()))
+    , dielectric_suppression_(shared.dielectric_suppression())
 {
     real_type density_factor = material.electron_density()
                                * detail::migdal_constant();
@@ -133,7 +133,6 @@ RBDiffXsCalculator::RBDiffXsCalculator(RelativisticBremRef const& shared,
           * value_as<detail::MevPerLen>(detail::lpm_constant());
     real_type lpm_threshold = lpm_energy * std::sqrt(density_factor);
     enable_lpm_ = (shared.enable_lpm && (total_energy_ > lpm_threshold));
-    dielectric_suppression_ = shared.dielectric_suppression();
 }
 
 //---------------------------------------------------------------------------//

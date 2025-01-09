@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/math/Algorithms.hh
@@ -14,6 +13,8 @@
 
 #include "corecel/Assert.hh"
 #include "corecel/Macros.hh"
+
+#include "NumericLimits.hh"
 
 #include "detail/AlgorithmsImpl.hh"
 
@@ -37,6 +38,7 @@ forward(typename std::remove_reference<T>::type& v) noexcept
 //! \cond (CELERITAS_DOC_DEV)
 template<class T>
 CELER_CONSTEXPR_FUNCTION T&&
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 forward(typename std::remove_reference<T>::type&& v) noexcept
 {
     return static_cast<T&&>(v);
@@ -109,6 +111,32 @@ struct Less<void>
     operator()(T&& lhs, U&& rhs) const -> decltype(auto)
     {
         return ::celeritas::forward<T>(lhs) < ::celeritas::forward<U>(rhs);
+    }
+};
+
+//---------------------------------------------------------------------------//
+/*!
+ * Evaluate whether the argument is "true".
+ *
+ * This is useful for calls to \c std::all_of .
+ */
+template<class T = void>
+struct LogicalTrue
+{
+    CELER_CONSTEXPR_FUNCTION bool operator()(T const& value) const noexcept
+    {
+        return static_cast<bool>(value);
+    }
+};
+
+//! Specialization of LogicalTrue with template deduction
+template<>
+struct LogicalTrue<void>
+{
+    template<class T>
+    CELER_CONSTEXPR_FUNCTION bool operator()(T const& value) const noexcept
+    {
+        return static_cast<bool>(value);
     }
 };
 
@@ -197,7 +225,7 @@ inline CELER_FUNCTION T const& clamp(T const& v, T const& lo, T const& hi)
 template<class T>
 CELER_CONSTEXPR_FUNCTION T clamp_to_nonneg(T v) noexcept
 {
-    return (v < 0) ? 0 : v;
+    return (v < T{0}) ? T{0} : v;
 }
 
 //---------------------------------------------------------------------------//
@@ -449,7 +477,7 @@ CELER_CONSTEXPR_FUNCTION T ipow(T v) noexcept
     if constexpr (N == 0)
     {
         CELER_DISCARD(v)  // Suppress warning in older compilers
-        return 1;
+        return T{1};
     }
     else if constexpr (N % 2 == 0)
     {
@@ -462,7 +490,7 @@ CELER_CONSTEXPR_FUNCTION T ipow(T v) noexcept
 #if (__CUDACC_VER_MAJOR__ < 11) \
     || (__CUDACC_VER_MAJOR__ == 11 && __CUDACC_VER_MINOR__ < 5)
     // "error: missing return statement at end of non-void function"
-    return T{};
+    return T{0};
 #endif
 }
 
@@ -509,6 +537,37 @@ template<class T, std::enable_if_t<!std::is_floating_point<T>::value, bool> = tr
 CELER_CONSTEXPR_FUNCTION T fma(T a, T b, T y)
 {
     return a * b + y;
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Calculate a hypotenuse.
+ *
+ * This does \em not conform to IEEE754 by returning infinity in edge cases
+ * (e.g., one argument is infinite and the other NaN). Similarly, it is not
+ * symmetric with respect to the function arguments.
+ *
+ * To improve accuracy we could use [1].
+ *
+ * [1] C.F. Borges, An Improved Algorithm for hypot(a,b), (2019).
+ *     http://arxiv.org/abs/1904.09481 (accessed November 19, 2024).
+ */
+template<class T>
+CELER_CONSTEXPR_FUNCTION T hypot(T a, T b)
+{
+    return std::sqrt(fma(b, b, ipow<2>(a)));
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Calculate a hypotenuse.
+ */
+template<class T>
+CELER_CONSTEXPR_FUNCTION T hypot(T a, T b, T c)
+{
+    T result = fma(b, b, ipow<2>(a));
+    result = fma(c, c, result);
+    return std::sqrt(result);
 }
 
 //---------------------------------------------------------------------------//
@@ -610,16 +669,6 @@ CELER_CONSTEXPR_FUNCTION int signum(T x)
 }
 
 //---------------------------------------------------------------------------//
-/*!
- * Double-precision math constant (POSIX derivative).
- *
- * These should be used in *host* or *type-dependent* circumstances because, if
- * using \c CELERITAS_REAL_TYPE=float, this could have more accuracy than
- * \c celeritas::constants::pi .
- */
-inline constexpr double m_pi{3.14159265358979323846};
-
-//---------------------------------------------------------------------------//
 //!@{
 //! \name CUDA/HIP equivalent routines
 
@@ -707,6 +756,44 @@ CELER_FORCEINLINE_FUNCTION void sincospi(double a, double* s, double* c)
 }
 //!@}
 //!@}
+
+//---------------------------------------------------------------------------//
+// Portable utilities functions
+//---------------------------------------------------------------------------//
+/*!
+ * Count the number of set bits in an integer.
+ */
+template<class T>
+#if defined(_MSC_VER)
+CELER_FORCEINLINE_FUNCTION int popcount(T x) noexcept
+#else
+CELER_CONSTEXPR_FUNCTION int popcount(T x) noexcept
+#endif
+{
+    static_assert(sizeof(T) <= 8,
+                  "popcount is only defined for 32-bit and 64-bit integers");
+    static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>,
+                  "popcount is only defined for unsigned integral types");
+
+    if constexpr (sizeof(T) <= 4)
+    {
+#if CELER_DEVICE_COMPILE
+        return __popc(x);
+#elif defined(_MSC_VER)
+        return __popcnt(x);
+#else
+        return __builtin_popcount(x);
+#endif
+    }
+
+#if CELER_DEVICE_COMPILE
+    return __popcll(x);
+#elif defined(_MSC_VER)
+    return __popcnt64(x);
+#else
+    return __builtin_popcountl(x);
+#endif
+}
 
 //---------------------------------------------------------------------------//
 }  // namespace celeritas

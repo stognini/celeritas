@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-g4/GeantDiagnostics.cc
@@ -75,7 +74,7 @@ GeantDiagnostics::GeantDiagnostics(SharedParams const& params)
     CELER_LOG_LOCAL(status) << "Initializing Geant4 diagnostics";
 
     // Get output registry
-    auto output_reg = params.output_reg();
+    auto const& output_reg = params.output_reg();
     CELER_ASSERT(output_reg);
     size_type num_threads = params.num_streams();
 

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/optical/Interaction.hh
@@ -8,7 +7,9 @@
 #pragma once
 
 #include "corecel/Macros.hh"
+#include "corecel/cont/Span.hh"
 #include "geocel/Types.hh"
+#include "celeritas/optical/TrackInitializer.hh"
 
 namespace celeritas
 {
@@ -29,10 +30,12 @@ struct Interaction
         scattered,  //!< Still alive, state has changed
         absorbed,  //!< Absorbed by the material
         unchanged,  //!< No state change, no secondaries
+        failed,  //!< Ran out of memory during sampling
     };
 
     Real3 direction;  //!< Post-interaction direction
     Real3 polarization;  //!< Post-interaction polarization
+    Span<TrackInitializer> secondaries;  //!< Emitted secondaries
     Action action{Action::scattered};  //!< Flags for interaction result
 
     //! Return an interaction respresenting an absorbed process
@@ -40,6 +43,9 @@ struct Interaction
 
     //! Return an interaction with no change in the track state
     static inline CELER_FUNCTION Interaction from_unchanged();
+
+    // Return an interaction representing a recoverable error
+    static inline CELER_FUNCTION Interaction from_failure();
 
     //! Whether the state changed but did not fail
     CELER_FUNCTION bool changed() const
@@ -69,6 +75,17 @@ CELER_FUNCTION Interaction Interaction::from_unchanged()
 {
     Interaction result;
     result.action = Action::unchanged;
+    return result;
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Indicate a failure to allocate memory for secondaries.
+ */
+CELER_FUNCTION Interaction Interaction::from_failure()
+{
+    Interaction result;
+    result.action = Action::failed;
     return result;
 }
 

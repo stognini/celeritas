@@ -1,17 +1,19 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/surf/GeneralQuadric.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include "corecel/Config.hh"
+
 #include "corecel/Types.hh"
 #include "corecel/cont/Array.hh"
 #include "corecel/cont/Span.hh"
 #include "corecel/math/ArrayUtils.hh"
 #include "orange/OrangeTypes.hh"
+#include "orange/SenseUtils.hh"
 
 #include "detail/QuadraticSolver.hh"
 
@@ -70,7 +72,8 @@ class GeneralQuadric
     explicit inline CELER_FUNCTION GeneralQuadric(Span<R, StorageSpan::extent>);
 
     // Promote from a simple quadric
-    explicit GeneralQuadric(SimpleQuadric const& other) noexcept;
+    explicit GeneralQuadric(SimpleQuadric const& other) noexcept(
+        !CELERITAS_DEBUG);
 
     //// ACCESSORS ////
 

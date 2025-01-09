@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file geocel/g4/GeantGeoParams.hh
@@ -9,6 +8,7 @@
 
 #include <string>
 
+#include "corecel/Macros.hh"
 #include "corecel/Types.hh"
 #include "corecel/cont/LabelIdMultiMap.hh"
 #include "corecel/data/ParamsDataInterface.hh"
@@ -45,8 +45,10 @@ class GeantGeoParams final : public GeoParamsInterface,
     // Create a VecGeom model from a pre-existing Geant4 geometry
     explicit GeantGeoParams(G4VPhysicalVolume const* world);
 
+    CELER_DEFAULT_MOVE_DELETE_COPY(GeantGeoParams);
+
     // Clean up on destruction
-    ~GeantGeoParams();
+    ~GeantGeoParams() final;
 
     //! Access the world volume
     G4VPhysicalVolume const* world() const { return host_ref_.world; }

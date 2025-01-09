@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/sys/TracingSession.cc
@@ -48,7 +47,7 @@ initialize_session(TracingMode mode) noexcept
             case TracingMode::in_process:
                 return perfetto::kInProcessBackend;
             case TracingMode::system:
-                return perfetto::kSystemBackend;
+                [[fallthrough]];
             default:
                 return perfetto::kSystemBackend;
         }
@@ -113,6 +112,7 @@ TracingSession::TracingSession(std::string_view filename) noexcept
     {
         if (!filename.empty())
         {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
             fd_ = open(filename.data(), O_RDWR | O_CREAT | O_TRUNC, 0660);
         }
         session_->Setup(configure_session(), fd_);

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/g4org/PhysicalVolumeConverter.cc
@@ -146,6 +145,7 @@ PhysicalVolumeConverter::Builder::make_pv(int depth,
         // Replace with constituent volume, and reflect across Z.
         // See G4ReflectionFactory::CheckScale: the reflection value is
         // hardcoded to {1, 1, -1}
+        // NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         g4lv = unrefl_g4lv;
         CELER_NOT_IMPLEMENTED("reflecting a placed volume");
     }

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/io/RootEventWriter.hh
@@ -40,9 +39,10 @@ class RootEventWriter : public EventWriterInterface
 
     //! Prevent copying and moving
     CELER_DELETE_COPY_MOVE(RootEventWriter);
+    ~RootEventWriter() override = default;
 
     // Export primaries to ROOT
-    void operator()(VecPrimary const& primaries);
+    void operator()(VecPrimary const& primaries) override;
 
   private:
     //// DATA ////

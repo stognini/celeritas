@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/neutron/interactor/detail/CascadeParticle.hh
@@ -30,9 +29,8 @@ struct CascadeParticle
     };
 
     ParticleType type{ParticleType::unknown};  //!< Particle type
-    units::MevMass mass;  // !< Particle mass
-    FourVector four_vec;  //!< Four momentum in natural MevMomentum and
-                          //!< MevEnergy units
+    units::MevMass mass;  //!< Particle mass
+    FourVector four_vec;  //!< Four momentum in natural units
 };
 
 //---------------------------------------------------------------------------//

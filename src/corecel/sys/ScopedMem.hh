@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/sys/ScopedMem.hh
@@ -8,6 +7,8 @@
 #pragma once
 
 #include <string_view>
+
+#include "corecel/Config.hh"
 
 #include "corecel/cont/InitializedValue.hh"
 
@@ -56,7 +57,7 @@ class ScopedMem
     }
 
     // Register data on destruction
-    ~ScopedMem();
+    ~ScopedMem() noexcept(!CELERITAS_DEBUG);
 
     //! Prevent copying but allow moving
     CELER_DEFAULT_MOVE_DELETE_COPY(ScopedMem);

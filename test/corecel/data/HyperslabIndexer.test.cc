@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/data/HyperslabIndexer.test.cc
@@ -30,6 +29,7 @@ TEST(HyperslabIndexerTest, 2D)
         {
             Array<size_type, 2> coords{a, b};
             EXPECT_EQ(index, to_index(coords));
+            EXPECT_EQ(index, to_index(a, b));
             EXPECT_EQ(coords, to_coords(index));
             index++;
         }
@@ -51,6 +51,7 @@ TEST(HyperslabIndexerTest, 3D)
             {
                 Array<size_type, 3> coords{a, b, c};
                 EXPECT_EQ(index, to_index(coords));
+                EXPECT_EQ(index, to_index(a, b, c));
                 EXPECT_EQ(coords, to_coords(index));
                 index++;
             }
@@ -75,6 +76,7 @@ TEST(HyperslabIndexerTest, 4D)
                 {
                     Array<size_type, 4> coords{a, b, c, d};
                     EXPECT_EQ(index, to_index(coords));
+                    EXPECT_EQ(index, to_index(a, b, c, d));
                     EXPECT_EQ(coords, to_coords(index));
                     index++;
                 }
@@ -98,6 +100,7 @@ TEST(HyperslabIndexerTest, 5D_with_ones)
             {
                 Array<size_type, 5> coords{a, 0, b, 0, c};
                 EXPECT_EQ(index, to_index(coords));
+                EXPECT_EQ(index, to_index(a, 0, b, 0, c));
                 EXPECT_EQ(coords, to_coords(index));
                 index++;
             }

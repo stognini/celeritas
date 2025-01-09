@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/ext/detail/GeantBremsstrahlungProcess.cc
@@ -39,9 +38,7 @@ namespace detail
  * Construct with model selection.
  */
 GeantBremsstrahlungProcess::GeantBremsstrahlungProcess(ModelSelection selection)
-    : G4VEnergyLossProcess("eBrem")
-    , is_initialized_(false)
-    , model_selection_(selection)
+    : G4VEnergyLossProcess("eBrem"), model_selection_(selection)
 {
     CELER_VALIDATE(selection != ModelSelection::none,
                    << "Cannot initialize GeantBremsstrahlungProcess with "

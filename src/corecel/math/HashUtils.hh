@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/math/HashUtils.hh
@@ -38,6 +37,7 @@ std::size_t hash_as_bytes(Span<T const, N> s)
 {
     std::size_t result{};
     Hasher hash{&result};
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     hash(Span<std::byte const>{reinterpret_cast<std::byte const*>(s.data()),
                                s.size() * sizeof(T)});
     return result;

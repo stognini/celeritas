@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file geocel/ScopedGeantLogger.cc
@@ -17,6 +16,8 @@
 #include <G4UImanager.hh>
 #include <G4Version.hh>
 #include <G4coutDestination.hh>
+
+#include "corecel/Macros.hh"
 #if G4VERSION_NUMBER >= 1120
 #    include <G4ios.hh>
 #    define CELER_G4SSBUF 0
@@ -113,6 +114,7 @@ class GeantLoggerAdapter final : public G4coutDestination
   public:
     // Assign to Geant handlers on construction
     GeantLoggerAdapter();
+    CELER_DEFAULT_COPY_MOVE(GeantLoggerAdapter);
     ~GeantLoggerAdapter() final;
 
     // Handle error messages
@@ -187,6 +189,7 @@ G4int GeantLoggerAdapter::ReceiveG4cerr(G4String const& str)
 
 //---------------------------------------------------------------------------//
 //! Thread-local flag for "ownership" of the Geant4 logger
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 G4ThreadLocal bool g_adapter_active_{false};
 
 //---------------------------------------------------------------------------//

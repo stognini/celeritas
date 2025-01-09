@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/detail/HitManager.test.cc
@@ -40,6 +39,7 @@ class SimpleCmsTest : public ::celeritas::test::SDTestBase,
     {
         sd_setup_.enabled = true;
         sd_setup_.ignore_zero_deposition = false;
+        sd_setup_.track = false;
     }
 
     SPConstGeoI build_fresh_geometry(std::string_view basename) override
@@ -90,7 +90,7 @@ class SimpleCmsTest : public ::celeritas::test::SDTestBase,
     HitManager make_hit_manager(bool make_hit_proc = true)
     {
         CELER_EXPECT(!processor_);
-        HitManager result(*this->geometry(), *this->particle(), sd_setup_, 1);
+        HitManager result(this->geometry(), *this->particle(), sd_setup_, 1);
 
         if (make_hit_proc)
         {

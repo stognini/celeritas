@@ -1,6 +1,5 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
@@ -51,7 +50,6 @@ list(APPEND SOURCES
   orangeinp/detail/IntersectSurfaceState.cc
   orangeinp/detail/LocalSurfaceInserter.cc
   orangeinp/detail/NodeSimplifier.cc
-  orangeinp/detail/PostfixLogicBuilder.cc
   orangeinp/detail/ProtoBuilder.cc
   orangeinp/detail/ProtoMap.cc
   orangeinp/detail/SenseEvaluator.cc
@@ -84,7 +82,7 @@ list(APPEND SOURCES
 
 
 if(CELERITAS_USE_Geant4 AND CELERITAS_REAL_TYPE STREQUAL "double")
-  set( _cg4org_sources
+  set(_cg4org_sources
     g4org/Converter.cc
     g4org/LogicalVolumeConverter.cc
     g4org/PhysicalVolumeConverter.cc
@@ -107,7 +105,7 @@ celeritas_polysource_append(SOURCES RaytraceImager)
 # Create library
 #-----------------------------------------------------------------------------#
 
-celeritas_add_library(orange ${SOURCES})
+celeritas_add_src_library(orange ${SOURCES})
 celeritas_target_link_libraries(orange
   PRIVATE ${PRIVATE_DEPS}
   PUBLIC ${PUBLIC_DEPS}

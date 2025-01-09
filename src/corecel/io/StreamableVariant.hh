@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/io/StreamableVariant.hh
@@ -9,6 +8,7 @@
 
 #include <ostream>
 #include <sstream>
+#include <utility>
 #include <variant>
 
 #include "corecel/Assert.hh"
@@ -47,7 +47,7 @@ struct GenericToStream
     template<class T>
     void operator()(T&& obj) const
     {
-        this->os << obj;
+        this->os << std::forward<T>(obj);
     }
 };
 }  // namespace detail

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/track/SortTracksAction.hh
@@ -29,7 +28,7 @@ class SortTracksAction final : public CoreStepActionInterface,
     SortTracksAction(ActionId id, TrackOrder track_order);
 
     //! Default destructor
-    ~SortTracksAction() = default;
+    ~SortTracksAction() final = default;
 
     //! Execute the action with host data
     void step(CoreParams const& params, CoreStateHost& state) const final;

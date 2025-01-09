@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/data/CollectionAlgorithms.hh
@@ -29,7 +28,7 @@ void fill(T&& value, Collection<T, W, M, I>* col)
     static_assert(W != Ownership::const_reference,
                   "const references cannot be filled");
     CELER_EXPECT(col);
-    Filler<T, M> fill_impl{value};
+    Filler<T, M> fill_impl{std::forward<T>(value)};
     fill_impl((*col)[AllItems<T, M>{}]);
 }
 

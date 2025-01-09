@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file geocel/rasterize/RaytraceImager.hh
@@ -37,6 +36,7 @@ class RaytraceImager final : public ImagerInterface
   public:
     // Construct with geometry
     explicit RaytraceImager(SPGeometry geo);
+    ~RaytraceImager() final = default;
 
     // Raytrace an image on host or device
     void operator()(Image<MemSpace::host>* image) final;

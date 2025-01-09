@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/io/StringEnumMapper.hh
@@ -57,6 +56,7 @@ class StringEnumMapper
 
     // Construct with a function that takes an enum and returns a stringlike
     template<class U>
+    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
     explicit inline StringEnumMapper(U&& enum_to_string,
                                      char const* desc = nullptr);
 
@@ -90,6 +90,7 @@ StringEnumMapper<T>::from_cstring_func(EnumCStringFuncPtr fp, char const* desc)
  */
 template<class T>
 template<class U>
+// NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
 StringEnumMapper<T>::StringEnumMapper(U&& enum_to_string, char const* desc)
     : description_(desc)
 {

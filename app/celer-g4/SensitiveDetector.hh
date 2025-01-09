@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-g4/SensitiveDetector.hh
@@ -41,8 +40,8 @@ class SensitiveDetector final : public G4VSensitiveDetector
     bool ProcessHits(G4Step*, G4TouchableHistory*) final;
 
   private:
-    int hcid_;
-    SensitiveHitsCollection* collection_;
+    int hcid_{-1};
+    SensitiveHitsCollection* collection_{nullptr};
 };
 
 //---------------------------------------------------------------------------//

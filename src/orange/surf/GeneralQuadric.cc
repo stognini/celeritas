@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/surf/GeneralQuadric.cc
@@ -44,7 +43,8 @@ GeneralQuadric::GeneralQuadric(Real3 const& abc,
 /*!
  * Promote from a simple quadric.
  */
-GeneralQuadric::GeneralQuadric(SimpleQuadric const& other) noexcept
+GeneralQuadric::GeneralQuadric(SimpleQuadric const& other) noexcept(
+    !CELERITAS_DEBUG)
     : GeneralQuadric{make_array(other.second()),
                      Real3{0, 0, 0},
                      make_array(other.first()),

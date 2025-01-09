@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/optical/CoreState.hh
@@ -40,7 +39,7 @@ class CoreStateInterface : public AuxStateInterface
 
   public:
     // Support polymorphic deletion
-    virtual ~CoreStateInterface();
+    ~CoreStateInterface() override;
 
     //! Thread/stream ID
     virtual StreamId stream_id() const = 0;

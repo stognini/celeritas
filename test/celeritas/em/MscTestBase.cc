@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/em/MscTestBase.cc
@@ -78,8 +77,7 @@ MscTestBase::make_phys_view(ParticleTrackView const& par,
     phys_view = PhysicsTrackInitializer{};
 
     // Calculate and store the energy loss (dedx) range limit
-    auto ppid = phys_view.eloss_ppid();
-    auto grid_id = phys_view.value_grid(ValueGridType::range, ppid);
+    auto grid_id = phys_view.range_grid();
     auto calc_range = phys_view.make_calculator<RangeCalculator>(grid_id);
     real_type range = calc_range(par.energy());
     phys_view.dedx_range(range);

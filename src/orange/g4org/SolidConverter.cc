@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/g4org/SolidConverter.cc
@@ -10,6 +9,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <G4BooleanSolid.hh>
 #include <G4Box.hh>
@@ -191,7 +191,7 @@ auto make_solid(G4VSolid const& solid,
                 SolidEnclosedAngle&& enclosed)
 {
     return Solid<CR>::or_shape(std::string{solid.GetName()},
-                               std::move(interior),
+                               std::forward<CR>(interior),
                                std::move(excluded),
                                std::move(enclosed));
 }
@@ -510,7 +510,7 @@ auto SolidConverter::polyhedra(arg_type solid_base) -> result_type
     auto const& params = *solid.GetOriginalParameters();
 
     // Convert from circumradius to apothem
-    double const radius_factor = std::cos(m_pi / params.numSide);
+    double const radius_factor = cospi(1 / static_cast<double>(params.numSide));
 
     std::vector<double> zs(params.Num_z_planes);
     std::vector<double> rmin(zs.size());

@@ -1,6 +1,5 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
@@ -223,7 +222,7 @@ endif()
 # Create library
 #-----------------------------------------------------------------------------#
 
-celeritas_add_library(corecel ${SOURCES})
+celeritas_add_src_library(corecel ${SOURCES})
 
 # Require at least C++17
 target_compile_features(corecel PUBLIC cxx_std_17)

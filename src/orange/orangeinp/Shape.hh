@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/orangeinp/Shape.hh
@@ -47,11 +46,12 @@ class ShapeBase : public ObjectInterface
     //! Interior intersect region interface for construction and access
     virtual IntersectRegionInterface const& interior() const = 0;
 
+    ~ShapeBase() override = default;
+
   protected:
     //!@{
     //! Allow construction and assignment only through daughter classes
     ShapeBase() = default;
-    virtual ~ShapeBase() = default;
     CELER_DEFAULT_COPY_MOVE(ShapeBase);
     //!@}
 };

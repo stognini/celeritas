@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/ext/detail/GeantBremsstrahlungProcess.hh
@@ -51,7 +50,7 @@ class GeantBremsstrahlungProcess : public G4VEnergyLossProcess
     void StreamProcessInfo(std::ostream& output) const override;
 
   private:
-    bool is_initialized_;
+    bool is_initialized_{false};
     ModelSelection model_selection_;
 };
 

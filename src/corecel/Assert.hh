@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 /*!
@@ -464,7 +463,7 @@ class DebugError : public std::logic_error
     CELER_DEFAULT_COPY_MOVE(DebugError);
 
     // Default destructor to anchor vtable
-    ~DebugError();
+    ~DebugError() override;
 
     //! Access the debug data
     DebugErrorDetails const& details() const { return details_; }
@@ -485,7 +484,7 @@ class RuntimeError : public std::runtime_error
     CELER_DEFAULT_COPY_MOVE(RuntimeError);
 
     // Default destructor to anchor vtable
-    ~RuntimeError();
+    ~RuntimeError() override;
 
     //! Access detailed information
     RuntimeErrorDetails const& details() const { return details_; }

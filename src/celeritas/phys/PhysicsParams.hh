@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/phys/PhysicsParams.hh
@@ -69,6 +68,10 @@ class ParticleParams;
  *   processes use MC integration to sample the discrete interaction length
  *   with the correct probability. Disable this integral approach for all
  *   processes.
+ *   \c spline_eloss_order: the order of interpolation to be used for the
+ *   spline interpolation. If it is 1, then the existing linear interpolation
+ *   is used. If it is 2+, the spline interpolation is used for energy loss
+ *   using the specified order. Default value is 1
  *
  * NOTE: min_range/max_step_over_range are not accessible through Geant4, and
  * they can also be set to be different for electrons, mu/hadrons, and ions
@@ -80,7 +83,7 @@ struct PhysicsParamsOptions
 
     //!@{
     //! \name Range calculation
-    real_type min_range = 1 * units::millimeter;
+    real_type min_range = real_type{1} * units::millimeter;
     real_type max_step_over_range = 0.2;
     real_type fixed_step_limiter = 0;
     //!@}
@@ -94,7 +97,7 @@ struct PhysicsParamsOptions
 
     //!@{
     //! \name Multiple scattering
-    real_type lambda_limit = 1 * units::millimeter;
+    real_type lambda_limit = real_type{1} * units::millimeter;
     real_type range_factor = 0.04;
     real_type safety_factor = 0.6;
     MscStepLimitAlgorithm step_limit_algorithm{MscStepLimitAlgorithm::safety};
@@ -102,6 +105,8 @@ struct PhysicsParamsOptions
 
     real_type secondary_stack_factor = 3;
     bool disable_integral_xs = false;
+
+    size_type spline_eloss_order = 1;
 };
 
 //---------------------------------------------------------------------------//

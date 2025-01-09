@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/OrangeData.hh
@@ -17,6 +16,7 @@
 #include "geocel/BoundingBox.hh"
 
 #include "OrangeTypes.hh"
+#include "SenseUtils.hh"
 #include "univ/detail/Types.hh"
 
 #include "detail/BIHData.hh"
@@ -28,10 +28,10 @@ namespace celeritas
 //---------------------------------------------------------------------------//
 
 //! Local ID of exterior volume for unit-type universes
-static inline constexpr LocalVolumeId orange_exterior_volume{0};
+inline constexpr LocalVolumeId orange_exterior_volume{0};
 
 //! ID of the top-level (global/world, level=0) universe (scene)
-static inline constexpr UniverseId orange_global_universe{0};
+inline constexpr UniverseId orange_global_universe{0};
 
 //---------------------------------------------------------------------------//
 /*!
@@ -472,7 +472,7 @@ struct OrangeStateData
     Items<UniverseId> universe;
 
     // Scratch space with dimensions {track}{max_faces}
-    Items<Sense> temp_sense;
+    Items<SenseValue> temp_sense;
 
     // Scratch space with dimensions {track}{max_intersections}
     Items<FaceId> temp_face;

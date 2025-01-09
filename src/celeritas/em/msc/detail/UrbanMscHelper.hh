@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/em/msc/detail/UrbanMscHelper.hh
@@ -17,7 +16,6 @@
 #include "celeritas/grid/EnergyLossCalculator.hh"
 #include "celeritas/grid/InverseRangeCalculator.hh"
 #include "celeritas/grid/RangeCalculator.hh"
-#include "celeritas/grid/ValueGridType.hh"
 #include "celeritas/grid/XsCalculator.hh"
 #include "celeritas/phys/ParticleTrackView.hh"
 #include "celeritas/phys/PhysicsTrackView.hh"
@@ -145,10 +143,8 @@ CELER_FUNCTION real_type UrbanMscHelper::calc_msc_mfp(Energy energy) const
 CELER_FUNCTION auto
 UrbanMscHelper::calc_inverse_range(real_type step) const -> Energy
 {
-    auto range_gid
-        = physics_.value_grid(ValueGridType::range, physics_.eloss_ppid());
-    auto range_to_energy
-        = physics_.make_calculator<InverseRangeCalculator>(range_gid);
+    auto range_to_energy = physics_.make_calculator<InverseRangeCalculator>(
+        physics_.range_grid());
     return range_to_energy(step);
 }
 
@@ -172,11 +168,9 @@ UrbanMscHelper::calc_end_energy(real_type step) const -> Energy
     real_type range = physics_.dedx_range();
     if (step <= range * shared_.params.dtrl())
     {
-        auto eloss_gid = physics_.value_grid(ValueGridType::energy_loss,
-                                             physics_.eloss_ppid());
         // Assume constant energy loss rate over the step
         real_type dedx = physics_.make_calculator<EnergyLossCalculator>(
-            eloss_gid)(particle_.energy());
+            physics_.energy_loss_grid())(particle_.energy());
 
         return particle_.energy() - Energy{step * dedx};
     }

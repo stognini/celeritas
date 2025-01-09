@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/cont/Span.hh
@@ -9,6 +8,8 @@
 
 #include <cstddef>
 #include <type_traits>
+
+#include "corecel/Macros.hh"
 
 #include "Array.hh"
 
@@ -95,12 +96,8 @@ class Span
         : s_(other.data(), other.size())
     {
     }
-
-    //! Copy constructor (same template parameters)
-    Span(Span const&) noexcept = default;
-
-    //! Assignment (same template parameters)
-    Span& operator=(Span const&) noexcept = default;
+    CELER_DEFAULT_COPY_MOVE(Span);
+    ~Span() = default;
 
     //// ACCESS ////
 

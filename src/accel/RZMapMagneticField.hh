@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/RZMapMagneticField.hh
@@ -38,7 +37,8 @@ class RZMapMagneticField : public G4MagneticField
     inline explicit RZMapMagneticField(SPConstFieldParams field_params);
 
     // Calculate values of the magnetic field vector
-    inline void GetFieldValue(double const point[3], double* field) const;
+    inline void
+    GetFieldValue(double const point[3], double* field) const override;
 
   private:
     SPConstFieldParams params_;

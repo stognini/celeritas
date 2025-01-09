@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/detail/UnitInserter.cc
@@ -146,12 +145,12 @@ std::vector<Label> make_surface_labels(UnitInput& inp)
 
 //---------------------------------------------------------------------------//
 //! Construct volume labels from the input volumes
-std::vector<Label> make_volume_labels(UnitInput& inp)
+std::vector<Label> make_volume_labels(UnitInput const& inp)
 {
     std::vector<Label> result;
     for (auto const& v : inp.volumes)
     {
-        Label vl = std::move(v.label);
+        Label vl = v.label;
         if (vl.ext.empty())
         {
             vl.ext = inp.label.name;
@@ -329,9 +328,7 @@ UniverseId UnitInserter::operator()(UnitInput&& inp)
         volume_records_.insert_back(vol_records.begin(), vol_records.end()));
 
     // Create BIH tree
-    CELER_VALIDATE(std::all_of(bboxes.begin(),
-                               bboxes.end(),
-                               [](FastBBox const& b) { return b; }),
+    CELER_VALIDATE(std::all_of(bboxes.begin(), bboxes.end(), LogicalTrue{}),
                    << "not all bounding boxes have been assigned");
     unit.bih_tree = build_bih_tree_(std::move(bboxes));
 

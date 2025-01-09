@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/detail/LevelStateAccessor.hh
@@ -34,9 +33,12 @@ class LevelStateAccessor
                                              TrackSlotId tid,
                                              LevelId level_id);
 
+    LevelStateAccessor(LevelStateAccessor const&) = default;
+    LevelStateAccessor(LevelStateAccessor&&) = default;
     // Copy data from another LSA
     inline CELER_FUNCTION LevelStateAccessor&
     operator=(LevelStateAccessor const& other);
+    ~LevelStateAccessor() = default;
 
     //// ACCESSORS ////
 
@@ -109,6 +111,10 @@ LevelStateAccessor::LevelStateAccessor(StateRef const* states,
 CELER_FUNCTION LevelStateAccessor&
 LevelStateAccessor::operator=(LevelStateAccessor const& other)
 {
+    if (this == &other)
+    {
+        return *this;
+    }
     this->vol() = other.vol();
     this->pos() = other.pos();
     this->dir() = other.dir();

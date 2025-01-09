@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/decay/interactor/MuDecayInteractor.hh
@@ -63,13 +62,6 @@ namespace celeritas
 class MuDecayInteractor
 {
   public:
-    //!@{
-    //! \name Type aliases
-    using Energy = units::MevEnergy;
-    using MevMomentum = units::MevMomentum;
-    using Mass = units::MevMass;
-    //!@}
-
     // Construct with shared and state data
     inline CELER_FUNCTION
     MuDecayInteractor(MuDecayData const& shared,
@@ -82,14 +74,18 @@ class MuDecayInteractor
     inline CELER_FUNCTION Interaction operator()(Engine& rng);
 
   private:
+    //// TYPES ////
+
+    using Energy = units::MevEnergy;
+    using Momentum = units::MevMomentum;
+    using Mass = units::MevMass;
+
     //// DATA ////
 
     // Constant data
     MuDecayData const& shared_;
     // Incident muon energy
     Energy const inc_energy_;
-    // Incident muon direction
-    Real3 const& inc_direction_;
     // Allocate space for secondary particles (electron only)
     StackAllocator<Secondary>& allocate_;
     // Define decay channel based on muon or anti-muon primary
@@ -103,12 +99,12 @@ class MuDecayInteractor
 
     // Boost four vector from the rest frame to the lab frame
     inline CELER_FUNCTION FourVector to_lab_frame(Real3 const& dir,
-                                                  MevMomentum momentum,
+                                                  Momentum momentum,
                                                   Mass mass) const;
 
     // Calculate particle momentum (or kinetic energy) in the center of mass
-    inline CELER_FUNCTION MevMomentum calc_momentum(real_type energy_frac,
-                                                    Mass mass) const;
+    inline CELER_FUNCTION Momentum calc_momentum(real_type energy_frac,
+                                                 Mass mass) const;
 };
 
 //---------------------------------------------------------------------------//
@@ -117,11 +113,12 @@ class MuDecayInteractor
 /*!
  * Construct with shared and state data.
  *
- * \note Geant4 physics manual defines E_{max} = m_\mu / 2, while the source
- * code (since v10.2.0 at least) defines E_{max} = m_\mu / 2 - m_e . The source
- * code implementation leads to a total CM energy of ~104.6 MeV instead of the
- * expected 105.7 MeV (muon mass), which is achieved by using the physics
- * manual definition.
+ * \note Geant4 physics manual defines \f$ E_{max} = m_\mu / 2 \f$,
+ * while the source code (since v10.2.0 at least) defines
+ * \f$ E_{max} = m_\mu / 2 - m_e \f$ .
+ * The source code implementation leads to a total CM energy of ~104.6
+ * MeV instead of the expected 105.7 MeV (muon mass), which is achieved by
+ * using the physics manual definition.
  */
 CELER_FUNCTION
 MuDecayInteractor::MuDecayInteractor(MuDecayData const& shared,
@@ -130,13 +127,11 @@ MuDecayInteractor::MuDecayInteractor(MuDecayData const& shared,
                                      StackAllocator<Secondary>& allocate)
     : shared_(shared)
     , inc_energy_(particle.energy())
-    , inc_direction_(inc_direction)
     , allocate_(allocate)
     , sec_id_((particle.particle_id() == shared_.mu_minus_id)
                   ? shared_.electron_id
                   : shared_.positron_id)
-    , inc_fourvec_{inc_direction_ * value_as<MevMomentum>(particle.momentum()),
-                   value_as<Energy>(particle.total_energy())}
+    , inc_fourvec_{FourVector::from_particle(particle, inc_direction)}
     , max_energy_(real_type{0.5} * shared_.muon_mass.value()
                   - shared_.electron_mass.value())
 {
@@ -175,7 +170,7 @@ CELER_FUNCTION Interaction MuDecayInteractor::operator()(Engine& rng)
     } while (electron_nu_energy_frac + electron_energy_frac < real_type{1});
 
     // Decay isotropically in rest frame and boost secondaries to the lab frame
-    auto charged_lep_4vec = this->to_lab_frame(
+    auto charged_lep_fv = this->to_lab_frame(
         IsotropicDistribution{}(rng),
         this->calc_momentum(electron_energy_frac, shared_.electron_mass),
         shared_.electron_mass);
@@ -186,8 +181,8 @@ CELER_FUNCTION Interaction MuDecayInteractor::operator()(Engine& rng)
     result.secondaries[0].particle_id = sec_id_;
     // Interaction stores kinetic energy; FourVector stores total energy
     result.secondaries[0].energy
-        = Energy{charged_lep_4vec.energy - shared_.electron_mass.value()};
-    result.secondaries[0].direction = make_unit_vector(charged_lep_4vec.mom);
+        = Energy{charged_lep_fv.energy - shared_.electron_mass.value()};
+    result.secondaries[0].direction = make_unit_vector(charged_lep_fv.mom);
 
     return result;
 }
@@ -200,19 +195,17 @@ CELER_FUNCTION Interaction MuDecayInteractor::operator()(Engine& rng)
  * to perform an inverse boost of the primary at the CM frame.
  */
 CELER_FUNCTION FourVector MuDecayInteractor::to_lab_frame(Real3 const& dir,
-                                                          MevMomentum momentum,
+                                                          Momentum momentum,
                                                           Mass mass) const
 {
     CELER_EXPECT(is_soft_unit_vector(dir));
     CELER_EXPECT(momentum > zero_quantity());
     CELER_EXPECT(mass >= zero_quantity());
 
-    Real3 p = dir * momentum.value();
-    FourVector lepton_4vec{
-        p, std::sqrt(ipow<2>(momentum.value()) + ipow<2>(mass.value()))};
-    boost(boost_vector(inc_fourvec_), &lepton_4vec);
+    auto lepton_fv = FourVector::from_mass_momentum(mass, momentum, dir);
+    boost(boost_vector(inc_fourvec_), &lepton_fv);
 
-    return lepton_4vec;
+    return lepton_fv;
 }
 
 //---------------------------------------------------------------------------//
@@ -220,12 +213,12 @@ CELER_FUNCTION FourVector MuDecayInteractor::to_lab_frame(Real3 const& dir,
  * Calculate final particle momentum (or kinetic energy) from its sampled
  * fractional energy.
  */
-CELER_FUNCTION units::MevMomentum
-MuDecayInteractor::calc_momentum(real_type energy_frac, Mass mass) const
+CELER_FUNCTION auto
+MuDecayInteractor::calc_momentum(real_type energy_frac,
+                                 Mass mass) const -> Momentum
 {
-    return MevMomentum{
-        std::sqrt(ipow<2>(energy_frac * max_energy_)
-                  + 2 * energy_frac * max_energy_ * mass.value())};
+    return Momentum{std::sqrt(ipow<2>(energy_frac * max_energy_)
+                              + 2 * energy_frac * max_energy_ * mass.value())};
 }
 
 //---------------------------------------------------------------------------//

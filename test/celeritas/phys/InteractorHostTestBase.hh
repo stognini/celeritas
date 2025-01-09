@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/phys/InteractorHostTestBase.hh
@@ -49,7 +48,7 @@ namespace test
  * \todo Since this now uses Collection objects it's generally safe to use this
  * to test Models as well as device code -- think about renaming it.
  */
-class InteractorHostTestBase : public Test
+class InteractorHostBase
 {
   public:
     //!@{
@@ -64,8 +63,8 @@ class InteractorHostTestBase : public Test
   public:
     //!@{
     //! Initialize and destroy
-    InteractorHostTestBase();
-    ~InteractorHostTestBase();
+    InteractorHostBase();
+    ~InteractorHostBase();
     //!@}
 
     // Helper to make dummy ImportProcess
@@ -187,6 +186,10 @@ class InteractorHostTestBase : public Test
     std::shared_ptr<MaterialTrackView> mt_view_;
     std::shared_ptr<ParticleTrackView> pt_view_;
     std::shared_ptr<SecondaryAllocator> sa_view_;
+};
+
+class InteractorHostTestBase : public InteractorHostBase, public Test
+{
 };
 
 //---------------------------------------------------------------------------//

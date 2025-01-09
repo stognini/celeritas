@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/global/CoreState.cc
@@ -83,7 +82,7 @@ CoreState<M>::~CoreState()
             << "Deallocating " << to_cstring(M) << " core state (stream "
             << this->stream_id().unchecked_get() << ')';
     }
-    catch (...)
+    catch (...)  // NOLINT(bugprone-empty-catch)
     {
         // Ignore anything bad that happens while logging
     }

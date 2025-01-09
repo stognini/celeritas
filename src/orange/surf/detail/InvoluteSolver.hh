@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/surf/detail/InvoluteSolver.hh
@@ -170,7 +169,7 @@ InvoluteSolver::operator()(Real3 const& pos,
 
     // Conversion constant for 2-D distance to 3-D distance
 
-    real_type convert = 1 / std::sqrt(ipow<2>(v) + ipow<2>(u));
+    real_type convert = 1 / hypot(v, u);
     u *= convert;
     v *= convert;
 

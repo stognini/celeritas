@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/sys/ScopedSignalHandler.cc
@@ -21,6 +20,7 @@ namespace
 {
 //---------------------------------------------------------------------------//
 // Bitset of signals that have been called
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 sig_atomic_t volatile g_celer_signal_bits_ = 0;
 
 //---------------------------------------------------------------------------//

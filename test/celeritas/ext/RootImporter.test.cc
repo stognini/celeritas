@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/ext/RootImporter.test.cc
@@ -151,7 +150,7 @@ TEST_F(RootImporterTest, phys_materials)
 TEST_F(RootImporterTest, processes)
 {
     auto const& processes = this->imported_data().processes;
-    EXPECT_EQ(15, processes.size());
+    EXPECT_EQ(17, processes.size());
 
     auto find_process = [&processes](PDGNumber pdg, ImportProcessClass ipc) {
         return std::find_if(processes.begin(),

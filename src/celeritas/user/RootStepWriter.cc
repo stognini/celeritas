@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/user/RootStepWriter.cc
@@ -82,6 +81,12 @@ RootStepWriter::RootStepWriter(SPRootFileManager root_manager,
     , filter_(std::move(filter))
 {
     CELER_EXPECT(root_manager_);
+
+    // Disable volume instance id selections (not implemented by this class)
+    for (auto p : range(StepPoint::size_))
+    {
+        selection_.points[p].volume_instance_ids = false;
+    }
 
     if (!filter_)
     {

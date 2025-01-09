@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/math/ArrayUtils.hh
@@ -73,6 +72,9 @@ rotate(Array<T, 3> const& dir, Array<T, 3> const& rot);
 //---------------------------------------------------------------------------//
 /*!
  * Increment a vector by another vector multiplied by a scalar.
+ *
+ * Note that this uses \c celeritas::fma which supports types other than
+ * floating point.
  */
 template<class T, size_type N>
 CELER_FUNCTION void axpy(T a, Array<T, N> const& x, Array<T, N>* y)
@@ -87,6 +89,9 @@ CELER_FUNCTION void axpy(T a, Array<T, N> const& x, Array<T, N>* y)
 //---------------------------------------------------------------------------//
 /*!
  * Dot product of two vectors.
+ *
+ * Note that this uses \c celeritas::fma which supports types other than
+ * floating point.
  */
 template<class T, size_type N>
 CELER_FUNCTION T dot_product(Array<T, N> const& x, Array<T, N> const& y)
@@ -242,7 +247,7 @@ rotate(Array<T, 3> const& dir, Array<T, 3> const& rot)
     else if (sintheta > 0)
     {
         // Avoid catastrophic roundoff error by normalizing x/y components
-        cosphi = rot[X] / std::sqrt(ipow<2>(rot[X]) + ipow<2>(rot[Y]));
+        cosphi = rot[X] / hypot(rot[X], rot[Y]);
         sinphi = std::sqrt(1 - ipow<2>(cosphi));
     }
     else

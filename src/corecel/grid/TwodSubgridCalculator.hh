@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/grid/TwodSubgridCalculator.hh
@@ -40,6 +39,9 @@ class TwodSubgridCalculator
 
     // Calculate the value at the given y coordinate
     inline CELER_FUNCTION real_type operator()(real_type y) const;
+
+    // Calculate the value at the given y grid point
+    inline CELER_FUNCTION real_type operator[](size_type i) const;
 
     //! Index of the preselected lower x value
     CELER_FORCEINLINE_FUNCTION size_type x_index() const
@@ -106,6 +108,17 @@ CELER_FUNCTION real_type TwodSubgridCalculator::operator()(real_type y) const
            + (x_loc_.fraction)
                  * ((1 - y_loc.fraction) * at_corner(1, 0)
                     + (y_loc.fraction) * at_corner(1, 1));
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Calculate the value at the given y grid point for preselected x.
+ */
+CELER_FUNCTION real_type TwodSubgridCalculator::operator[](size_type i) const
+{
+    CELER_EXPECT(i < grids_.y.size());
+    return (1 - x_loc_.fraction) * this->at(x_loc_.index, i)
+           + x_loc_.fraction * this->at(x_loc_.index + 1, i);
 }
 
 //---------------------------------------------------------------------------//

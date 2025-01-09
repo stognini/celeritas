@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/user/Diagnostic.test.cc
@@ -11,10 +10,10 @@
 #include "corecel/io/StringUtils.hh"
 #include "corecel/sys/ActionRegistry.hh"
 #include "geocel/UnitUtils.hh"
+#include "celeritas/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/em/params/UrbanMscParams.hh"
 #include "celeritas/ext/GeantPhysicsOptions.hh"
 #include "celeritas/global/Stepper.hh"
-#include "celeritas/global/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/phys/PDGNumber.hh"
 #include "celeritas/phys/ParticleParams.hh"
 #include "celeritas/phys/Primary.hh"
@@ -68,7 +67,7 @@ class TestEm3DiagnosticTest : public TestEm3Base, public DiagnosticTestBase
     {
         auto& action_reg = *this->action_reg();
         UniformFieldParams field_params;
-        field_params.field = {0, 0, 1 * units::tesla};
+        field_params.field = {0, 0, real_type(1 * units::tesla)};
         auto msc = UrbanMscParams::from_import(
             *this->particle(), *this->material(), this->imported_data());
 

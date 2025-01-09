@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/OrangeParams.hh
@@ -55,7 +54,7 @@ class OrangeParams final : public GeoParamsSurfaceInterface,
     explicit OrangeParams(OrangeInput&& input);
 
     // Default destructor to anchor vtable
-    ~OrangeParams();
+    ~OrangeParams() final;
 
     // Moving would leave the class in an unspecified state
     CELER_DELETE_COPY_MOVE(OrangeParams);

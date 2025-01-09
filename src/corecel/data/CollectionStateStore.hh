@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/data/CollectionStateStore.hh
@@ -51,6 +50,7 @@ class CollectionStateStore
 
   public:
     CollectionStateStore() = default;
+    ~CollectionStateStore() = default;
 
     // Construct from parameters and stream ID
     template<template<Ownership, MemSpace> class P>

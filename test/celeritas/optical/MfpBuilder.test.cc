@@ -1,13 +1,13 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/optical/MfpBuilder.test.cc
 //---------------------------------------------------------------------------//
 #include "celeritas/optical/MfpBuilder.hh"
 
-#include "MockImportedData.hh"
+#include "OpticalMockTestBase.hh"
+#include "ValidationUtils.hh"
 #include "celeritas_test.hh"
 
 namespace celeritas
@@ -21,10 +21,8 @@ using namespace ::celeritas::test;
 // TEST HARNESS
 //---------------------------------------------------------------------------//
 
-class MfpBuilderTest : public MockImportedData
+class MfpBuilderTest : public OpticalMockTestBase
 {
-  protected:
-    void SetUp() override {}
 };
 
 //---------------------------------------------------------------------------//
@@ -33,13 +31,15 @@ class MfpBuilderTest : public MockImportedData
 // Check MFP tables are built with correct structure from imported data
 TEST_F(MfpBuilderTest, construct_tables)
 {
-    std::vector<ItemRange<Grid>> tables;
-    auto const& models = this->import_models();
+    OwningGridAccessor storage;
+
+    std::vector<ItemRange<OwningGridAccessor::Grid>> tables;
+    auto const& models = this->imported_data().optical_models;
 
     // Build MFP tables from imported data
     for (auto const& model : models)
     {
-        auto build = this->create_mfp_builder();
+        auto build = storage.create_mfp_builder();
 
         for (auto const& mfp : model.mfp_table)
         {
@@ -54,7 +54,7 @@ TEST_F(MfpBuilderTest, construct_tables)
     // Check each MFP table has been built correctly
     for (auto table_id : range(tables.size()))
     {
-        this->check_built_table_exact(models[table_id].mfp_table, tables[table_id]);
+        EXPECT_TABLE_EQ(models[table_id].mfp_table, storage(tables[table_id]));
     }
 }
 

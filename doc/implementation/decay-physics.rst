@@ -1,5 +1,4 @@
-.. Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-.. See the doc/COPYRIGHT file for details.
+.. Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 .. SPDX-License-Identifier: CC-BY-4.0
 
 .. _api_decay_physics:
@@ -23,13 +22,13 @@ their decay channels branching ratios, and associated Interactor.
 
    .. table:: Particle decays available in Celeritas.
 
-      +----------------+---------------------------------+------------------------------------------+-------------------------------------------+
-      | **Particle**   | **Decay channel(s)**            | **Fraction (:math:`\Gamma_i / \Gamma`)** | **Celeritas Implementation**              |
-      +----------------+---------------------------------+------------------------------------------+-------------------------------------------+
-      | :math:`\mu^-`  | :math:`e^- \bar{\nu}_e \nu_\mu` | 1                                        | :cpp:class:`celeritas::MuDecayInteractor` |
-      +----------------+---------------------------------+------------------------------------------+                                           |
-      | :math:`\mu^+`  | :math:`e^+ \nu_e \bar{\nu}_\mu` | 1                                        |                                           |
-      +----------------+---------------------------------+------------------------------------------+-------------------------------------------+
+      +----------------+---------------------------------+----------------------------------------+-------------------------------------------+
+      | Particle       | Decay channel(s)                | Fraction (:math:`\Gamma_i/\Gamma`)     | Celeritas Implementation                  |
+      +================+=================================+========================================+===========================================+
+      | :math:`\mu^-`  | :math:`e^- \bar{\nu}_e \nu_\mu` | 1                                      | :cpp:class:`celeritas::MuDecayInteractor` |
+      +----------------+---------------------------------+----------------------------------------+                                           |
+      | :math:`\mu^+`  | :math:`e^+ \nu_e \bar{\nu}_\mu` | 1                                      |                                           |
+      +----------------+---------------------------------+----------------------------------------+-------------------------------------------+
 
 .. only:: latex
 
@@ -38,14 +37,14 @@ their decay channels branching ratios, and associated Interactor.
       \begin{table}[h]
           \caption{Particle decays available in Celeritas.}
           \begin{threeparttable}
-          \begin{tabular}{| l | l | l | l | }
-            \hline
-            \textbf{Particle} & \textbf{Decay channel(s)} & \textbf{Fraction ($\Gamma_i/\Gamma$)} & \textbf{Celeritas Implementation} \\
-            \hline
+          \begin{tabular}{llll}
+            \toprule
+            Particle & Decay channel(s) & Fraction ($\Gamma_i/\Gamma$) & Celeritas Implementation \\
+            \midrule
             $\mu^-$           & $e^- \bar{\nu}_e \nu_\mu$ & 1                                     & \multirow{2}{*}{\texttt{\scriptsize celeritas::MuDecayInteractor}} \\
             \cline{1-3}
             $\mu^+$           & $e^+ \nu_e \bar{\nu}_\mu$ & 1                                     & \\
-            \hline
+            \bottomrule
           \end{tabular}
           \end{threeparttable}
       \end{table}

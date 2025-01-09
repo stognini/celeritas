@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/random/distribution/NormalDistribution.hh
@@ -11,9 +10,9 @@
 #include <type_traits>
 
 #include "corecel/Assert.hh"
+#include "corecel/Constants.hh"
 #include "corecel/Macros.hh"
 #include "corecel/Types.hh"
-#include "corecel/math/Algorithms.hh"
 #include "celeritas/Constants.hh"
 
 #include "GenerateCanonical.hh"
@@ -62,14 +61,16 @@ class NormalDistribution
     inline CELER_FUNCTION NormalDistribution(NormalDistribution const& other);
 
     // Reset spare value of other distribution
-    inline CELER_FUNCTION NormalDistribution(NormalDistribution&& other);
+    inline CELER_FUNCTION
+    NormalDistribution(NormalDistribution&& other) noexcept;
 
     // Keep spare value but change distribution
     inline CELER_FUNCTION NormalDistribution&
     operator=(NormalDistribution const&);
 
     // Possibly use spare value, change distribution
-    inline CELER_FUNCTION NormalDistribution& operator=(NormalDistribution&&);
+    inline CELER_FUNCTION NormalDistribution&
+    operator=(NormalDistribution&&) noexcept;
 
     // Default destructor (rule of 5)
     ~NormalDistribution() = default;
@@ -119,8 +120,8 @@ NormalDistribution<RealType>::NormalDistribution(NormalDistribution const& other
  * Reset spare value of other distribution.
  */
 template<class RealType>
-CELER_FUNCTION
-NormalDistribution<RealType>::NormalDistribution(NormalDistribution&& other)
+CELER_FUNCTION NormalDistribution<RealType>::NormalDistribution(
+    NormalDistribution&& other) noexcept
     : mean_{other.mean_}
     , stddev_{other.stddev_}
     , spare_{other.spare_}
@@ -148,7 +149,7 @@ NormalDistribution<RealType>::operator=(NormalDistribution const& other)
  */
 template<class RealType>
 CELER_FUNCTION NormalDistribution<RealType>&
-NormalDistribution<RealType>::operator=(NormalDistribution&& other)
+NormalDistribution<RealType>::operator=(NormalDistribution&& other) noexcept
 {
     mean_ = other.mean_;
     stddev_ = other.stddev_;
@@ -176,7 +177,8 @@ NormalDistribution<RealType>::operator()(Generator& rng) -> result_type
         return std::fma(spare_, stddev_, mean_);
     }
 
-    constexpr auto twopi = static_cast<RealType>(2 * m_pi);
+    // TODO: use sincospi here
+    constexpr auto twopi = static_cast<RealType>(2 * constants::pi);
     real_type theta = twopi * generate_canonical<RealType>(rng);
     real_type r = std::sqrt(-2 * std::log(generate_canonical<RealType>(rng)));
     spare_ = r * std::cos(theta);

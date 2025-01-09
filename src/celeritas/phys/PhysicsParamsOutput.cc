@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/phys/PhysicsParamsOutput.cc
@@ -85,6 +84,7 @@ void PhysicsParamsOutput::output(JsonPimpl* j) const
         PPO_SAVE_OPTION(lowest_electron_energy);
         PPO_SAVE_OPTION(linear_loss_limit);
         PPO_SAVE_OPTION(fixed_step_limiter);
+        PPO_SAVE_OPTION(spline_eloss_order);
 #undef PPO_SAVE_OPTION
         obj["options"] = std::move(options);
     }

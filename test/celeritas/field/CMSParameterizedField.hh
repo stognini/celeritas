@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/field/CMSParameterizedField.hh
@@ -70,7 +69,7 @@ auto CMSParameterizedField::operator()(Real3 const& pos) const -> Real3
 
     Real3 value{0., 0., 0.};
 
-    real_type r = std::sqrt(ipow<2>(pos[0]) + ipow<2>(pos[1]));
+    real_type r = hypot(pos[0], pos[1]);
     Real3 bw = this->evaluate_field(r, pos[2]);
     real_type rinv = (r > 0) ? 1 / r : 0;
 

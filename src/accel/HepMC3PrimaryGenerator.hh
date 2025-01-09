@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/HepMC3PrimaryGenerator.hh
@@ -51,6 +50,7 @@ class HepMC3PrimaryGenerator final : public G4VPrimaryGenerator
     explicit HepMC3PrimaryGenerator(std::string const& filename);
 
     CELER_DELETE_COPY_MOVE(HepMC3PrimaryGenerator);
+    ~HepMC3PrimaryGenerator() final = default;
 
     //! Add primaries to Geant4 event
     void GeneratePrimaryVertex(G4Event* g4_event) final;

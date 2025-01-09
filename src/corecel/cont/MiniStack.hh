@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/cont/MiniStack.hh
@@ -29,7 +28,7 @@ class MiniStack
   public:
     //! Construct with underlying storage.
     CELER_FUNCTION explicit MiniStack(Span<T> storage)
-        : data_(storage.data()), size_(0), capacity_(storage.size())
+        : data_(storage.data()), capacity_(storage.size())
     {
     }
 
@@ -58,7 +57,7 @@ class MiniStack
 
   private:
     T* data_;
-    size_type size_;
+    size_type size_{0};
     size_type capacity_;
 };
 

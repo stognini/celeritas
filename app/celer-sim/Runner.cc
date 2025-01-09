@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-sim/Runner.cc
@@ -30,6 +29,8 @@
 #include "corecel/sys/ScopedProfiling.hh"
 #include "celeritas/Types.hh"
 #include "celeritas/Units.hh"
+#include "celeritas/alongstep/AlongStepGeneralLinearAction.hh"
+#include "celeritas/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/em/params/UrbanMscParams.hh"
 #include "celeritas/em/params/WentzelOKVIParams.hh"
 #include "celeritas/ext/GeantImporter.hh"
@@ -42,12 +43,10 @@
 #include "celeritas/geo/GeoMaterialParams.hh"
 #include "celeritas/geo/GeoParams.hh"  // IWYU pragma: keep
 #include "celeritas/global/CoreParams.hh"
-#include "celeritas/global/alongstep/AlongStepGeneralLinearAction.hh"
-#include "celeritas/global/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/io/EventReader.hh"
 #include "celeritas/io/RootEventReader.hh"
 #include "celeritas/mat/MaterialParams.hh"
-#include "celeritas/optical/CerenkovParams.hh"
+#include "celeritas/optical/CherenkovParams.hh"
 #include "celeritas/optical/MaterialParams.hh"
 #include "celeritas/optical/OpticalCollector.hh"
 #include "celeritas/optical/ScintillationParams.hh"
@@ -351,6 +350,7 @@ void Runner::build_core_params(RunnerInput const& inp,
         input.options.linear_loss_limit = imported.em_params.linear_loss_limit;
         input.options.lowest_electron_energy = PhysicsParamsOptions::Energy(
             imported.em_params.lowest_electron_energy);
+        input.options.spline_eloss_order = inp.spline_eloss_order;
 
         input.processes = [&params, &inp, &imported] {
             std::vector<std::shared_ptr<Process const>> result;
@@ -464,6 +464,7 @@ void Runner::build_transporter_input(RunnerInput const& inp)
     transporter_input_->store_step_times = inp.write_step_times;
     transporter_input_->action_times = inp.action_times;
     transporter_input_->params = core_params_;
+    transporter_input_->log_progress = inp.log_progress;
 }
 
 //---------------------------------------------------------------------------//
@@ -586,7 +587,7 @@ void Runner::build_optical_collector(RunnerInput const& inp,
 {
     CELER_EXPECT(core_params_);
 
-    using optical::CerenkovParams;
+    using optical::CherenkovParams;
     using optical::MaterialParams;
     using optical::ScintillationParams;
 
@@ -603,7 +604,7 @@ void Runner::build_optical_collector(RunnerInput const& inp,
     OpticalCollector::Input oc_inp;
     oc_inp.material = MaterialParams::from_import(
         imported, *core_params_->geomaterial(), *core_params_->material());
-    oc_inp.cerenkov = std::make_shared<CerenkovParams>(oc_inp.material);
+    oc_inp.cherenkov = std::make_shared<CherenkovParams>(*oc_inp.material);
     oc_inp.scintillation
         = ScintillationParams::from_import(imported, core_params_->particle());
     oc_inp.num_track_slots = ceil_div(inp.optical.num_track_slots, num_streams);

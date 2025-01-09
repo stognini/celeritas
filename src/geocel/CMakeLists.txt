@@ -1,6 +1,5 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
@@ -99,7 +98,7 @@ endif()
 # Create library
 #-----------------------------------------------------------------------------#
 
-celeritas_add_library(geocel ${SOURCES})
+celeritas_add_src_library(geocel ${SOURCES})
 
 celeritas_target_link_libraries(geocel
   PRIVATE ${PRIVATE_DEPS}

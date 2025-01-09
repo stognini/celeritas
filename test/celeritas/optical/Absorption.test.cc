@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/optical/Absorption.test.cc
@@ -8,7 +7,8 @@
 #include "celeritas/optical/interactor/AbsorptionInteractor.hh"
 #include "celeritas/optical/model/AbsorptionModel.hh"
 
-#include "MockImportedData.hh"
+#include "OpticalMockTestBase.hh"
+#include "ValidationUtils.hh"
 #include "celeritas_test.hh"
 
 namespace celeritas
@@ -28,7 +28,7 @@ class AbsorptionInteractorTest : public ::celeritas::test::Test
     void SetUp() override {}
 };
 
-class AbsorptionModelTest : public MockImportedData
+class AbsorptionModelTest : public OpticalMockTestBase
 {
   protected:
     void SetUp() override {}
@@ -36,15 +36,10 @@ class AbsorptionModelTest : public MockImportedData
     //! Construct absorption model from mock data
     std::shared_ptr<AbsorptionModel const> create_model()
     {
-        auto models = MockImportedData::create_imported_models();
-
-        import_model_id_
-            = models->builtin_model_id(ImportModelClass::absorption);
-
+        auto models = std::make_shared<ImportedModels const>(
+            this->imported_data().optical_models);
         return std::make_shared<AbsorptionModel const>(ActionId{0}, models);
     }
-
-    ImportedModels::ImportedModelId import_model_id_;
 };
 
 //---------------------------------------------------------------------------//
@@ -80,17 +75,19 @@ TEST_F(AbsorptionModelTest, description)
 // Check absorption model MFP tables match imported ones
 TEST_F(AbsorptionModelTest, interaction_mfp)
 {
-    auto model = create_model();
-    auto builder = this->create_mfp_builder();
+    OwningGridAccessor storage;
 
-    for (auto mat : range(OpticalMaterialId(import_materials().size())))
+    auto model = create_model();
+    auto builder = storage.create_mfp_builder();
+
+    for (auto mat : range(OpticalMaterialId(this->num_optical_materials())))
     {
         model->build_mfps(mat, builder);
     }
 
-    this->check_built_table_exact(
-        this->import_models()[import_model_id_.get()].mfp_table,
-        builder.grid_ids());
+    EXPECT_TABLE_EQ(
+        this->import_model_by_class(ImportModelClass::absorption).mfp_table,
+        storage(builder.grid_ids()));
 }
 
 //---------------------------------------------------------------------------//

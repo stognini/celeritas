@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/AlongStepFactory.cc
@@ -13,13 +12,13 @@
 #include "corecel/math/ArrayUtils.hh"
 #include "corecel/math/QuantityIO.hh"
 #include "geocel/g4/Convert.hh"
+#include "celeritas/alongstep/AlongStepGeneralLinearAction.hh"
+#include "celeritas/alongstep/AlongStepRZMapFieldMscAction.hh"
+#include "celeritas/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/em/params/UrbanMscParams.hh"
 #include "celeritas/ext/GeantUnits.hh"
 #include "celeritas/field/RZMapFieldInput.hh"
 #include "celeritas/field/UniformFieldData.hh"
-#include "celeritas/global/alongstep/AlongStepGeneralLinearAction.hh"
-#include "celeritas/global/alongstep/AlongStepRZMapFieldMscAction.hh"
-#include "celeritas/global/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/io/ImportData.hh"
 
 namespace celeritas

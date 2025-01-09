@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/user/SlotDiagnostic.cc
@@ -10,6 +9,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
+#include "corecel/Macros.hh"
 #include "corecel/data/AuxParamsRegistry.hh"
 #include "corecel/data/AuxStateVec.hh"
 #include "corecel/io/JsonPimpl.hh"
@@ -32,7 +32,13 @@ struct SlotDiagnostic::State final : AuxStateInterface
     std::ofstream outfile;
     std::vector<int> buffer;
 
-    ~State() { CELER_LOG_LOCAL(debug) << "Closing slot diagnostic file"; }
+    State() = default;
+    // NOLINTNEXTLINE(performance-noexcept-move-constructor)
+    CELER_DEFAULT_MOVE_DELETE_COPY(State);
+    ~State() final
+    {
+        CELER_LOG_LOCAL(debug) << "Closing slot diagnostic file";
+    }
 };
 
 //---------------------------------------------------------------------------//

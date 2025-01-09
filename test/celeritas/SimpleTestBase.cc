@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/SimpleTestBase.cc
@@ -9,10 +8,10 @@
 
 #include "corecel/sys/ActionRegistry.hh"
 #include "celeritas/Quantities.hh"
+#include "celeritas/alongstep/AlongStepNeutralAction.hh"
 #include "celeritas/em/params/WentzelOKVIParams.hh"
 #include "celeritas/em/process/ComptonProcess.hh"
 #include "celeritas/geo/GeoMaterialParams.hh"
-#include "celeritas/global/alongstep/AlongStepNeutralAction.hh"
 #include "celeritas/io/ImportProcess.hh"
 #include "celeritas/io/detail/ImportDataConverter.hh"
 #include "celeritas/mat/MaterialParams.hh"
@@ -84,10 +83,10 @@ auto SimpleTestBase::build_cutoff() -> SPConstCutoff
     input.cutoffs = {
         {pdg::gamma(),
          {{MevEnergy{0.01}, 0.1 * millimeter},
-          {MevEnergy{100}, 100 * centimeter}}},
+          {MevEnergy{100}, 100.0 * centimeter}}},
         {pdg::electron(),
-         {{MevEnergy{1000}, 1000 * centimeter},
-          {MevEnergy{1000}, 1000 * centimeter}}},
+         {{MevEnergy{1000}, 1000.0 * centimeter},
+          {MevEnergy{1000}, 1000.0 * centimeter}}},
     };
 
     return std::make_shared<CutoffParams>(std::move(input));

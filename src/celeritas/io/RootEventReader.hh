@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/io/RootEventReader.hh
@@ -47,6 +46,7 @@ class RootEventReader : public EventReaderInterface
 
     //! Prevent copying and moving
     CELER_DELETE_COPY_MOVE(RootEventReader);
+    ~RootEventReader() override = default;
 
     // Read a user-defined event from the ROOT file
     result_type operator()(EventId event_id);
@@ -86,7 +86,7 @@ inline RootEventReader::RootEventReader(std::string const&, SPConstParticles)
     CELER_DISCARD(num_events_);
     CELER_DISCARD(entry_count_);
     CELER_DISCARD(expected_event_id_);
-    CELER_DISCARD(event_to_entry_);
+    CELER_DISCARD(event_to_entry_);  // NOLINT(bugprone-sizeof-container)
     CELER_NOT_CONFIGURED("ROOT");
 }
 

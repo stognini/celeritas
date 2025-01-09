@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/grid/GridIdFinder.hh
@@ -86,14 +85,10 @@ GridIdFinder<K, V>::operator()(argument_type quant) const -> result_type
 {
     auto iter
         = celeritas::lower_bound(grid_.begin(), grid_.end(), quant.value());
-    if (iter == grid_.end())
+    if (iter == grid_.end()
+        || (iter == grid_.begin() && quant.value() != *iter))
     {
-        // Higher than end point
-        return {};
-    }
-    else if (iter == grid_.begin() && quant.value() != *iter)
-    {
-        // Below first point
+        // Higher than end point or below first point
         return {};
     }
     else if (iter + 1 == grid_.end() || quant.value() != *iter)

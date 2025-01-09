@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/sys/ActionInterface.hh
@@ -230,7 +229,7 @@ class ConcreteAction : virtual public ActionInterface
                    std::string description) noexcept(!CELERITAS_DEBUG);
 
     // Default destructor
-    ~ConcreteAction() noexcept;
+    ~ConcreteAction() noexcept override;
     CELER_DELETE_COPY_MOVE(ConcreteAction);
 
     //! ID of this action for verification
@@ -308,7 +307,7 @@ class StaticConcreteAction : virtual public ActionInterface
                          std::string_view description) noexcept(!CELERITAS_DEBUG);
 
     // Default destructor
-    ~StaticConcreteAction() = default;
+    ~StaticConcreteAction() override = default;
     CELER_DELETE_COPY_MOVE(StaticConcreteAction);
 
     //! ID of this action for verification

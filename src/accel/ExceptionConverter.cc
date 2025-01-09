@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/ExceptionConverter.cc
@@ -166,7 +165,7 @@ void ExceptionConverter::operator()(std::exception_ptr eptr) const
                     msg << "\n[error while exporting state: " << e.what()
                         << "]";
                 }
-                catch (...)
+                catch (...)  // NOLINT(bugprone-empty-catch)
                 {
                     /* Do nothing */
                 }

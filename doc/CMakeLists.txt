@@ -1,6 +1,5 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
@@ -14,10 +13,7 @@ celeritas_version_to_hex(_doxy_version_hex DOXYGEN_VERSION)
 set(DOXYGEN_PROJECT_NUMBER "${Celeritas_VERSION_STRING}")
 
 # File setup
-set(DOXYGEN_EXCLUDE_PATTERNS
-  "*.nohepmc.cc"
-  "*/generated/*"
-)
+set(DOXYGEN_EXCLUDE_PATTERNS)
 if(NOT CELERITAS_DEBUG)
   list(APPEND DOXYGEN_EXCLUDE_PATTERNS "*/detail/*")
 endif()
@@ -201,6 +197,7 @@ file(GLOB _DOXYGEN_SOURCE
   "${PROJECT_SOURCE_DIR}/src/*/*.cc"
   "${PROJECT_SOURCE_DIR}/src/*/*/*.hh"
   "${PROJECT_SOURCE_DIR}/src/*/*/*.cc"
+  "${PROJECT_SOURCE_DIR}/src/celeritas/decay/interactor/*.hh"
   "${PROJECT_SOURCE_DIR}/src/celeritas/em/*.hh"
   "${PROJECT_SOURCE_DIR}/src/celeritas/em/*.cc"
   "${PROJECT_SOURCE_DIR}/src/celeritas/em/interactor/*.hh"
@@ -214,6 +211,8 @@ file(GLOB _DOXYGEN_SOURCE
   "${PROJECT_SOURCE_DIR}/src/celeritas/em/process/*.cc"
   "${PROJECT_SOURCE_DIR}/src/celeritas/em/xs/*.hh"
   "${PROJECT_SOURCE_DIR}/src/celeritas/random/distribution/*.hh"
+  "${PROJECT_SOURCE_DIR}/src/celeritas/optical/interactor/*.hh"
+  "${PROJECT_SOURCE_DIR}/src/celeritas/optical/model/*.hh"
   "${PROJECT_SOURCE_DIR}/test/*.hh"
   "${PROJECT_SOURCE_DIR}/test/*.cc"
 )

@@ -1,35 +1,9 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
 include(CeleritasAddTest)
-
-#-----------------------------------------------------------------------------#
-
-function(celeritas_add_test_library target)
-  cuda_rdc_get_sources_and_options(_sources _cmake_options _options ${ARGN})
-  cuda_rdc_sources_contains_cuda(_cuda_sources ${_sources})
-  if(CELERITAS_USE_HIP AND _cuda_sources)
-    # When building Celeritas libraries, we put HIP/CUDA files in shared .cu
-    # suffixed files. Override the language if using HIP.
-    set_source_files_properties(
-      ${_cuda_sources}
-      PROPERTIES LANGUAGE HIP
-    )
-  endif()
-
-  celeritas_cuda_rdc_wrapper_add_library(${target} ${ARGN})
-
-  # We could hide this behind `if (CELERITAS_USE_ROOT)`
-  get_target_property(_tgt ${target} CUDA_RDC_OBJECT_LIBRARY)
-  if(_tgt)
-    set_target_properties(${_tgt} PROPERTIES
-      POSITION_INDEPENDENT_CODE ON
-    )
-  endif()
-endfunction()
 
 #-----------------------------------------------------------------------------#
 # TEST HARNESS

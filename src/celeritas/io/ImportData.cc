@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/io/ImportData.cc
@@ -28,8 +27,8 @@ void convert_to_native(ImportData* data)
     // Convert data
     if (data->units.empty())
     {
-        CELER_LOG(warning) << "Unit system missing from import data: assuming "
-                              "CGS";
+        CELER_LOG(warning)
+            << R"(Unit system missing from import data: assuming CGS)";
         data->units = to_cstring(UnitSystem::cgs);
     }
 

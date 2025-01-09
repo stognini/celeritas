@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/io/detail/ReprImpl.cc
@@ -68,6 +67,7 @@ void repr_char(std::ostream& os, char value)
 std::string char_to_hex_string(unsigned char value)
 {
     char buffer[3];
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
     int size = std::snprintf(buffer, sizeof(buffer), "%02hhx", value);
     CELER_ENSURE(size == 2);
     return {buffer, buffer + 2};

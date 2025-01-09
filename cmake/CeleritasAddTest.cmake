@@ -1,6 +1,5 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #[=======================================================================[.rst:
 
@@ -356,7 +355,7 @@ function(celeritas_add_test SOURCE_FILE)
     endif()
   endif()
   if(PARSE_SOURCES AND CELERITAS_USE_HIP)
-    celeritas_sources_contains_cuda(_cuda_sources ${PARSE_SOURCES})
+    celeritas_get_cuda_source_args(_cuda_sources ${PARSE_SOURCES})
     if(_cuda_sources)
       # When building Celeritas libraries, we put HIP/CUDA files in shared .cu
       # suffixed files. Override the language if using HIP.

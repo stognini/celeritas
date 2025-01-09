@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/OnlyCoreTestBase.hh
@@ -23,7 +22,7 @@ namespace test
 class OnlyCoreTestBase : virtual public GlobalTestBase
 {
   public:
-    SPConstCerenkov build_cerenkov() override { CELER_ASSERT_UNREACHABLE(); }
+    SPConstCherenkov build_cherenkov() override { CELER_ASSERT_UNREACHABLE(); }
     SPConstOpticalMaterial build_optical_material() override
     {
         CELER_ASSERT_UNREACHABLE();

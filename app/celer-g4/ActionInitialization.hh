@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-g4/ActionInitialization.hh
@@ -12,12 +11,13 @@
 
 #include "accel/SharedParams.hh"
 
-#include "GeantDiagnostics.hh"
-
 namespace celeritas
 {
+class HepMC3PrimaryGenerator;
+
 namespace app
 {
+class GeantDiagnostics;
 //---------------------------------------------------------------------------//
 /*!
  * Set up demo-specific action initializations.
@@ -28,7 +28,6 @@ class ActionInitialization final : public G4VUserActionInitialization
     //!@{
     //! \name Type aliases
     using SPParams = std::shared_ptr<SharedParams>;
-    using SPDiagnostics = std::shared_ptr<GeantDiagnostics>;
     //!@}
 
   public:
@@ -41,9 +40,10 @@ class ActionInitialization final : public G4VUserActionInitialization
 
   private:
     SPParams params_;
-    SPDiagnostics diagnostics_;
+    std::shared_ptr<GeantDiagnostics> diagnostics_;
+    std::shared_ptr<HepMC3PrimaryGenerator> hepmc_gen_;
     int num_events_{0};
-    mutable bool init_shared_;
+    mutable bool init_shared_{true};
 };
 
 //---------------------------------------------------------------------------//

@@ -1,9 +1,8 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file celeritas/global/AlongStep.test.cc
+//! \file celeritas/alongstep.test.cc
 //---------------------------------------------------------------------------//
 #include <fstream>
 
@@ -16,12 +15,12 @@
 #include "celeritas/LeadBoxTestBase.hh"
 #include "celeritas/SimpleCmsTestBase.hh"
 #include "celeritas/TestEm3Base.hh"
+#include "celeritas/alongstep/AlongStepRZMapFieldMscAction.hh"
+#include "celeritas/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/em/params/UrbanMscParams.hh"
 #include "celeritas/ext/GeantPhysicsOptions.hh"
 #include "celeritas/field/RZMapFieldInput.hh"
 #include "celeritas/field/UniformFieldData.hh"
-#include "celeritas/global/alongstep/AlongStepRZMapFieldMscAction.hh"
-#include "celeritas/global/alongstep/AlongStepUniformMscAction.hh"
 #include "celeritas/phys/PDGNumber.hh"
 #include "celeritas/phys/ParticleParams.hh"
 
@@ -53,7 +52,7 @@ class MockAlongStepFieldTest : public MockAlongStepTest
     {
         // Note that default track direction is {0,0,1}
         UniformFieldParams field_params;
-        field_params.field = {4 * units::tesla, 0, 0};
+        field_params.field = {static_cast<real_type>(4 * units::tesla), 0, 0};
 
         auto& action_reg = *this->action_reg();
         auto result = std::make_shared<AlongStepUniformMscAction>(
@@ -99,7 +98,7 @@ class SimpleCmsAlongStepTest : public SimpleCmsTestBase,
     {
         auto& action_reg = *this->action_reg();
         UniformFieldParams field_params;
-        field_params.field = {0, 0, 1 * units::tesla};
+        field_params.field = {0, 0, static_cast<real_type>(1 * units::tesla)};
 
         auto msc = UrbanMscParams::from_import(
             *this->particle(), *this->material(), this->imported_data());

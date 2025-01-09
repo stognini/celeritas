@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/g4org/ProtoConstructor.cc
@@ -38,6 +37,7 @@ SPConstObject make_explicit_background(LogicalVolume const& lv,
     using namespace orangeinp;
 
     std::vector<SPConstObject> children;
+    children.reserve(lv.children.size());
     for (auto const& child_pv : lv.children)
     {
         children.push_back(

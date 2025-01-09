@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/ext/RootInterfaceLinkDef.h
@@ -44,7 +43,6 @@
 #pragma link C++ class celeritas::ImportProcess+;
 #pragma link C++ class celeritas::ImportProductionCut+;
 #pragma link C++ class celeritas::ImportRegion+;
-#pragma link C++ class celeritas::ImportSBTable+;
 #pragma link C++ class celeritas::ImportScintComponent+;
 #pragma link C++ class celeritas::ImportScintData+;
 #pragma link C++ class celeritas::ImportTransParameters+;

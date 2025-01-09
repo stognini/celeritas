@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/SharedParams.cc
@@ -599,7 +598,7 @@ void SharedParams::initialize_core(SetupOptions const& options)
         asfi.cutoff = params.cutoff;
         asfi.physics = params.physics;
         asfi.imported = imported;
-        auto const along_step{options.make_along_step(asfi)};
+        auto along_step{options.make_along_step(asfi)};
         CELER_VALIDATE(along_step,
                        << "along-step factory returned a null pointer");
         return along_step;
@@ -613,7 +612,7 @@ void SharedParams::initialize_core(SetupOptions const& options)
     if (options.sd)
     {
         hit_manager_
-            = std::make_shared<detail::HitManager>(*params_->geometry(),
+            = std::make_shared<detail::HitManager>(params_->geometry(),
                                                    *params_->particle(),
                                                    options.sd,
                                                    params_->max_streams());

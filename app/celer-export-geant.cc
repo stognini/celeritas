@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-export-geant.cc
@@ -28,6 +27,7 @@
 #include "celeritas/ext/RootExporter.hh"
 #include "celeritas/ext/RootJsonDumper.hh"
 #include "celeritas/ext/ScopedRootErrorHandler.hh"
+#include "celeritas/io/ImportDataTrimmer.hh"
 
 namespace celeritas
 {
@@ -82,8 +82,15 @@ GeantPhysicsOptions load_options(std::string const& option_filename)
 void run(std::string const& gdml_filename,
          std::string const& opts_filename,
          std::string const& out_filename,
-         GeantImporter::DataSelection selection)
+         bool gen_test)
 {
+    // TODO: expose data selection to JSON users?
+    GeantImporter::DataSelection selection;
+    selection.particles = GeantImporter::DataSelection::em
+                          | GeantImporter::DataSelection::optical;
+    selection.processes = selection.particles;
+    selection.reader_data = !gen_test;
+
     // Construct options, set up Geant4, read data
     auto imported = [&] {
         GeantImporter import(
@@ -91,7 +98,22 @@ void run(std::string const& gdml_filename,
         return import(selection);
     }();
 
+    // TODO: expose trim data rather than bool 'gen_test'
+    if (gen_test)
+    {
+        ImportDataTrimmer::Input options;
+        options.mupp = true;
+        options.max_size = 16;
+        ImportDataTrimmer trim(options);
+        trim(imported);
+    }
+
     ScopedRootErrorHandler scoped_root_error;
+
+    if (gen_test)
+    {
+        CELER_LOG(info) << "Trimming data for testing";
+    }
 
     if (ends_with(out_filename, ".root"))
     {
@@ -164,17 +186,12 @@ int main(int argc, char* argv[])
         return 2;
     }
 
-    GeantImporter::DataSelection selection;
-    selection.particles = GeantImporter::DataSelection::em
-                          | GeantImporter::DataSelection::optical;
-    selection.processes = selection.particles;
-    selection.reader_data = true;
-
+    bool gen_test{false};
     if (args.size() == 4)
     {
         if (args.back() == "--gen-test")
         {
-            selection.reader_data = false;
+            gen_test = true;
         }
         else
         {
@@ -186,7 +203,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        run(args[0], args[1], args[2], selection);
+        run(args[0], args[1], args[2], gen_test);
     }
     catch (RuntimeError const& e)
     {

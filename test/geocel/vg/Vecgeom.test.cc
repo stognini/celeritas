@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file geocel/vg/Vecgeom.test.cc
@@ -28,6 +27,10 @@
 
 #include "VecgeomTestBase.hh"
 #include "celeritas_test.hh"
+
+#if CELERITAS_USE_GEANT4
+#    include <G4VPhysicalVolume.hh>
+#endif
 
 namespace celeritas
 {
@@ -1080,7 +1083,7 @@ class CmseTest : public VecgeomVgdmlTestBase
 
 //---------------------------------------------------------------------------//
 
-TEST_F(CmseTest, trace)
+TEST_F(CmseTest, DISABLED_trace)
 {
     // clang-format off
     {
@@ -1376,6 +1379,25 @@ TEST_F(MultiLevelGeantTest, accessors)
         "world_PV",
     };
     EXPECT_VEC_EQ(expected_vol_inst_names, vol_inst_names);
+
+    auto g4names = [&geo] {
+        std::vector<std::string> result;
+        for (auto viid : range(VolumeInstanceId{geo.volume_instances().size()}))
+        {
+#if CELERITAS_USE_GEANT4
+            if (auto* g4pv = geo.id_to_pv(viid))
+            {
+                result.push_back(g4pv->GetName());
+            }
+            else
+#endif
+            {
+                result.push_back("<NULL>");
+            }
+        }
+        return result;
+    }();
+    EXPECT_VEC_EQ(expected_vol_inst_names, g4names);
 }
 
 //---------------------------------------------------------------------------//

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/SetupOptionsMessenger.hh
@@ -64,7 +63,7 @@ class SetupOptionsMessenger : public G4UImessenger
     explicit SetupOptionsMessenger(SetupOptions* options);
 
     // Default destructor
-    ~SetupOptionsMessenger();
+    ~SetupOptionsMessenger() override;
 
   protected:
     void SetNewValue(G4UIcommand* command, G4String newValue) override;

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/io/Label.hh
@@ -12,6 +11,8 @@
 #include <iosfwd>
 #include <string>
 #include <utility>
+
+#include "corecel/Config.hh"
 
 #include "corecel/math/HashUtils.hh"
 
@@ -120,7 +121,8 @@ struct hash<celeritas::Label>
 {
     using argument_type = celeritas::Label;
     using result_type = std::size_t;
-    result_type operator()(argument_type const& label) const noexcept
+    result_type operator()(argument_type const& label) const
+        noexcept(!CELERITAS_DEBUG)
     {
         return celeritas::hash_combine(label.name, label.ext);
     }

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/data/Collection.hh
@@ -267,8 +266,8 @@ class Collection
     using AllItemsT = AllItems<T, M>;
     //!@}
 
-    static constexpr inline Ownership ownership = W;
-    static constexpr inline MemSpace memspace = M;
+    static constexpr Ownership ownership = W;
+    static constexpr MemSpace memspace = M;
 
   public:
     //// CONSTRUCTION ////
@@ -279,6 +278,8 @@ class Collection
     Collection(Collection const&) = default;
     Collection(Collection&&) = default;
     //!@}
+
+    ~Collection() = default;
 
     // Construct from another collection
     template<Ownership W2, MemSpace M2>

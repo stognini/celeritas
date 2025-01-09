@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-dump-data.cc
@@ -624,7 +623,7 @@ void print_trans_params(ImportTransParameters const& trans_params,
     for (auto const& kv : trans_params.looping)
     {
         auto pid = particles.find(PDGNumber{kv.first});
-        auto par = particles.id_to_label(pid);
+        auto const& par = particles.id_to_label(pid);
         cout << PEP_STREAM_PAR_PARAM(threshold_trials, par)
              << PEP_STREAM_PAR_PARAM(important_energy, par);
     }
@@ -810,8 +809,8 @@ class OpticalMfpHelper
     };
 
     //! Construct helper for given model class out of the models
-    OpticalMfpHelper(std::vector<ImportOpticalModel> const& models, optical::ImportModelClass imc)
-        : mfps_(nullptr)
+    OpticalMfpHelper(std::vector<ImportOpticalModel> const& models,
+                     optical::ImportModelClass imc)
     {
         auto iter = std::find_if(models.begin(), models.end(), [imc] (auto const& m) { return m.model_class == imc; });
         if (iter != models.end())
@@ -831,7 +830,7 @@ class OpticalMfpHelper
     }
 
   private:
-    std::vector<ImportPhysicsVector> const* mfps_;
+    std::vector<ImportPhysicsVector> const* mfps_{nullptr};
 };
 
 /*!
@@ -968,7 +967,7 @@ void print_optical_materials(std::vector<ImportOpticalModel> const& io_models,
 /*!
  * Execute and run.
  */
-int main(int argc, char* argv[])
+int main(int argc, char* argv[])  // NOLINT(bugprone-exception-escape)
 {
     using namespace celeritas;
     using namespace celeritas::app;

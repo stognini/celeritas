@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/grid/GenericCalculator.hh
@@ -24,6 +23,8 @@ namespace celeritas
  * Find and interpolate real numbers on a nonuniform grid.
  *
  * The end points of the grid are extrapolated outward as constant values.
+ *
+ * \todo Rename NonuniformGridCalculator? Template on value type and/or units?
  */
 class GenericCalculator
 {

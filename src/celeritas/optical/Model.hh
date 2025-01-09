@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/optical/Model.hh
@@ -32,10 +31,7 @@ class Model : public OpticalStepActionInterface, public ConcreteAction
     using ConcreteAction::ConcreteAction;
 
     //! Action order for optical models is always post-step
-    StepActionOrder order() const override final
-    {
-        return StepActionOrder::post;
-    }
+    StepActionOrder order() const override { return StepActionOrder::post; }
 
     //! Build mean free path grids for all optical materials
     virtual void build_mfps(OpticalMaterialId mat, MfpBuilder& build) const = 0;

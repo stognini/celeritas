@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file accel/detail/NaviTouchableUpdater.cc
@@ -47,16 +46,6 @@ NaviTouchableUpdater::NaviTouchableUpdater(SPConstVecLV detector_volumes,
  */
 NaviTouchableUpdater::NaviTouchableUpdater(SPConstVecLV detector_volumes)
     : NaviTouchableUpdater{std::move(detector_volumes), geant_world_volume()}
-{
-}
-
-//---------------------------------------------------------------------------//
-/*!
- * Construct with explicit world.
- */
-NaviTouchableUpdater::NaviTouchableUpdater(G4VPhysicalVolume const* world)
-    : NaviTouchableUpdater{
-          std::make_shared<std::vector<G4LogicalVolume const*>>(), world}
 {
 }
 

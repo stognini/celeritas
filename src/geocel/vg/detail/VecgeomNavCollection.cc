@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file geocel/vg/detail/VecgeomNavCollection.cc
@@ -102,8 +101,9 @@ auto VecgeomNavCollection<Ownership::reference, MemSpace::device>::operator=(
     -> VecgeomNavCollection&
 {
     CELER_ASSERT(other);
-    pool_view = vecgeom::NavStatePoolView{
-        (char*)other.ptr, other.max_depth, (int)other.size};
+    pool_view = vecgeom::NavStatePoolView{static_cast<char*>(other.ptr),
+                                          other.max_depth,
+                                          static_cast<int>(other.size)};
     return *this;
 }
 

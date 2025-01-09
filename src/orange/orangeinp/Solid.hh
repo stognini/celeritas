@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/orangeinp/Solid.hh
@@ -96,11 +95,12 @@ class SolidBase : public ObjectInterface
     //! Optional azimuthal angular restriction
     virtual SolidEnclosedAngle enclosed_angle() const = 0;
 
+    ~SolidBase() override = default;
+
   protected:
     //!@{
     //! Allow construction and assignment only through daughter classes
     SolidBase() = default;
-    virtual ~SolidBase() = default;
     CELER_DEFAULT_COPY_MOVE(SolidBase);
     //!@}
 };

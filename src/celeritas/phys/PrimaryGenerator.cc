@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/phys/PrimaryGenerator.cc
@@ -33,7 +32,7 @@ PrimaryGenerator::from_options(SPConstParticles particles,
 
     PrimaryGenerator::Input inp;
     inp.seed = opts.seed;
-    inp.pdg = std::move(opts.pdg);
+    inp.pdg = opts.pdg;
     inp.num_events = opts.num_events;
     inp.primaries_per_event = opts.primaries_per_event;
     inp.sample_energy = make_energy_sampler(opts.energy);
@@ -49,9 +48,9 @@ PrimaryGenerator::from_options(SPConstParticles particles,
 PrimaryGenerator::PrimaryGenerator(SPConstParticles particles, Input const& inp)
     : num_events_(inp.num_events)
     , primaries_per_event_(inp.primaries_per_event)
-    , sample_energy_(std::move(inp.sample_energy))
-    , sample_pos_(std::move(inp.sample_pos))
-    , sample_dir_(std::move(inp.sample_dir))
+    , sample_energy_(inp.sample_energy)
+    , sample_pos_(inp.sample_pos)
+    , sample_dir_(inp.sample_dir)
 {
     CELER_EXPECT(particles);
 

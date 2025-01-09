@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/io/ExceptionOutput.cc
@@ -84,6 +83,7 @@ void eptr_to_json(nlohmann::json& j, std::exception_ptr const& eptr)
     {
         try_nested_to_json(j, e);
     }
+    // NOLINTNEXTLINE(bugprone-empty-catch)
     catch (...)
     {
     }

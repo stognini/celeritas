@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-g4/SensitiveHit.cc
@@ -24,6 +23,7 @@ namespace app
  */
 auto SensitiveHit::allocator() -> HitAllocator&
 {
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
     static G4ThreadLocal HitAllocator* alloc_;
     if (CELER_UNLIKELY(!alloc_))
     {
@@ -36,10 +36,7 @@ auto SensitiveHit::allocator() -> HitAllocator&
 /*!
  * Construct with hit data.
  */
-SensitiveHit::SensitiveHit(EventHitData const& hit)
-    : G4VHit(), data_{std::move(hit)}
-{
-}
+SensitiveHit::SensitiveHit(EventHitData const& hit) : G4VHit(), data_{hit} {}
 
 //---------------------------------------------------------------------------//
 }  // namespace app

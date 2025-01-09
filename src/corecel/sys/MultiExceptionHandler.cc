@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/sys/MultiExceptionHandler.cc
@@ -27,6 +26,7 @@ void log_exception(std::exception const& e, Logger::Message* msg)
         log_exception(next, msg);
         *msg << "\n... from: ";
     }
+    // NOLINTNEXTLINE(bugprone-empty-catch)
     catch (...)
     {
         // Ignore unknown exception
@@ -46,7 +46,7 @@ namespace detail
 [[noreturn]] void log_and_rethrow_impl(MultiExceptionHandler&& exceptions)
 {
     CELER_EXPECT(!exceptions.empty());
-    auto exc_vec = exceptions.release();
+    auto exc_vec = std::move(exceptions).release();
 
     for (auto eptr_iter = exc_vec.begin() + 1; eptr_iter != exc_vec.end();
          ++eptr_iter)
@@ -79,7 +79,7 @@ namespace detail
 {
     CELER_EXPECT(!exceptions_.empty());
 
-    for (auto eptr : exceptions_)
+    for (auto const& eptr : exceptions_)
     {
         try
         {

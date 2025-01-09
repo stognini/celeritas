@@ -1,11 +1,12 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/orangeinp/detail/VolumeBuilder.hh
 //---------------------------------------------------------------------------//
 #pragma once
+
+#include "corecel/Config.hh"
 
 #include "corecel/io/Label.hh"
 #include "orange/transform/VariantTransform.hh"
@@ -109,20 +110,25 @@ class PopVBTransformOnDestruct
 
   public:
     //! Capture the pointer when move constructed
-    PopVBTransformOnDestruct(PopVBTransformOnDestruct&& other)
+    PopVBTransformOnDestruct(PopVBTransformOnDestruct&& other) noexcept
         : vb_(std::exchange(other.vb_, nullptr))
     {
     }
 
     //! Capture the pointer when move assigned
-    PopVBTransformOnDestruct& operator=(PopVBTransformOnDestruct&& other)
+    PopVBTransformOnDestruct&
+    operator=(PopVBTransformOnDestruct&& other) noexcept
     {
         vb_ = std::exchange(other.vb_, nullptr);
         return *this;
     }
 
+    PopVBTransformOnDestruct(PopVBTransformOnDestruct const&) = default;
+    PopVBTransformOnDestruct& operator=(PopVBTransformOnDestruct const&)
+        = default;
+
     //! Call pop when we own the pointer and go out of scope
-    ~PopVBTransformOnDestruct()
+    ~PopVBTransformOnDestruct() noexcept(!CELERITAS_DEBUG)
     {
         if (vb_)
         {

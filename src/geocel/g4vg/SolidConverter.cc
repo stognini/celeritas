@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file geocel/g4vg/SolidConverter.cc
@@ -407,7 +406,7 @@ auto SolidConverter::hype(arg_type solid_base) -> result_type
 auto SolidConverter::intersectionsolid(arg_type solid_base) -> result_type
 {
     PlacedBoolVolumes pv = this->convert_bool_impl(
-        static_cast<G4BooleanSolid const&>(solid_base));
+        dynamic_cast<G4BooleanSolid const&>(solid_base));
     return make_unplaced_boolean<kIntersection>(pv[0], pv[1]);
 }
 
@@ -496,7 +495,8 @@ auto SolidConverter::polyhedra(arg_type solid_base) -> result_type
         rmaxs[i] = scale_(params.Rmax[i] * radius_factor);
     }
 
-    auto phistart = std::fmod(params.Start_angle, 2 * constants::pi);
+    auto phistart = std::fmod(params.Start_angle,
+                              static_cast<double>(2 * constants::pi));
 
     return GeoManager::MakeInstance<UnplacedPolyhedron>(phistart,
                                                         params.Opening_angle,
@@ -536,7 +536,7 @@ auto SolidConverter::sphere(arg_type solid_base) -> result_type
 auto SolidConverter::subtractionsolid(arg_type solid_base) -> result_type
 {
     PlacedBoolVolumes pv = this->convert_bool_impl(
-        static_cast<G4BooleanSolid const&>(solid_base));
+        dynamic_cast<G4BooleanSolid const&>(solid_base));
     return make_unplaced_boolean<kSubtraction>(pv[0], pv[1]);
 }
 
@@ -668,7 +668,7 @@ auto SolidConverter::tubs(arg_type solid_base) -> result_type
 auto SolidConverter::unionsolid(arg_type solid_base) -> result_type
 {
     PlacedBoolVolumes pv = this->convert_bool_impl(
-        static_cast<G4BooleanSolid const&>(solid_base));
+        dynamic_cast<G4BooleanSolid const&>(solid_base));
     return make_unplaced_boolean<kUnion>(pv[0], pv[1]);
 }
 

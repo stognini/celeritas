@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file geocel/g4/GeantGeoParams.cc
@@ -106,16 +105,15 @@ std::vector<Label> get_pv_labels(G4VPhysicalVolume const& world)
 //---------------------------------------------------------------------------//
 LevelId::size_type get_max_depth(G4VPhysicalVolume const& world)
 {
-    int result{0};
+    LevelId::size_type result{0};
     visit_geant_volume_instances(
         [&result](G4VPhysicalVolume const&, int level) {
-            result = max(level, result);
+            result = max(level, static_cast<int>(result));
             return true;
         },
         world);
-    CELER_ENSURE(result >= 0);
     // Maximum "depth" is one greater than "highest level"
-    return static_cast<LevelId::size_type>(result + 1);
+    return result + 1;
 }
 
 //---------------------------------------------------------------------------//

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/grid/TwodGridCalculator.test.cc
@@ -139,6 +138,10 @@ TEST_F(TwodGridCalculatorTest, subgrid)
         for (real_type y : {0.0, 0.4, 1.6, 3.25})
         {
             EXPECT_SOFT_EQ(calc_expected(x, y), interpolate(y));
+        }
+        for (size_type i : range(ygrid_.size()))
+        {
+            EXPECT_SOFT_EQ(calc_expected(x, ygrid_[i]), interpolate[i]);
         }
     }
 

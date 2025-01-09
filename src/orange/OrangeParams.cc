@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2021-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/OrangeParams.cc
@@ -134,6 +133,7 @@ OrangeParams::OrangeParams(G4VPhysicalVolume const* world)
  *
  * Volume and surface labels must be unique for the time being.
  */
+// NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
 OrangeParams::OrangeParams(OrangeInput&& input)
 {
     CELER_VALIDATE(input, << "input geometry is incomplete");

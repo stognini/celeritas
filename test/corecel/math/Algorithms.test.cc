@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/math/Algorithms.test.cc
@@ -12,6 +11,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "corecel/Constants.hh"
+
 #include "celeritas_test.hh"
 
 namespace celeritas
@@ -19,6 +20,7 @@ namespace celeritas
 namespace test
 {
 //---------------------------------------------------------------------------//
+using constants::pi;
 
 struct Foo
 {
@@ -83,7 +85,7 @@ TEST(UtilityTest, exchange)
 TEST(AlgorithmsTest, all_of)
 {
     static bool const items[] = {true, false, true, true};
-    auto is_true = [](bool b) { return b; };
+    LogicalTrue<bool> is_true;
     EXPECT_TRUE(all_of(std::begin(items), std::begin(items), is_true));
     EXPECT_FALSE(all_of(std::begin(items), std::end(items), is_true));
     EXPECT_TRUE(all_of(std::begin(items) + 2, std::end(items), is_true));
@@ -92,7 +94,7 @@ TEST(AlgorithmsTest, all_of)
 TEST(AlgorithmsTest, any_of)
 {
     static bool const items[] = {false, true, false, false};
-    auto is_true = [](bool b) { return b; };
+    LogicalTrue<> is_true;
     EXPECT_FALSE(any_of(std::begin(items), std::begin(items), is_true));
     EXPECT_TRUE(any_of(std::begin(items), std::end(items), is_true));
     EXPECT_FALSE(any_of(std::begin(items) + 2, std::end(items), is_true));
@@ -139,6 +141,7 @@ TEST(AlgorithmsTest, clamp_to_nonneg)
 
     EXPECT_DOUBLE_EQ(1.2345, clamp_to_nonneg(1.2345));
     EXPECT_DOUBLE_EQ(0.0, clamp_to_nonneg(-123));
+    EXPECT_EQ(pi, clamp_to_nonneg(pi));
     EXPECT_TRUE(std::isnan(clamp_to_nonneg(nan)));
 }
 
@@ -311,6 +314,8 @@ TEST(MathTest, ipow)
     EXPECT_FLOAT_EQ(0.001f, ipow<3>(0.1f));
     EXPECT_EQ(1e4, ipow<4>(10.0));
     EXPECT_TRUE((std::is_same<int, decltype(ipow<4>(5))>::value));
+
+    EXPECT_EQ(pi * pi, static_cast<double>(ipow<2>(pi)));
 }
 
 //---------------------------------------------------------------------------//
@@ -354,6 +359,65 @@ TEST(MathTest, fma)
     EXPECT_DOUBLE_EQ(std::fma(1.0, 2.0, 8.0), fma(1.0, 2.0, 8.0));
 
     EXPECT_DOUBLE_EQ(1 * 2 + 8, fma(1, 2, 8));
+}
+
+//---------------------------------------------------------------------------//
+
+TEST(MathTest, hypot)
+{
+    static double const nums[] = {
+        1.1e-10,
+        0.456e-7,
+        0.301e-5,
+        0.6789e-3,
+        0.1,
+        3.123,
+        -0.0,
+        0.0,
+    };
+    for (double a : nums)
+    {
+        for (double b : nums)
+        {
+            for (auto i : range(1 << 4))
+            {
+                // Do combinations of flipped signs and inverted
+                if (i & (1 << 0))
+                    a = -a;
+                if (i & (1 << 1))
+                    b = -b;
+                if (i & (1 << 2))
+                    a = 1 / a;
+                if (i & (1 << 3))
+                    b = 1 / b;
+
+                EXPECT_DOUBLE_EQ(std::hypot(a, b), hypot(a, b))
+                    << "a=" << repr(a) << ", b=" << repr(b);
+
+                auto af = static_cast<float>(a);
+                auto bf = static_cast<float>(b);
+                if (false)
+                {
+                    // The current implementation is not symmetric
+                    EXPECT_EQ(hypot(af, bf), hypot(bf, af))
+                        << "af=" << repr(af) << ", bf=" << repr(bf)
+                        << ", exact: "
+                        << repr(static_cast<float>(
+                               std::hypot(static_cast<double>(af),
+                                          static_cast<double>(bf))));
+                }
+                EXPECT_FLOAT_EQ(std::hypot(af, bf), hypot(af, bf))
+                    << "af=" << repr(af) << ", bf=" << repr(bf);
+            }
+        }
+    }
+    EXPECT_DOUBLE_EQ(5.0, hypot(3.0, 4.0));
+    EXPECT_FLOAT_EQ(5.0f, hypot(3.0f, 4.0f));
+}
+
+TEST(MathTest, hypot3)
+{
+    EXPECT_DOUBLE_EQ(std::hypot(1.0, 2.0, 3.0), hypot(1.0, 2.0, 3.0));
 }
 
 //---------------------------------------------------------------------------//
@@ -466,14 +530,14 @@ TEST(MathTest, sincos)
 
 TEST(MathTest, sincospi)
 {
-    EXPECT_DOUBLE_EQ(std::sin(m_pi * 0.1), sinpi(0.1));
-    EXPECT_DOUBLE_EQ(std::cos(m_pi * 0.1), cospi(0.1));
+    EXPECT_DOUBLE_EQ(std::sin(pi * 0.1), sinpi(0.1));
+    EXPECT_DOUBLE_EQ(std::cos(pi * 0.1), cospi(0.1));
 
     {
         double s{0}, c{0};
         sincospi(0.123, &s, &c);
-        EXPECT_DOUBLE_EQ(std::sin(m_pi * 0.123), s);
-        EXPECT_DOUBLE_EQ(std::cos(m_pi * 0.123), c);
+        EXPECT_DOUBLE_EQ(std::sin(pi * 0.123), s);
+        EXPECT_DOUBLE_EQ(std::cos(pi * 0.123), c);
 
         // Test special cases
         sincospi(0, &s, &c);
@@ -498,8 +562,8 @@ TEST(MathTest, sincospi)
         float s{0}, c{0};
         sincospi(inp, &s, &c);
         EXPECT_FLOAT_EQ(1.0f, c);
-        EXPECT_FLOAT_EQ(std::sin(static_cast<float>(m_pi * inp)), s);
-        EXPECT_FLOAT_EQ(std::cos(static_cast<float>(m_pi * inp)), c);
+        EXPECT_FLOAT_EQ(std::sin(static_cast<float>(pi * inp)), s);
+        EXPECT_FLOAT_EQ(std::cos(static_cast<float>(pi * inp)), c);
     }
 }
 
@@ -510,6 +574,21 @@ TEST(MathTest, signum)
     EXPECT_EQ(1, signum(2.0));
     EXPECT_EQ(-1, signum(-2.0));
     EXPECT_EQ(0, signum(0));
+}
+
+//---------------------------------------------------------------------------//
+
+TEST(PortabilityTest, popcount)
+{
+    unsigned int x = 0xAA;
+    EXPECT_EQ(4, popcount(x));
+
+    x &= 0xF;
+    EXPECT_EQ(2, popcount(x));
+    x >>= 2;
+    EXPECT_EQ(1, popcount(x));
+    x >>= 2;
+    EXPECT_EQ(0, popcount(x));
 }
 
 //---------------------------------------------------------------------------//

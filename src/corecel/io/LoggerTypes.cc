@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file corecel/io/LoggerTypes.cc
@@ -40,7 +39,7 @@ char const* to_color_code(LogLevel lev)
     char c = ' ';
     switch (lev)
     {
-        case LogLevel::debug:      c = 'x'; break;
+        case LogLevel::debug:     [[fallthrough]];
         case LogLevel::diagnostic: c = 'x'; break;
         case LogLevel::status:     c = 'b'; break;
         case LogLevel::info:       c = 'g'; break;

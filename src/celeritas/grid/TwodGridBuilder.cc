@@ -1,11 +1,12 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/grid/TwodGridBuilder.cc
 //---------------------------------------------------------------------------//
 #include "TwodGridBuilder.hh"
+
+#include "celeritas/io/ImportPhysicsVector.hh"
 
 namespace celeritas
 {
@@ -38,6 +39,16 @@ auto TwodGridBuilder::operator()(SpanConstDbl grid_x,
                                  SpanConstDbl values) -> TwodGrid
 {
     return this->insert_impl(grid_x, grid_y, values);
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Add a grid from an imported physics vector.
+ */
+auto TwodGridBuilder::operator()(ImportPhysics2DVector const& pvec) -> TwodGrid
+{
+    return this->insert_impl(
+        make_span(pvec.x), make_span(pvec.y), make_span(pvec.value));
 }
 
 //---------------------------------------------------------------------------//

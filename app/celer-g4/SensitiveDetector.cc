@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2022-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celer-g4/SensitiveDetector.cc
@@ -30,7 +29,7 @@ namespace app
  * Construct with sensitive detector name.
  */
 SensitiveDetector::SensitiveDetector(std::string name)
-    : G4VSensitiveDetector(name), hcid_{-1}, collection_{nullptr}
+    : G4VSensitiveDetector(name)
 {
     this->collectionName.insert(name);
 }

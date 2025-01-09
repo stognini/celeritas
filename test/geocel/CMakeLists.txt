@@ -1,6 +1,5 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
@@ -84,7 +83,6 @@ if(CELERITAS_USE_VecGeom)
         "FourLevelsTest.*"
         "MultiLevelTest.*"
         "SolidsTest.*"
-        "CmseTest.*"
       )
     endif()
   endif()
@@ -101,7 +99,7 @@ if(CELERITAS_USE_VecGeom)
     set(_vecgeom_tests DISABLE)
   endif()
   celeritas_add_device_test(vg/Vecgeom
-    LINK_LIBRARIES VecGeom::vecgeom
+    LINK_LIBRARIES VecGeom::vecgeom ${_g4_geo_libs}
     FILTER ${_vecgeom_tests}
     ${_fixme_cgs}
   )
@@ -125,10 +123,16 @@ endif()
 #-----------------------------------------------------------------------------#
 # Rasterization
 
-
 celeritas_add_test(rasterize/Color.test.cc)
 celeritas_add_test(rasterize/Image.test.cc)
 celeritas_add_test(rasterize/Raytracer.test.cc)
-celeritas_add_test(rasterize/ImageWriter.test.cc ${_needs_png})
+
+# In that very specific case (which is the one used in Athena integration)
+# this test fails to link as geocel seems to be removed by the linker
+# https://github.com/celeritas-project/celeritas/pull/1498
+if(NOT (CELERITAS_USE_VecGeom AND CELERITAS_USE_CUDA
+   AND NOT CELERITAS_USE_PNG AND NOT BUILD_SHARED_LIBS))
+  celeritas_add_test(rasterize/ImageWriter.test.cc ${_needs_png})
+endif()
 
 #-----------------------------------------------------------------------------#

@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/MatrixUtils.cc
@@ -57,6 +56,9 @@ T trace(SquareMatrix<T, 3> const& mat)
  * This should be equivalent to BLAS' GEMM without the option to transpose,
  * use strides, or multiply by constants. All matrix orderings are C-style:
  * mat[i][j] is for row i, column j .
+ *
+ * Note that this uses \c celeritas::fma which supports types other than
+ * floating point.
  *
  * \warning This implementation is limited and slow.
  */

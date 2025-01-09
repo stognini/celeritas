@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/grid/TwodGridBuilder.hh
@@ -14,6 +13,7 @@
 
 namespace celeritas
 {
+struct ImportPhysics2DVector;
 //---------------------------------------------------------------------------//
 /*!
  * Construct a generic 2D grid.
@@ -43,6 +43,9 @@ class TwodGridBuilder
     // Add a 2D grid of generic data with linear interpolation
     TwodGrid
     operator()(SpanConstDbl grid_x, SpanConstDbl grid_y, SpanConstDbl values);
+
+    // Add a grid from an imported physics vector
+    TwodGrid operator()(ImportPhysics2DVector const&);
 
   private:
     DedupeCollectionBuilder<real_type> reals_;
