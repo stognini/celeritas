@@ -93,8 +93,6 @@ inline constexpr bool operator<(PDGNumber lhs, PDGNumber rhs)
  * | Particle name    | PDG |
  * | ---------------- | --- |
  * | Generic ion      | 90  |
- * | Muonic deuterium | 91  |
- * | Muonic triton    | 92  |
  */
 namespace pdg
 {
@@ -114,8 +112,8 @@ CELER_DEFINE_PDGNUMBER(mu_minus, 13)
 CELER_DEFINE_PDGNUMBER(mu_plus, -13)
 CELER_DEFINE_PDGNUMBER(gamma, 22)
 CELER_DEFINE_PDGNUMBER(ion, 90)
-CELER_DEFINE_PDGNUMBER(muonic_deuterium, 91)
-CELER_DEFINE_PDGNUMBER(muonic_triton, 92)
+CELER_DEFINE_PDGNUMBER(muonic_deuteron, 2000010020)
+CELER_DEFINE_PDGNUMBER(muonic_triton, 2000010030)
 CELER_DEFINE_PDGNUMBER(pi_plus, 211)
 CELER_DEFINE_PDGNUMBER(pi_minus, -211)
 CELER_DEFINE_PDGNUMBER(kaon_plus, 321)

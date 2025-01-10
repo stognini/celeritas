@@ -24,6 +24,7 @@ struct Secondary
     ParticleId particle_id;  //!< New particle type
     units::MevEnergy energy;  //!< New kinetic energy
     Real3 direction;  //!< New direction
+    real_type spin{};  //!< New spin
 
     //! Whether the secondary survived cutoffs
     explicit CELER_FUNCTION operator bool() const

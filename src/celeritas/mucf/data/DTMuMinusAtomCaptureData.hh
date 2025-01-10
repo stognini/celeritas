@@ -18,14 +18,15 @@ namespace celeritas
  */
 struct DTMuMinusAtomCaptureData
 {
+    MaterialId hydrogen;  //!< Hydrogen with d and t isotopes
     ParticleId muon;
-    ElementId deuterium;
-    ElementId tritium;
+    ParticleId muonic_deuteron;
+    ParticleId muonic_triton;
 
     //! Check whether the data is assigned
     explicit CELER_FUNCTION operator bool() const
     {
-        return muon && (deuterium || tritium);
+        return muon && (muonic_deuteron || muonic_triton);
     }
 };
 
