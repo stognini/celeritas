@@ -23,7 +23,7 @@ namespace celeritas
  * density, temperature). The proportions and identities of a material's
  * constitutents are encoded in the \c elements accessor, where each index of
  * the returned span corresponds to an \c ElementComponentId for this material.
- * The \c get_element_density and \c element_view helper functions can be used
+ * The \c element_density and \c element_view helper functions can be used
  * to calculate elemental densities and properties.
  */
 class MaterialView
@@ -69,8 +69,7 @@ class MaterialView
     inline CELER_FUNCTION ElementId element_id(ElementComponentId id) const;
 
     // Total number density of an element in this material [1/len^3]
-    inline CELER_FUNCTION real_type
-    get_element_density(ElementComponentId id) const;
+    inline CELER_FUNCTION real_type element_density(ElementComponentId id) const;
 
     // Advanced access to the elemental components (id/fraction)
     inline CELER_FUNCTION Span<MatElementComponent const> elements() const;
@@ -205,8 +204,7 @@ CELER_FUNCTION ElementId MaterialView::element_id(ElementComponentId id) const
 /*!
  * Number density of an element in this material [1/len^3]
  */
-CELER_FUNCTION real_type
-MaterialView::get_element_density(ElementComponentId id) const
+CELER_FUNCTION real_type MaterialView::element_density(ElementComponentId id) const
 {
     CELER_EXPECT(id < this->material_def().elements.size());
     return this->number_density() * this->elements()[id.get()].fraction;

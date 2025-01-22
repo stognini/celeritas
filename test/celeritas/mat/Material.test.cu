@@ -71,7 +71,7 @@ __global__ void m_test_kernel(unsigned int const size,
         // Get its atomic number weighted by its fractional number density
         tz += scratch[ec]
               * native_value_to<units::InvCcDensity>(
-                    mat.get_element_density(ElementComponentId{ec}))
+                    mat.element_density(ElementComponentId{ec}))
                     .value();
     }
     tot_z[tid.get()] = tz;

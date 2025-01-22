@@ -24,9 +24,9 @@ namespace celeritas
 /*!
  * Muonic atom capture interactor for deuteron or triton atoms.
  *
- * This is an `at-rest` interaction where an incoming muon track is absorbed
- * and the resulting secondary is a muonic deuteron or triton atom with no
- * kinetic energy.
+ * This is an \em at-rest interaction where an incoming muon track is
+ * absorbed and the resulting secondary is a muonic deuteron or triton atom
+ * with no kinetic energy.
  */
 class DTMuMinusAtomCaptureInteractor
 {
@@ -38,7 +38,7 @@ class DTMuMinusAtomCaptureInteractor
 
     // Construct with defaults
     inline CELER_FUNCTION
-    DTMuMinusAtomCaptureInteractor(DTMuMinusAtomCaptureData const& shared,
+    DTMuMinusAtomCaptureInteractor(DTMuMinusAtomCaptureData const& data,
                                    ParticleTrackView const& particle,
                                    MaterialView const& material,
                                    ElementView const& element,
@@ -50,13 +50,17 @@ class DTMuMinusAtomCaptureInteractor
 
   private:
     // Shared constant physics properties
-    DTMuMinusAtomCaptureData const& shared_;
+    DTMuMinusAtomCaptureData const& data_;
     // Material properties
     MaterialView const& material_;
     // Element properties
     ElementView const& element_;
     // Allocate space for secondary particle (one muonic d or t)
     StackAllocator<Secondary>& allocate_;
+    // Deuteron number fraction
+    real_type deuteron_frac_{-1};
+    // Triton number fraction
+    real_type triton_frac_{-1};
 
     // Select d or t spin (make it a separate helper)
     template<class Engine>
@@ -65,8 +69,7 @@ class DTMuMinusAtomCaptureInteractor
 
     // Select muonic atom
     template<class Engine>
-    inline CELER_FUNCTION ParticleId
-    select_muonic_atom(ElementId hidrogen_isotope, Engine& rng);
+    inline CELER_FUNCTION ParticleId select_muonic_atom(Engine& rng);
 };
 
 //---------------------------------------------------------------------------//
@@ -76,18 +79,34 @@ class DTMuMinusAtomCaptureInteractor
  * Construct with shared and state data.
  */
 DTMuMinusAtomCaptureInteractor::DTMuMinusAtomCaptureInteractor(
-    DTMuMinusAtomCaptureData const& shared,
+    DTMuMinusAtomCaptureData const& data,
     ParticleTrackView const& particle,
     MaterialView const& material,
     ElementView const& element,
     StackAllocator<Secondary>& allocate)
-    : shared_(shared)
-    , material_(material)
-    , element_(element)
-    , allocate_(allocate)
+    : data_(data), material_(material), element_(element), allocate_(allocate)
 {
-    CELER_EXPECT(particle.particle_id() == shared_.muon);
-    // TODO: Expect correct material and composition
+    CELER_EXPECT(particle.particle_id() == data_.muon);
+    CELER_EXPECT(material_.num_elements() == 1);
+    CELER_EXPECT(material_.element_id(ElementComponentId{0}) == data_.hydrogen);
+
+    auto const& el_view = material_.make_element_view(ElementComponentId{0});
+    CELER_EXPECT(el_view.atomic_number() == AtomicNumber{1});  // Hydrogen only
+
+    // Store isotopic number fractions for the muonic atom selection
+    for (auto const& iso : el_view.isotopes())
+    {
+        if (iso.isotope == data_.deuteron)
+        {
+            deuteron_frac_ = iso.fraction;
+        }
+        else if (iso.isotope == data_.triton)
+        {
+            triton_frac_ = iso.fraction;
+        }
+    }
+    // At least one of the isotopes must be present
+    CELER_ENSURE(deuteron_frac_ >= 0 || triton_frac_ >= 0);
 }
 
 //---------------------------------------------------------------------------//
@@ -108,21 +127,10 @@ CELER_FUNCTION Interaction DTMuMinusAtomCaptureInteractor::operator()(Engine& rn
 
     Interaction result = Interaction::from_absorption();
     result.secondaries = {secondary};
-
-    // Select d or t isotope
-    // TODO: Looks not used in G4???
-    IsotopeSelector select(element_);
-    auto const isotope_compid = select(rng);
-    auto const isotope_id = element_.isotope_id(isotope_compid);
-    CELER_ASSERT(isotope_id == shared_.deuteron
-                 || isotope_id == shared_.triton);
-
-    // FIGURE OUT ELEMENT VS ISOTOPE ID
-    // ACTUALLY NEED ELEMENTRECORD -> ELISOTOPECOMPONENT
-
-    // TODO: Apply electromagnetic cascade to the formed atom
     secondary->particle_id = this->select_muonic_atom(isotope_id, rng);
+    // TODO: Apply electromagnetic cascade to the formed atom
     secondary->spin = this->select_spin(element_.atomic_mass_number(), rng);
+
     return result;
 }
 
@@ -136,6 +144,10 @@ CELER_FUNCTION Interaction DTMuMinusAtomCaptureInteractor::operator()(Engine& rn
  * \note
  * Yamashita, T., et al. Sci Rep 12, 6393 (2022).
  * https://doi.org/10.1038/s41598-022-09487-0
+ *
+ * \todo
+ * Use \citet{yamashita-mucf-2022, https://doi.org/10.1038/s41598-022-09487-0}
+ * and add ref to zotero.
  */
 template<class Engine>
 CELER_FUNCTION real_type DTMuMinusAtomCaptureInteractor::select_spin(
@@ -162,42 +174,45 @@ CELER_FUNCTION real_type DTMuMinusAtomCaptureInteractor::select_spin(
 /*!
  * Select muonic atom (deuteron or triton).
  *
- * Selection is defined based on relative mole fractions and the relative
- * probability of having a muonic deuteron or triton at the end of the
- * deexcitation cascade using Q1S formula.
+ * Selection is defined based on relative mole or number fractions (numerically
+ * equivalent) and the relative probability of having a muonic deuteron or
+ * triton at the end of the deexcitation cascade using the q1s formula
+ * \citet{bom-dtmucf-2005, https://doi.org/10.1134/1.1926428}.
+ *
+ * The probability of d(mu) or t(mu) formation is calculated using
+ * \f[
+ * q_{1s} = \frac{1}{1 + 2.9 f_\text{triton}} \\
+ * P(\text{d}\mu) = f_\text{deuteron} q_{1s}.
+ * \f]
+ *
+ * A uniform random number is directly compared against \f$ P(\text{d}\mu) \f$,
+ * to define which muonic atom is formed.
+ *
+ * \todo add a more descriptive calculation from the paper
  *
  * \note
  * Bom, V.R., et al. J. Exp. Theor. Phys. 100, 663–687 (2005).
  * https://doi.org/10.1134/1.1926428
+ *
+ * \todo
+ * Use \citet{bom-dtmucf-2005, https://doi.org/10.1134/1.1926428}
+ * and add ref to zotero.
  */
 template<class Engine>
-CELER_FUNCTION ParticleId DTMuMinusAtomCaptureInteractor::select_muonic_atom(
-    IsotopeId hidrogen_isotope, Engine& rng)
+CELER_FUNCTION ParticleId
+DTMuMinusAtomCaptureInteractor::select_muonic_atom(Engine& rng)
 {
-    // Calculate number fraction (numerically equivalent to mole fraction)
-    auto const deuteron_elid;
-    auto const triton_elid;
+    CELER_EXPECT(deuteron_frac >= 0 || triton_frac >= 0);
 
-    // LOOP OVER, SELECT CORRECT FRACTIONS FOR D and T OF
-    // ElementRecord.isotopes
-
-    real_type const deuteron_mole_frac
-        = material_.element_mole_fraction(deuteron_elid);
-    real_type const triton_mole_frac
-        = material_.element_mole_fraction(triton_elid);
-
-    // Compute probability and return (d)mu or (t)mu via the Q1S formula
-    real_type const q1s = real_type{1}
-                          / (real_type{1} + 2.9 * triton_mole_frac);
-    real_type const deuteron_prob = deuteron_mole_frac * q1s;
+    real_type const q1s = real_type{1} / (real_type{1} + 2.9 * triton_frac);
+    real_type const deuteron_prob = deuteron_frac * q1s;
 
     UniformRealDistribution<real_type> uniform;
     if (uniform(rng) <= deuteron_prob)
     {
-        return shared_.muonic_deuteron;
+        return data_.muonic_deuteron;
     }
-
-    return shared_.muonic_triton;
+    return data_.muonic_triton;
 }
 //---------------------------------------------------------------------------//
 }  // namespace celeritas
