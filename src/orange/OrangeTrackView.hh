@@ -33,15 +33,26 @@ namespace celeritas
 /*!
  * Navigate through an ORANGE geometry on a single thread.
  *
- * Ordering requirements:
- * - initialize (through assignment) must come first
- * - access (pos, dir, volume/surface/is_outside/is_on_boundary) good at any
- * time
- * - \c find_next_step
- * - \c find_safety or \c move_internal or \c move_to_boundary
- * - if on boundary, \c cross_boundary
- * - at any time, \c set_dir , but then must do \c find_next_step before any
- *   \c move or \c cross action above
+ * Since the navigation relies on computationally expensive calls and must
+ * ensure a consistent state between physical and logical boundaries, there is
+ * an ordering followed by Celeritas' internal calls to each track's state.
+ * Access (\c pos, \c dir, \c volume/surface/is_outside/is_on_boundary) is
+ * valid at any time.
+ *
+ * The required ordering is:
+ *
+ * - Initialization, via the assignment operator
+ * - Locating the boundary crossing along the current direction, \c
+ *   find_next_step
+ * - Locating the closest point on the boundary in any direction, \c
+ *   find_safety
+ * - Movement within a volume, not crossing a boundary: \c move_internal or \c
+ *   move_to_boundary
+ * - If on a boundary, logically moving to the adjacent volume ("relocation")
+ *   with \c cross_boundary
+ *
+ * At any time, \c set_dir may be called, but then \c find_next_step must again
+ * be called before any subsequent \c move or \c cross action above .
  *
  * The main point is that \c find_next_step depends on the current
  * straight-line direction, \c move_to_boundary and \c move_internal (with
@@ -49,8 +60,8 @@ namespace celeritas
  * \c cross_boundary depends on being on the boundary with a knowledge of the
  * post-boundary state.
  *
- * \c move_internal with a position \em should depend on the safety distance
- * but that's not yet implemented.
+ * \todo \c move_internal with a position \em should depend on the safety
+ * distance, but that check is not yet implemented.
  */
 class OrangeTrackView
 {
@@ -284,14 +295,14 @@ OrangeTrackView::operator=(Initializer_t const& init)
     };
 
     // Recurse into daughter universes starting with the outermost universe
-    UniverseId uid = top_universe_id();
+    UniverseId univ_id = top_universe_id();
     DaughterId daughter_id;
     LevelId level{0};
     do
     {
         TrackerVisitor visit_tracker{params_};
         auto tinit = visit_tracker(
-            [&local](auto&& t) { return t.initialize(local); }, uid);
+            [&local](auto&& t) { return t.initialize(local); }, univ_id);
 
         if (!tinit.volume || tinit.surface)
         {
@@ -307,7 +318,7 @@ OrangeTrackView::operator=(Initializer_t const& init)
                 msg << "started on a surface ("
                     << tinit.surface.id().unchecked_get() << ")";
             }
-            msg << " in universe " << uid.unchecked_get()
+            msg << " in universe " << univ_id.unchecked_get()
                 << " at local position " << repr(local.pos);
 #endif
             // Mark as failed and place in local "exterior" to end the search
@@ -320,18 +331,18 @@ OrangeTrackView::operator=(Initializer_t const& init)
         lsa.vol() = tinit.volume;
         lsa.pos() = local.pos;
         lsa.dir() = local.dir;
-        lsa.universe() = uid;
+        lsa.universe() = univ_id;
 
         daughter_id = visit_tracker(
-            [&tinit](auto&& t) { return t.daughter(tinit.volume); }, uid);
+            [&tinit](auto&& t) { return t.daughter(tinit.volume); }, univ_id);
 
         if (daughter_id)
         {
             auto const& daughter = params_.daughters[daughter_id];
             // Apply "transform down" based on stored transform
-            apply_transform(transform_down_local, daughter.transform_id);
+            apply_transform(transform_down_local, daughter.trans_id);
             // Update universe and increase level depth
-            uid = daughter.universe_id;
+            univ_id = daughter.universe_id;
             ++level;
         }
 
@@ -734,7 +745,7 @@ CELER_FUNCTION void OrangeTrackView::cross_boundary()
                 local.pos = t.transform_down(local.pos);
                 local.dir = t.rotate_down(local.dir);
             };
-            apply_transform(transform_down_local, daughter.transform_id);
+            apply_transform(transform_down_local, daughter.trans_id);
             universe = daughter.universe_id;
         }
 
@@ -964,15 +975,15 @@ OrangeTrackView::find_next_step_impl(detail::Intersection isect)
     LevelId min_level{0};
 
     // Find the nearest intersection from level 0 to current level
-    // inclusive, prefering the shallowest level (i.e., lowest uid)
+    // inclusive, prefering the shallowest level (i.e., lowest univ_id)
     for (auto levelid : range(LevelId{1}, this->level() + 1))
     {
-        auto uid = this->make_lsa(levelid).universe();
+        auto univ_id = this->make_lsa(levelid).universe();
         auto local_isect = visit_tracker(
             [local_state = this->make_local_state(levelid), &isect](auto&& t) {
                 return t.intersect(local_state, isect.distance);
             },
-            uid);
+            univ_id);
 
         if (local_isect.distance < isect.distance)
         {
@@ -1182,7 +1193,7 @@ CELER_FUNCTION DaughterId OrangeTrackView::get_daughter(LSA const& lsa)
 CELER_FUNCTION TransformId OrangeTrackView::get_transform(DaughterId daughter_id)
 {
     CELER_EXPECT(daughter_id);
-    return params_.daughters[daughter_id].transform_id;
+    return params_.daughters[daughter_id].trans_id;
 }
 
 //---------------------------------------------------------------------------//

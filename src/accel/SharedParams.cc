@@ -22,6 +22,7 @@
 #include <G4Threading.hh>
 
 #include "corecel/Config.hh"
+#include "corecel/Version.hh"
 
 #include "corecel/Assert.hh"
 #include "corecel/io/Logger.hh"
@@ -213,7 +214,10 @@ SharedParams::SharedParams(SetupOptions const& options)
                       "Celeritas offloading is disabled via "
                       "\"CELER_DISABLE\"");
 
-    CELER_LOG_LOCAL(status) << "Initializing Celeritas shared data";
+    CELER_LOG_LOCAL(info) << "Activating Celeritas version "
+                          << celeritas_version << " on "
+                          << (Device::num_devices() > 0 ? "GPU" : "CPU");
+
     ScopedProfiling profile_this{"construct-params"};
     ScopedMem record_mem("SharedParams.construct");
     ScopedTimeLog scoped_time;
@@ -248,8 +252,8 @@ SharedParams::SharedParams(SetupOptions const& options)
     }
     else
     {
-        CELER_LOG(debug) << "Skipping 'startup' JSON output since writing to "
-                            "stdout";
+        CELER_LOG(debug)
+            << R"(Skipping 'startup' JSON output since writing to stdout)";
     }
 
     if (!options.offload_output_file.empty())
@@ -513,7 +517,8 @@ void SharedParams::initialize_core(SetupOptions const& options)
         *imported, params.particle, params.material);
 
     // Construct shared data for Coulomb scattering
-    params.wentzel = WentzelOKVIParams::from_import(*imported, params.material);
+    params.wentzel = WentzelOKVIParams::from_import(
+        *imported, params.material, params.particle);
 
     // Load physics: create individual processes with make_shared
     params.physics = [&params, &options, &imported] {
@@ -525,10 +530,26 @@ void SharedParams::initialize_core(SetupOptions const& options)
         input.relaxation = nullptr;  // TODO: add later?
         input.action_registry = params.action_reg.get();
 
+        // Set physics options
         input.options.linear_loss_limit = imported->em_params.linear_loss_limit;
-        input.options.lowest_electron_energy = PhysicsParamsOptions::Energy(
+        input.options.light.lowest_energy = ParticleOptions::Energy(
             imported->em_params.lowest_electron_energy);
+        input.options.heavy.lowest_energy
+            = ParticleOptions::Energy(imported->em_params.lowest_muhad_energy);
         input.options.secondary_stack_factor = options.secondary_stack_factor;
+
+        // Set multiple scattering options
+        input.options.light.range_factor = imported->em_params.msc_range_factor;
+        input.options.heavy.range_factor
+            = imported->em_params.msc_muhad_range_factor;
+        input.options.safety_factor = imported->em_params.msc_safety_factor;
+        input.options.lambda_limit = imported->em_params.msc_lambda_limit;
+        input.options.light.displaced = imported->em_params.msc_displaced;
+        input.options.heavy.displaced = imported->em_params.msc_muhad_displaced;
+        input.options.light.step_limit_algorithm
+            = imported->em_params.msc_step_algorithm;
+        input.options.heavy.step_limit_algorithm
+            = imported->em_params.msc_muhad_step_algorithm;
 
         return std::make_shared<PhysicsParams>(std::move(input));
     }();
@@ -667,7 +688,7 @@ void SharedParams::set_num_streams(unsigned int num_streams)
  * Write available Celeritas output.
  *
  * This can be done multiple times, overwriting the same file so that we can
- * get output before construction and after
+ * get output before construction *and* after.
  */
 void SharedParams::try_output() const
 {
@@ -681,7 +702,8 @@ void SharedParams::try_output() const
     std::string filename = output_filename_;
     if (!params_ && filename.empty())
     {
-        // Setup was not called but JSON is available: make a default filename
+        // Setup was not called but we're outputting anyway (called by
+        // celer-g4?)
         filename = "celeritas.out.json";
         CELER_LOG(debug) << "Set default Celeritas output filename";
     }

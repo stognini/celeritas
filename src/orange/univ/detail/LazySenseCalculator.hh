@@ -8,7 +8,6 @@
 
 #include "corecel/Assert.hh"
 #include "corecel/Macros.hh"
-#include "corecel/cont/Span.hh"
 #include "orange/OrangeTypes.hh"
 #include "orange/SenseUtils.hh"
 #include "orange/surf/LocalSurfaceVisitor.hh"
@@ -29,9 +28,10 @@ namespace detail
  * simple *and* complex intersection. Instances of this class are specific to a
  * volume, and a position. Calling an instance evaluates the sense of a
  * volume's face with respect to the given position. This class is used to
- * lazily calculate sense during evaluation of a logic expression, caching
- * previously calculated senses, allowing potential short-circuiting
- * of unnecessary sense evaluation.
+ * lazily calculate sense during evaluation of a logic expression, contrary to
+ * CachedLazySenseCalculator, this class does not cache the calculated sense:
+ * potentially recomputing the same sense value multiple time. The advantage
+ * is that we do not need to access global memory to store the cached sense.
  *
  * The OnFace constructor's parameter is used to store the first face that we
  * are "on".
@@ -43,18 +43,11 @@ class LazySenseCalculator
     inline CELER_FUNCTION LazySenseCalculator(LocalSurfaceVisitor const& visit,
                                               VolumeView const& vol,
                                               Real3 const& pos,
-                                              Span<SenseValue> sense_cache,
                                               OnFace& face);
 
     // Calculate senses for a single face of the given volume, possibly on a
     // face
     inline CELER_FUNCTION Sense operator()(FaceId face_id);
-
-    //! Flip the sense of a face
-    CELER_FUNCTION void flip_sense(FaceId face_id)
-    {
-        sense_cache_[face_id.get()] = celeritas::flip_sense((*this)(face_id));
-    }
 
   private:
     //! Apply a function to a local surface
@@ -64,10 +57,7 @@ class LazySenseCalculator
     VolumeView const& vol_;
 
     //! Local position
-    Real3 pos_;
-
-    //! Temporary senses
-    Span<SenseValue> sense_cache_;
+    Real3 const& pos_;
 
     //! The first face encountered that we are "on"
     OnFace& face_;
@@ -83,18 +73,9 @@ CELER_FUNCTION
 LazySenseCalculator::LazySenseCalculator(LocalSurfaceVisitor const& visit,
                                          VolumeView const& vol,
                                          Real3 const& pos,
-                                         Span<SenseValue> sense_cache,
                                          OnFace& face)
-    : visit_{visit}
-    , vol_(vol)
-    , pos_{pos}
-    , sense_cache_{sense_cache.first(vol_.num_faces())}
-    , face_(face)
+    : visit_{visit}, vol_{vol}, pos_{pos}, face_{face}
 {
-    for (auto& sense : sense_cache_)
-    {
-        sense.clear();
-    }
 }
 
 //---------------------------------------------------------------------------//
@@ -106,31 +87,29 @@ LazySenseCalculator::LazySenseCalculator(LocalSurfaceVisitor const& visit,
  */
 CELER_FUNCTION auto LazySenseCalculator::operator()(FaceId face_id) -> Sense
 {
-    auto& cached_sense = sense_cache_[face_id.get()];
-    if (cached_sense.is_assigned())
-    {
-        return cached_sense;
-    }
+    CELER_EXPECT(face_id < vol_.num_faces());
+    CELER_EXPECT(!face_ || face_.id() < vol_.num_faces());
 
+    Sense sense;
     if (face_id != face_.id())
     {
         // Calculate sense
         SignedSense ss = visit_(CalcSense{pos_}, vol_.get_surface(face_id));
-        cached_sense = to_sense(ss);
+        sense = to_sense(ss);
         if (ss == SignedSense::on && !face_)
         {
             // This is the first face that we're exactly on: save it
-            face_ = {face_id, cached_sense};
+            face_ = {face_id, sense};
         }
     }
     else
     {
         // Sense is known a priori
-        cached_sense = face_.sense();
+        sense = face_.sense();
     }
 
     CELER_ENSURE(!face_ || face_.id() < vol_.num_faces());
-    return cached_sense;
+    return sense;
 }
 
 //---------------------------------------------------------------------------//

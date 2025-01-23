@@ -131,17 +131,6 @@ LocalTransporter::LocalTransporter(SetupOptions const& options,
         }
     }
 
-    if (CELERITAS_CORE_GEO == CELERITAS_CORE_GEO_GEANT4)
-    {
-        /*!
-         * \todo Add support for Geant4 navigation wrapper, which requires
-         * calling \c state.ref().geometry.reset() on the local transporter
-         * thread due to thread-allocated navigator data.
-         */
-        CELER_NOT_IMPLEMENTED(
-            "offloading when using Celeritas Geant4 navigation wrapper");
-    }
-
     // Create hit processor on the local thread so that it's deallocated when
     // this object is destroyed
     StreamId stream_id{static_cast<size_type>(thread_id)};
@@ -168,6 +157,8 @@ LocalTransporter::LocalTransporter(SetupOptions const& options,
 
     // Save state for reductions at the end
     params.set_state(stream_id.get(), step_->sp_state());
+
+    CELER_ENSURE(*this);
 }
 
 //---------------------------------------------------------------------------//
@@ -180,6 +171,7 @@ void LocalTransporter::InitializeEvent(int id)
     CELER_EXPECT(id >= 0);
 
     event_id_ = id_cast<UniqueEventId>(id);
+    ++accum_num_events_;
 
     if (!(G4Threading::IsMultithreadedApplication()
           && G4MTRunManager::SeedOncePerCommunication()))
@@ -253,7 +245,7 @@ void LocalTransporter::Flush()
     }
     if (celeritas::device())
     {
-        CELER_LOG_LOCAL(info)
+        CELER_LOG_LOCAL(debug)
             << "Transporting " << buffer_.size() << " tracks ("
             << buffer_energy_ << " MeV cumulative kinetic energy) from event "
             << event_id_.unchecked_get() << " with Celeritas";
@@ -276,6 +268,9 @@ void LocalTransporter::Flush()
 
     // Copy buffered tracks to device and transport the first step
     auto track_counts = (*step_)(make_span(buffer_));
+    accum_num_steps_ += track_counts.active;
+    accum_num_primaries_ += buffer_.size();
+
     buffer_.clear();
     buffer_energy_ = 0;
 
@@ -290,6 +285,7 @@ void LocalTransporter::Flush()
                                       *step_);
 
         track_counts = (*step_)();
+        accum_num_steps_ += track_counts.active;
         ++step_iters;
 
         CELER_VALIDATE_OR_KILL_ACTIVE(
@@ -310,6 +306,24 @@ void LocalTransporter::Finalize()
     CELER_VALIDATE(buffer_.empty(),
                    << "offloaded tracks (" << buffer_.size()
                    << " in buffer) were not flushed");
+
+    CELER_LOG_LOCAL(info) << "Finalizing Celeritas after " << accum_num_steps_
+                          << " from " << accum_num_primaries_
+                          << " offloaded tracks over " << accum_num_events_
+                          << " events";
+
+    if constexpr (CELERITAS_CORE_GEO == CELERITAS_CORE_GEO_GEANT4)
+    {
+        // Geant4 navigation states *MUST* be deallocated on the thread in
+        // which they're allocated
+        auto state = std::dynamic_pointer_cast<CoreState<MemSpace::host>>(
+            step_->sp_state());
+        CELER_ASSERT(state);
+#if CELERITAS_CORE_GEO == CELERITAS_CORE_GEO_GEANT4
+        CELER_LOG_LOCAL(debug) << "Deallocating navigation states";
+        state->ref().geometry.reset();
+#endif
+    }
 
     // Reset all data
     CELER_LOG_LOCAL(debug) << "Resetting local transporter";
