@@ -40,6 +40,10 @@ class StepParams;
  * detectors" (mapping volume IDs to detector IDs and ignoring unmapped
  * volumes) and supporting unfiltered output for "MC truth" . Right now only
  * one or the other can be used, not both.
+ *
+ * \todo Like the optical collector, this class is not used after it's created:
+ * it just serves to create helper classes. Perhaps move to the \c setup
+ * namespace?
  */
 class StepCollector
 {
@@ -47,7 +51,7 @@ class StepCollector
     //!@{
     //! \name Type aliases
     using SPStepInterface = std::shared_ptr<StepInterface>;
-    using SPConstGeo = std::shared_ptr<GeoParams const>;
+    using SPConstCoreGeo = std::shared_ptr<CoreGeoParams const>;
     using VecInterface = std::vector<SPStepInterface>;
     //!@}
 
@@ -57,7 +61,7 @@ class StepCollector
     make_and_insert(CoreParams const& core, VecInterface callbacks);
 
     // Construct with options and register pre/post-step actions
-    StepCollector(SPConstGeo geo,
+    StepCollector(SPConstCoreGeo geo,
                   VecInterface&& callbacks,
                   AuxParamsRegistry* aux_registry,
                   ActionRegistry* action_registry);

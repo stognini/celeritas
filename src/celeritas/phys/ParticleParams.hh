@@ -1,6 +1,5 @@
-//---------------------------------*-CUDA-*----------------------------------//
-// Copyright 2020-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------ -*- C++ -*- -------------------------------//
+// Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file celeritas/phys/ParticleParams.hh
@@ -18,6 +17,7 @@
 #include "corecel/data/ParamsDataInterface.hh"
 #include "celeritas/Quantities.hh"
 #include "celeritas/Types.hh"
+#include "celeritas/inp/Particle.hh"
 
 #include "PDGNumber.hh"
 #include "ParticleData.hh"
@@ -44,18 +44,8 @@ struct ImportData;
 class ParticleParams final : public ParamsDataInterface<ParticleParamsData>
 {
   public:
-    //! Define a particle's input data
-    struct ParticleInput
-    {
-        std::string name;  //!< Particle name
-        PDGNumber pdg_code;  //!< See "Review of Particle Physics"
-        units::MevMass mass;  //!< Rest mass [MeV / c^2]
-        units::ElementaryCharge charge;  //!< Charge in units of [e]
-        real_type decay_constant;  //!< Decay constant [1/time]
-    };
-
     //! Input data to construct this class
-    using Input = std::vector<ParticleInput>;
+    using Input = std::vector<inp::Particle>;
 
   public:
     // Construct with imported data
@@ -143,6 +133,9 @@ ParticleId ParticleParams::find(std::string const& name) const
 //---------------------------------------------------------------------------//
 /*!
  * Find the ID from a PDG code.
+ *
+ * \todo Multiple particles can share a "generic" PDG code so this should be a
+ * multimap.
  */
 ParticleId ParticleParams::find(PDGNumber pdg_code) const
 {

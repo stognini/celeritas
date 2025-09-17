@@ -13,6 +13,7 @@
 #include "corecel/io/LogContextException.hh"
 #include "corecel/sys/ActionRegistry.hh"
 #include "geocel/UnitUtils.hh"
+#include "celeritas/TestEm3Base.hh"
 #include "celeritas/Types.hh"
 #include "celeritas/ext/GeantPhysicsOptions.hh"
 #include "celeritas/global/CoreParams.hh"
@@ -26,7 +27,6 @@
 #include "celeritas/track/detail/TrackSortUtils.hh"
 
 #include "celeritas_test.hh"
-#include "../TestEm3Base.hh"
 
 namespace celeritas
 {
@@ -50,6 +50,12 @@ class TrackSortTestBase : virtual public GlobalTestBase
         result.params = this->core();
         result.stream_id = StreamId{0};
         result.num_track_slots = tracks;
+
+        if constexpr (M == MemSpace::device)
+        {
+            device().create_streams(1);
+        }
+
         return Stepper<M>{std::move(result)};
     }
 
@@ -281,7 +287,7 @@ TEST_F(TestTrackPartitionEm3Stepper, host_is_partitioned)
             });
     };
 
-    // we partition at the start of the step so we need to explictly partition
+    // we partition at the start of the step so we need to explicitly partition
     // again after a step before checking
     for (auto i = 0; i < 10; ++i)
     {
@@ -325,7 +331,7 @@ TEST_F(TestTrackPartitionEm3Stepper,
                        != TrackStatus::inactive;
             });
     };
-    // we partition at the start of the step so we need to explictly partition
+    // we partition at the start of the step so we need to explicitly partition
     // again after a step before checking
     for (auto i = 0; i < 10; ++i)
     {
@@ -616,12 +622,12 @@ TEST_F(PartitionDataTest, step_host)
             "NNNNNNNNNN_NNNNNN_NNNNNNNN_NNN_NN_NNN______CCCCCCCCCCC__CCCCCCCC",
             "NNNNNN_NNN_N__NNNNNNNNNNNNNNNNNN_NNNN_N____CCCCCCCCC_CCCCCCCCCCC",
             "NNNNNNNNNNNNN_NNNNNNNNNNNNNNNNNN_NNNN__NNNCCCCCCCC_CCCCCCCCCCCCC",
-            "NNNNNNNNNNN_NNNNN_NNNNNNNNNNNNNNNNNNN_NNNN_CCCCCCCNC_CCCCCCCCCCC",
-            "NNNNNNNNNNNNNNNNNN_NNNNNNNNN_NN_NNN_NNNNNNNCCCCCC_N_NC_CC_CCCCCC",
-            "NNNNNNNNNNNNNNNN_NNNNNNNNNNNNNN_NNNNNNNNNNNCCCCCC_NNNCNCCCCCCCCC",
-            "NN_N__NNNNN_NNNNNNNNNNNNNNNNNNNNNN_NNNNNNNNCCC_CCCNN_CN_C_CCCCCC",
-            "NNNNNNNNNN__NNNNN_NNNNNN_NNNNN_NNNNNNNNNNNNCCCNC_CNNNCNN__CCCCCC",
-            "NNNNNNNNNNN_NN_NN__NNNNNNNNNNNNNNNNNNNNNNNNCCCNCNC_NNCNNN_CCCCCC",
+            "NNNNNNNNNNN_NNNNN_NNNNNNNNNNNNNNNNNNN_NNNN_CCCCCC_NC_CCCCCCCCCCC",
+            "NNNNNNNNNNNNNNNNNN_NNNNNNNNN_NN_NNN_NNNNNNNCCCCCCNN_CC_CC_CCCCCC",
+            "NNNNNNNNNNNNNNNN_N_NNNNNNNNN_NNNNNNNNNNNNNNCCC_CCNNN_CNCCCCCCCCC",
+            "NN_N__NNNNN_NNNNNN_NNNNNNNNNNNN_NN_NNNNNNNNCCCNCC_NNCCN___CCCCCC",
+            "NNNNN_NNNN_NNNNNN_NNNNNN_NNNNN_NNNNNNNNNNNNCCCNC_NNNCCNNCCCCCCCC",
+            "NNNNN_NNNNNNNN_N_NNNNNNNNNNN_NNNNNNNNNNNNNNCCCNC_N_N_CNN__CCCCCC",
         };
         EXPECT_VEC_EQ(expected_result, result);
     }

@@ -14,12 +14,14 @@
 
 #include "celeritas/io/ImportOpticalModel.hh"
 
+#include "Model.hh"
 #include "Types.hh"
 
 namespace celeritas
 {
 class MaterialParams;
 struct ImportData;
+struct ImportOpticalParameters;
 struct ImportOpticalRayleigh;
 struct ImportWavelengthShift;
 
@@ -56,6 +58,7 @@ class ModelImporter
 
     //!@{
     //! \name User builder type aliases
+    using ModelBuilder = Model::ModelBuilder;
     using UserBuildFunction
         = std::function<std::optional<ModelBuilder>(UserBuildInput const&)>;
     using UserBuildMap = std::unordered_map<IMC, UserBuildFunction>;
@@ -79,6 +82,7 @@ class ModelImporter
   private:
     UserBuildInput input_;
     UserBuildMap user_build_map_;
+    ImportOpticalParameters const& params_;
 
     SPConstImported const& imported() const { return input_.imported; }
     SPConstMaterial const& material() const { return input_.material; }
@@ -93,6 +97,8 @@ class ModelImporter
 
     ModelBuilder build_absorption() const;
     ModelBuilder build_rayleigh() const;
+    ModelBuilder build_wls() const;
+    ModelBuilder build_wls2() const;
 };
 
 //---------------------------------------------------------------------------//
@@ -107,6 +113,7 @@ struct WarnAndIgnoreModel
     //!@{
     //! \name Type aliases
     using UserBuildInput = ModelImporter::UserBuildInput;
+    using ModelBuilder = ModelImporter::ModelBuilder;
     //!@}
 
     // Warn about a missing optical model and ignore it

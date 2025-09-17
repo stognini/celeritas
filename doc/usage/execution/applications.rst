@@ -15,15 +15,9 @@ The ``celer-sim`` application is the primary means of running EM test problems
 for independent validation and performance analysis. See
 :ref:`example_celer_sim` for an example.
 
-Usage::
+Usage:
 
-   usage: celer-sim {input}.json
-          celer-sim [--help|-h]
-          celer-sim --version
-          celer-sim --config
-          celer-sim --device
-          celer-sim --dump-default
-
+.. literalinclude:: _usage/celer-sim.txt
 
 - :file:`{input}.json` is the path to the input file, or ``-`` to read the
   JSON from ``stdin``.
@@ -38,7 +32,8 @@ Input
 ^^^^^
 
 .. todo::
-   The input parameters will be documented for version 1. Until then, refer to the
+   The input parameters will be documented for version 1 in the :ref:`input`
+   section and :ref:`api_problem_setup_standalone`. Until then, refer to the
    source code at :file:`app/celer-sim/RunnerInput.hh` .
 
 In addition to these input parameters, :ref:`environment` can be specified to
@@ -66,12 +61,9 @@ sensitive detectors marked via an ``auxiliary`` annotation. The input particles
 must be specified with a HepMC3-compatible file or with a JSON-specified
 "particle gun." See :ref:`example_celer_g4` for an example.
 
-Usage::
+Usage:
 
-  celer-g4 {input}.json
-           {commands}.mac
-           --interactive
-           --dump-default
+.. literalinclude:: _usage/celer-g4.txt
 
 Input
 ^^^^^
@@ -86,7 +78,8 @@ with ``field_options`` corresponding to the ``FieldOptions`` class in :ref:`api_
 
    The macro file usage is in the process of being replaced by JSON
    input for improved automation. The input parameters will be documented for
-   version 1.  Until then, refer to the source code
+   version 1 in the :ref:`input` section and
+   :ref:`api_problem_setup_standalone`.  Until then, refer to the source code
    at :file:`app/celer-g4/RunInput.hh` .
 
 The input is a Geant4 macro file for executing the program. Celeritas defines
@@ -120,5 +113,3 @@ Output
 
 The ROOT "MC truth" output file, if enabled with the command above, contains
 hits from all the sensitive detectors.
-
-

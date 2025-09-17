@@ -16,6 +16,7 @@
 #include "corecel/Macros.hh"
 
 #include "JsonPimpl.hh"
+#include "StringUtils.hh"
 
 namespace celeritas
 {
@@ -25,50 +26,75 @@ namespace celeritas
  */
 void BuildOutput::output(JsonPimpl* j) const
 {
-    auto obj = nlohmann::json::object();
+    auto obj = nlohmann::json::object({
+        {"version", std::string(version_string)},
+    });
 
-    obj["version"] = std::string(celeritas_version);
-
-    {
+    obj["config"] = [] {
         auto cfg = nlohmann::json::object();
-#define CO_SAVE_CFG(NAME) cfg[#NAME] = bool(NAME)
-        CO_SAVE_CFG(CELERITAS_USE_CUDA);
-        CO_SAVE_CFG(CELERITAS_USE_GEANT4);
-        CO_SAVE_CFG(CELERITAS_USE_HEPMC3);
-        CO_SAVE_CFG(CELERITAS_USE_HIP);
-        CO_SAVE_CFG(CELERITAS_USE_MPI);
-        CO_SAVE_CFG(CELERITAS_USE_OPENMP);
-        CO_SAVE_CFG(CELERITAS_USE_ROOT);
-        CO_SAVE_CFG(CELERITAS_USE_VECGEOM);
-        CO_SAVE_CFG(CELERITAS_DEBUG);
-#undef CO_SAVE_CFG
-        cfg["CELERITAS_BUILD_TYPE"] = celeritas_build_type;
-        cfg["CELERITAS_HOSTNAME"] = celeritas_hostname;
-        cfg["CELERITAS_REAL_TYPE"] = celeritas_real_type;
-        cfg["CELERITAS_CORE_GEO"] = celeritas_core_geo;
-        cfg["CELERITAS_CORE_RNG"] = celeritas_core_rng;
-        cfg["CELERITAS_UNITS"] = celeritas_units;
-        if constexpr (CELERITAS_USE_GEANT4)
-        {
-            cfg["CLHEP_VERSION"] = celeritas_clhep_version;
-            cfg["Geant4_VERSION"] = celeritas_geant4_version;
-        }
-        if constexpr (CELERITAS_USE_CUDA)
-        {
-            cfg["CUDA_VERSION"] = celeritas_cuda_version;
-            cfg["Thrust_VERSION"] = celeritas_thrust_version;
-        }
-        if constexpr (CELERITAS_USE_HIP)
-        {
-            cfg["HIP_VERSION"] = celeritas_hip_version;
-        }
+
+        cfg["use"] = [] {
+            std::vector<std::string> options;
+#define CO_ADD_OPT(NAME)                              \
+    if constexpr (CELERITAS_USE_##NAME)               \
+    {                                                 \
+        options.push_back(celeritas::tolower(#NAME)); \
+    }
+            CO_ADD_OPT(COVFIE);
+            CO_ADD_OPT(CUDA);
+            CO_ADD_OPT(GEANT4);
+            CO_ADD_OPT(HEPMC3);
+            CO_ADD_OPT(HIP);
+            CO_ADD_OPT(MPI);
+            CO_ADD_OPT(OPENMP);
+            CO_ADD_OPT(PERFETTO);
+            CO_ADD_OPT(ROOT);
+            CO_ADD_OPT(VECGEOM);
+#undef CO_ADD_OPT
+            return options;
+        }();
+
+#define CO_ADD_CFG(NAME) cfg[#NAME] = std::string(cmake::NAME);
+        CO_ADD_CFG(build_type);
+        CO_ADD_CFG(hostname);
+        CO_ADD_CFG(real_type);
+        CO_ADD_CFG(units);
+        CO_ADD_CFG(openmp);
+        CO_ADD_CFG(core_geo);
+        CO_ADD_CFG(core_rng);
+        CO_ADD_CFG(gpu_architectures);
+#undef CO_ADD_CFG
+        cfg["debug"] = bool(CELERITAS_DEBUG);
+
+        cfg["versions"] = [] {
+            auto deps = nlohmann::json::object();
+
+#define CO_ADD_COND_VERS(USE, NAME, LOWER)                 \
+    if constexpr (CELERITAS_USE_##USE)                     \
+    {                                                      \
+        deps[#NAME] = std::string(cmake::LOWER##_version); \
+    }
+            CO_ADD_COND_VERS(COVFIE, covfie, covfie);
+            CO_ADD_COND_VERS(CUDA, CUDA, cuda);
+            CO_ADD_COND_VERS(CUDA, Thrust, thrust);
+            CO_ADD_COND_VERS(GEANT4, CLHEP, clhep);
+            CO_ADD_COND_VERS(GEANT4, Geant4, geant4);
+            CO_ADD_COND_VERS(HEPMC3, HepMC3, hepmc3);
+            CO_ADD_COND_VERS(HIP, HIP, hip);
+            CO_ADD_COND_VERS(ROOT, ROOT, root);
+            CO_ADD_COND_VERS(VECGEOM, G4VG, g4vg);
+            CO_ADD_COND_VERS(VECGEOM, VecGeom, vecgeom);
+#undef CO_ADD_COND_VERS
+            return deps;
+        }();
+
         if constexpr (CELERITAS_USE_VECGEOM)
         {
-            cfg["VecGeom_VERSION"] = celeritas_vecgeom_version;
+            cfg["vecgeom"] = std::string(cmake::vecgeom_options);
         }
 
-        obj["config"] = std::move(cfg);
-    }
+        return cfg;
+    }();
 
     j->obj = std::move(obj);
 }

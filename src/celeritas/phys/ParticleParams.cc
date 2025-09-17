@@ -13,6 +13,7 @@
 #include "corecel/Assert.hh"
 #include "corecel/cont/Range.hh"
 #include "corecel/data/CollectionBuilder.hh"
+#include "corecel/io/Logger.hh"
 #include "corecel/sys/ScopedMem.hh"
 #include "celeritas/io/ImportData.hh"
 
@@ -33,34 +34,16 @@ ParticleParams::from_import(ImportData const& data)
 {
     CELER_EXPECT(!data.particles.empty());
 
-    Input defs(data.particles.size());
-
-    for (auto i : range(data.particles.size()))
-    {
-        auto const& particle = data.particles.at(i);
-        CELER_ASSERT(!particle.name.empty());
-
-        // Convert metadata
-        defs[i].name = particle.name;
-        defs[i].pdg_code = PDGNumber{particle.pdg};
-        CELER_ASSERT(defs[i].pdg_code);
-
-        // Convert data
-        defs[i].mass = units::MevMass(particle.mass);
-        defs[i].charge = units::ElementaryCharge(particle.charge);
-        defs[i].decay_constant = (particle.is_stable
-                                      ? constants::stable_decay_constant
-                                      : 1 / particle.lifetime);
-    }
+    Input defs = data.particles;
 
     // Sort by increasing mass, then by PDG code (positive before negative of
     // the same absolute value). Placing lighter particles
     // (more likely to be created by various processes, so more "light
     // particle" tracks) together at the beginning of the list will make it
     // easier to human-read the particles while debugging, and having them
-    // at adjacent memory locations could improve cacheing.
+    // at adjacent memory locations could improve caching.
     auto to_particle_key = [](auto const& inp) {
-        int pdg = inp.pdg_code.get();
+        int pdg = inp.pdg.get();
         return std::make_tuple(inp.mass, std::abs(pdg), pdg < 0);
     };
     std::sort(defs.begin(),
@@ -87,16 +70,25 @@ ParticleParams::ParticleParams(Input const& input)
     detail::ParticleInserter insert_particle(&host_data);
     for (auto const& particle : input)
     {
+        CELER_VALIDATE(particle.pdg,
+                       << "input particle '" << particle.name
+                       << "' was not assigned a PDG code");
         CELER_EXPECT(!particle.name.empty());
 
         ParticleId id = insert_particle(particle);
 
         // Add host metadata
-        md_.push_back({particle.name, particle.pdg_code});
+        md_.push_back({particle.name, particle.pdg});
         bool inserted = name_to_id_.insert({particle.name, id}).second;
-        CELER_ASSERT(inserted);
-        inserted = pdg_to_id_.insert({particle.pdg_code, id}).second;
-        CELER_ASSERT(inserted);
+        CELER_VALIDATE(inserted,
+                       << "multiple particles share the name '"
+                       << particle.name << "'");
+        inserted = pdg_to_id_.insert({particle.pdg, id}).second;
+        if (!inserted)
+        {
+            CELER_LOG(warning) << "multiple particles share the PDG code "
+                               << particle.pdg.get();
+        }
     }
 
     // Move to mirrored data, copying to device

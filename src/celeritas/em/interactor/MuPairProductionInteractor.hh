@@ -12,6 +12,7 @@
 #include "corecel/math/Algorithms.hh"
 #include "corecel/math/ArrayOperators.hh"
 #include "corecel/math/ArrayUtils.hh"
+#include "corecel/random/distribution/UniformRealDistribution.hh"
 #include "celeritas/Constants.hh"
 #include "celeritas/Quantities.hh"
 #include "celeritas/em/data/MuPairProductionData.hh"
@@ -22,7 +23,6 @@
 #include "celeritas/phys/Interaction.hh"
 #include "celeritas/phys/ParticleTrackView.hh"
 #include "celeritas/phys/Secondary.hh"
-#include "celeritas/random/distribution/UniformRealDistribution.hh"
 
 namespace celeritas
 {
@@ -111,7 +111,7 @@ CELER_FUNCTION MuPairProductionInteractor::MuPairProductionInteractor(
 
 //---------------------------------------------------------------------------//
 /*!
- * Simulate electron-posiitron pair production by muons.
+ * Simulate electron-positron pair production by muons.
  */
 template<class Engine>
 CELER_FUNCTION Interaction MuPairProductionInteractor::operator()(Engine& rng)
@@ -139,7 +139,7 @@ CELER_FUNCTION Interaction MuPairProductionInteractor::operator()(Engine& rng)
     electron.direction
         = rotate(from_spherical(sample_costheta(rng), phi), inc_direction_);
 
-    // Create the secondary electron
+    // Create the secondary positron
     Secondary& positron = secondaries[1];
     positron.particle_id = shared_.ids.positron;
     positron.energy = energy.positron;

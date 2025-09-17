@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file orange/BoundingBoxUtils.hh
-//! \brief Host-only utilities for bounding boxes
+//! \brief Utilities for bounding boxes
 //---------------------------------------------------------------------------//
 #pragma once
 
 #include <cmath>
 #include <iosfwd>
 
+#include "corecel/Assert.hh"
 #include "corecel/cont/Range.hh"
 #include "corecel/math/Algorithms.hh"
-#include "corecel/math/SoftEqual.hh"
 #include "geocel/BoundingBox.hh"
 
 #include "OrangeTypes.hh"
@@ -74,19 +74,40 @@ inline bool is_degenerate(BoundingBox<T> const& bbox)
 
 //---------------------------------------------------------------------------//
 /*!
+ * Whether any axis has an infinity on one bound but not the other.
+ */
+template<class T>
+inline bool is_half_inf(BoundingBox<T> const& bbox)
+{
+    auto axes = range(to_int(Axis::size_));
+    return any_of(axes.begin(), axes.end(), [&bbox](int ax) {
+        return std::isinf(bbox.lower()[ax]) != std::isinf(bbox.upper()[ax]);
+    });
+}
+
+//---------------------------------------------------------------------------//
+/*!
  * Calculate the center of a bounding box.
  *
- * \pre The bounding box cannot be null
+ * \pre The bounding box cannot be null, or "semi-infinite" (i.e., it may not
+ * have a finite lower/upper value in a particular dimension, with a
+ * corresponding infinite upper/lower value).
  */
 template<class T>
 inline Array<T, 3> calc_center(BoundingBox<T> const& bbox)
 {
     CELER_EXPECT(bbox);
+    CELER_EXPECT(!is_half_inf(bbox));
 
     Array<T, 3> center;
     for (auto ax : range(to_int(Axis::size_)))
     {
         center[ax] = (bbox.lower()[ax] + bbox.upper()[ax]) / 2;
+        if (CELER_UNLIKELY(std::isnan(center[ax])))
+        {
+            // Infinite or half-infinite
+            center[ax] = 0;
+        }
     }
 
     return center;
@@ -228,27 +249,28 @@ inline bool encloses(BoundingBox<T> const& big, BoundingBox<T> const& small)
  * intersection, the result will be inf.
  */
 template<class T, class U>
-inline U calc_dist_to_inside(BoundingBox<T> const& bbox,
-                             Array<U, 3> const& pos,
-                             Array<U, 3> const& dir)
+inline CELER_FUNCTION T calc_dist_to_inside(BoundingBox<T> const& bbox,
+                                            Array<U, 3> const& pos,
+                                            Array<U, 3> const& dir)
 {
     CELER_EXPECT(!is_inside(bbox, pos));
 
     // Test if an intersection is outside the bbox for a given axis
-    auto out_of_bounds = [&bbox](U intersect, int ax) {
+    auto out_of_bounds = [&bbox](T intersect, int ax) {
         return !(intersect >= bbox.lower()[ax]
                  && intersect <= bbox.upper()[ax]);
     };
 
     // Check that the intersection point occurs within the region
     // bounded by the planes of the other two axes
-    auto in_bounds = [&](int ax, U dist) {
+    auto in_bounds = [&](int ax, T dist) {
         for (auto other_ax : range(to_int(Axis::size_)))
         {
             if (other_ax == ax)
                 continue;
 
-            auto intersect = pos[other_ax] + dist * dir[other_ax];
+            auto intersect
+                = celeritas::fma<T>(dist, dir[other_ax], pos[other_ax]);
             if (out_of_bounds(intersect, other_ax))
                 return false;
         }
@@ -256,23 +278,22 @@ inline U calc_dist_to_inside(BoundingBox<T> const& bbox,
     };
 
     // Loop over all 6 planes to find the minimum intersection
-    U min_dist = numeric_limits<U>::infinity();
-    for (auto bound : range(to_int(Bound::size_)))
+    T min_dist = numeric_limits<T>::infinity();
+    for (auto bound : range(Bound::size_))
     {
         for (auto ax : range(to_int(Axis::size_)))
         {
             if (dir[ax] == 0)
             {
-                // Short circut if there is not movement in this dir
+                // Short circuit if there is not movement in this dir
                 continue;
             }
 
-            U dist = (bbox.point(static_cast<Bound>(bound))[ax] - pos[ax])
+            T dist = (bbox.point(static_cast<Bound>(bound))[ax] - pos[ax])
                      / dir[ax];
-
-            if (dist < 0)
+            if (dist <= 0)
             {
-                // Short circut if the plane is behind us
+                // Short circuit if the plane is behind us
                 continue;
             }
 

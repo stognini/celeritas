@@ -10,11 +10,11 @@
 
 #include "corecel/cont/Range.hh"
 #include "corecel/data/Ref.hh"
+#include "corecel/random/params/RngParams.hh"
 #include "corecel/sys/ActionRegistry.hh"
 #include "corecel/sys/ScopedProfiling.hh"
 #include "orange/OrangeData.hh"
 #include "celeritas/Types.hh"
-#include "celeritas/random/RngParams.hh"
 #include "celeritas/random/RngReseed.hh"
 #include "celeritas/track/ExtendFromPrimariesAction.hh"
 #include "celeritas/track/TrackInitParams.hh"
@@ -76,9 +76,15 @@ Stepper<M>::Stepper(Input input)
     CELER_VALIDATE(primaries_action_,
                    << "primary generator was not added to the stepping loop");
 
+    size_type const track_slots = (input.num_track_slots == 0
+                                       ? params_->tracks_per_stream()
+                                       : input.num_track_slots);
+    CELER_VALIDATE(track_slots > 0,
+                   << "track slots were specified neither in core params nor "
+                      "stepper input");
     // Create state, including aux data
     state_ = std::make_shared<CoreState<M>>(
-        *params_, input.stream_id, input.num_track_slots);
+        *params_, input.stream_id, track_slots);
 
     // Execute beginning-of-run action
     ScopedProfiling profile_this{"begin-run"};
@@ -117,7 +123,7 @@ void Stepper<M>::warm_up()
 /*!
  * Transport already-initialized states.
  *
- * A single transport step is simply a loop over a toplogically sorted DAG
+ * A single transport step is simply a loop over a topologically sorted DAG
  * of kernels.
  */
 template<MemSpace M>
@@ -160,6 +166,7 @@ auto Stepper<M>::operator()(SpanConstPrimary primaries) -> result_type
                    << "event number " << max_id->event_id.unchecked_get()
                    << " exceeds max_events=" << params_->init()->max_events());
 
+    state_->counters().num_pending = primaries.size();
     primaries_action_->insert(*params_, *state_, primaries);
 
     return (*this)();

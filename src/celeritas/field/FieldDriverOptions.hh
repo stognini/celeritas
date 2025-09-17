@@ -14,13 +14,14 @@ namespace celeritas
 {
 //---------------------------------------------------------------------------//
 /*!
- * Configuration options for the field driver.
+ * Configuration options for field propagation and substepping.
  *
  * TODO: replace epsilon_rel_max with 1/epsilon_rel_max^2
  * TODO: replace safety with step_shrink_mul (or something to indicate that
  *       it's a multiplicative factor for reducing the step, not anything with
  *       geometry)
  * TODO: remove errcon
+ * TODO: for some of these we could probably use single-precision
  */
 struct FieldDriverOptions
 {

@@ -7,9 +7,7 @@
 #include "PrimaryGeneratorOptions.hh"
 
 #include "corecel/io/EnumStringMapper.hh"
-#include "celeritas/random/distribution/DeltaDistribution.hh"
-#include "celeritas/random/distribution/IsotropicDistribution.hh"
-#include "celeritas/random/distribution/UniformBoxDistribution.hh"
+#include "celeritas/inp/Events.hh"
 
 namespace celeritas
 {
@@ -43,8 +41,72 @@ void check_params_size(char const* sampler,
     CELER_VALIDATE(options.params.size() == required_params,
                    << sampler << " input parameters have "
                    << options.params.size() << " elements but the '"
-                   << to_cstring(options.distribution)
-                   << "' distribution needs exactly " << required_params);
+                   << options.distribution << "' distribution needs exactly "
+                   << required_params);
+}
+
+//---------------------------------------------------------------------------//
+// Helper: Convert energy distribution to inp::EnergyDistribution
+inp::EnergyDistribution inp_from_energy(DistributionOptions const& options)
+{
+    using MevEnergy = Quantity<units::Mev, double>;
+
+    char const sampler_name[] = "energy";
+    check_params_size(sampler_name, 1, options);
+    auto const& p = options.params;
+    switch (options.distribution)
+    {
+        case DistributionSelection::delta:
+            return inp::MonoenergeticDistribution{MevEnergy(p[0])};
+        default:
+            CELER_VALIDATE(false,
+                           << "invalid distribution type '"
+                           << options.distribution << "' for " << sampler_name);
+    }
+    CELER_ASSERT_UNREACHABLE();
+}
+
+//---------------------------------------------------------------------------//
+// Convert position distribution to inp::ShapeDistribution
+inp::ShapeDistribution inp_from_position(DistributionOptions const& options)
+{
+    char const sampler_name[] = "position";
+    check_params_size(sampler_name, 3, options);
+    auto const& p = options.params;
+    switch (options.distribution)
+    {
+        case DistributionSelection::delta:
+            return inp::PointDistribution{Real3{p[0], p[1], p[2]}};
+        case DistributionSelection::box:
+            return inp::UniformBoxDistribution{Real3{p[0], p[1], p[2]},
+                                               Real3{p[3], p[4], p[5]}};
+        default:
+            CELER_VALIDATE(false,
+                           << "invalid distribution type '"
+                           << options.distribution << "' for " << sampler_name);
+    }
+    CELER_ASSERT_UNREACHABLE();
+}
+
+//---------------------------------------------------------------------------//
+// Helper: Convert direction distribution to inp::AngleDistribution
+inp::AngleDistribution inp_from_direction(DistributionOptions const& options)
+{
+    char const sampler_name[] = "direction";
+    check_params_size(sampler_name, 3, options);
+    auto const& p = options.params;
+    switch (options.distribution)
+    {
+        case DistributionSelection::delta:
+            return inp::MonodirectionalDistribution{Real3{p[0], p[1], p[2]}};
+        case DistributionSelection::isotropic:
+            return inp::IsotropicDistribution{};
+        default:
+            CELER_VALIDATE(false,
+                           << "invalid distribution type '"
+                           << options.distribution << "' for " << sampler_name);
+    }
+    CELER_ASSERT_UNREACHABLE();
 }
 
 //---------------------------------------------------------------------------//
@@ -66,79 +128,33 @@ char const* to_cstring(DistributionSelection value)
 
 //---------------------------------------------------------------------------//
 /*!
- * Return a distribution for sampling the energy.
+ * Convert PrimaryGeneratorOptions to inp::CorePrimaryGenerator.
  */
-std::function<real_type(PrimaryGeneratorEngine&)>
-make_energy_sampler(DistributionOptions options)
+inp::CorePrimaryGenerator to_input(PrimaryGeneratorOptions const& pgo)
 {
-    CELER_EXPECT(options);
+    CELER_VALIDATE(pgo,
+                   << "Invalid PrimaryGeneratorOptions: "
+                   << "ensure all distributions and parameters are correctly "
+                      "set.");
 
-    char const sampler_name[] = "energy";
-    check_params_size(sampler_name, 1, options);
-    auto const& p = options.params;
-    switch (options.distribution)
-    {
-        case DistributionSelection::delta:
-            return DeltaDistribution<real_type>(p[0]);
-        default:
-            CELER_VALIDATE(false,
-                           << "invalid distribution type '"
-                           << to_cstring(options.distribution) << "' for "
-                           << sampler_name);
-    }
-}
+    inp::CorePrimaryGenerator result;
 
-//---------------------------------------------------------------------------//
-/*!
- * Return a distribution for sampling the position.
- */
-std::function<Real3(PrimaryGeneratorEngine&)>
-make_position_sampler(DistributionOptions options)
-{
-    CELER_EXPECT(options);
+    // RNG seed
+    result.seed = pgo.seed;
 
-    char const sampler_name[] = "position";
-    check_params_size(sampler_name, 3, options);
-    auto const& p = options.params;
-    switch (options.distribution)
-    {
-        case DistributionSelection::delta:
-            return DeltaDistribution<Real3>(Real3{p[0], p[1], p[2]});
-        case DistributionSelection::box:
-            return UniformBoxDistribution<real_type>(Real3{p[0], p[1], p[2]},
-                                                     Real3{p[3], p[4], p[5]});
-        default:
-            CELER_VALIDATE(false,
-                           << "invalid distribution type '"
-                           << to_cstring(options.distribution) << "' for "
-                           << sampler_name);
-    }
-}
+    // PDG numbers
+    result.pdg = pgo.pdg;
 
-//---------------------------------------------------------------------------//
-/*!
- * Return a distribution for sampling the direction.
- */
-std::function<Real3(PrimaryGeneratorEngine&)>
-make_direction_sampler(DistributionOptions options)
-{
-    CELER_EXPECT(options);
+    // Number of events and primaries per event
+    result.num_events = pgo.num_events;
+    result.primaries_per_event = pgo.primaries_per_event;
 
-    char const sampler_name[] = "direction";
-    check_params_size(sampler_name, 3, options);
-    auto const& p = options.params;
-    switch (options.distribution)
-    {
-        case DistributionSelection::delta:
-            return DeltaDistribution<Real3>(Real3{p[0], p[1], p[2]});
-        case DistributionSelection::isotropic:
-            return IsotropicDistribution<real_type>();
-        default:
-            CELER_VALIDATE(false,
-                           << "invalid distribution type '"
-                           << to_cstring(options.distribution) << "' for "
-                           << sampler_name);
-    }
+    // Distributions
+    result.shape = inp_from_position(pgo.position);
+    result.angle = inp_from_direction(pgo.direction);
+    result.energy = inp_from_energy(pgo.energy);
+
+    return result;
 }
 
 //---------------------------------------------------------------------------//

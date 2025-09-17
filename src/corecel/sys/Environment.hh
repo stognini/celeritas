@@ -73,6 +73,14 @@ class Environment
     // Insert (not overriding!) from another environment
     void merge(Environment const& other);
 
+    //!@{
+    //! Access all entries, unordered, by const iterator
+    const_iterator begin() const { return vars_.cbegin(); }
+    const_iterator cbegin() const { return vars_.cbegin(); }
+    const_iterator end() const { return vars_.cend(); }
+    const_iterator cend() const { return vars_.cend(); }
+    //!@}
+
   private:
     std::unordered_map<key_type, mapped_type> vars_;
     VecKVRef ordered_;
@@ -108,7 +116,7 @@ std::ostream& operator<<(std::ostream&, Environment const&);
 // INLINE DEFINITIONS
 //---------------------------------------------------------------------------//
 /*!
- * Get an environment variable from current or system enviroments.
+ * Get an environment variable from current or system environments.
  */
 auto Environment::operator[](key_type const& env_var) -> mapped_type const&
 {

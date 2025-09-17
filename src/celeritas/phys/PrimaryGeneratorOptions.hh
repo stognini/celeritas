@@ -7,8 +7,7 @@
 #pragma once
 
 #include <algorithm>
-#include <functional>
-#include <random>
+#include <vector>
 
 #include "corecel/io/StringEnumMapper.hh"
 #include "corecel/math/Algorithms.hh"
@@ -18,6 +17,11 @@
 
 namespace celeritas
 {
+namespace inp
+{
+struct CorePrimaryGenerator;
+}
+
 //---------------------------------------------------------------------------//
 //! Distribution selection for sampling quantities in a \c PrimaryGenerator
 enum class DistributionSelection
@@ -48,8 +52,6 @@ struct DistributionOptions
 /*!
  * Primary generator options.
  *
- * TODO: distributions should be std::variant (see ORANGE input)
- *
  * - \c seed: RNG seed
  * - \c pdg: PDG numbers of the primaries. An equal number of primaries of each
  *   type will be generated
@@ -58,6 +60,8 @@ struct DistributionOptions
  * - \c energy: energy distribution type and parameters
  * - \c position: spatial distribution type and parameters
  * - \c direction: angular distribution type and parameters
+ *
+ * \deprecated See inp::PrimaryGenerator
  */
 struct PrimaryGeneratorOptions
 {
@@ -72,16 +76,15 @@ struct PrimaryGeneratorOptions
     //! Whether the options are valid
     explicit operator bool() const
     {
-        return !pdg.empty()
-               && std::all_of(pdg.begin(), pdg.end(), LogicalTrue{})
+        return !pdg.empty() && std::all_of(pdg.begin(), pdg.end(), Identity{})
                && num_events > 0 && primaries_per_event > 0 && energy
                && position && direction;
     }
 };
 
-// TODO: move to PrimaryGenerator.hh
-
-using PrimaryGeneratorEngine = std::mt19937;
+//---------------------------------------------------------------------------//
+// Convert PrimaryGeneratorOptions to inp::CorePrimaryGenerator.
+inp::CorePrimaryGenerator to_input(PrimaryGeneratorOptions const&);
 
 //---------------------------------------------------------------------------//
 // FREE FUNCTIONS
@@ -90,21 +93,5 @@ using PrimaryGeneratorEngine = std::mt19937;
 // Get a distribution name
 char const* to_cstring(DistributionSelection value);
 
-// TODO: move these to PrimaryGenerator.hh
-//! \cond
-
-// Return a distribution for sampling the energy
-std::function<real_type(PrimaryGeneratorEngine&)>
-make_energy_sampler(DistributionOptions options);
-
-// Return a distribution for sampling the position
-std::function<Real3(PrimaryGeneratorEngine&)>
-make_position_sampler(DistributionOptions options);
-
-// Return a distribution for sampling the direction
-std::function<Real3(PrimaryGeneratorEngine&)>
-make_direction_sampler(DistributionOptions options);
-
-//! \endcond
 //---------------------------------------------------------------------------//
 }  // namespace celeritas

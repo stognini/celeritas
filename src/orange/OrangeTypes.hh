@@ -180,7 +180,7 @@ enum class UniverseType : unsigned char
  * with inter-universe coincident surfaces as well as carefully placed
  * particle sources and ray tracing.
  *
- * As an implementataion detail, the "on" case is currently *exact*, but future
+ * As an implementation detail, the "on" case is currently *exact*, but future
  * changes might increase the width of "on" to a finite but small range
  * ("fuzziness").
  */
@@ -237,17 +237,17 @@ enum class Chirality : bool
  */
 namespace logic
 {
-//! Special logical Evaluator tokens.
+//! Special logical Evaluator tokens ordered by precedence.
 // The enum values are set to the highest 6 values of logic_int.
 enum OperatorToken : logic_int
 {
     lbegin = logic_int(~logic_int(6)),
     lopen = lbegin,  //!< Open parenthesis
     lclose,  //!< Close parenthesis
-    ltrue,  //!< Push 'true'
     lor,  //!< Binary logical OR
     land,  //!< Binary logical AND
     lnot,  //!< Unary negation
+    ltrue,  //!< Push 'true'
     lend
 };
 }  // namespace logic
@@ -393,6 +393,9 @@ CELER_CONSTEXPR_FUNCTION bool is_operator_token(logic_int lv)
 //---------------------------------------------------------------------------//
 // HELPER FUNCTIONS (HOST)
 //---------------------------------------------------------------------------//
+// Get a string corresponding to a surface sense
+char const* to_cstring(Sense);
+
 // Get a string corresponding to a surface type
 char const* to_cstring(SurfaceType);
 
@@ -410,7 +413,7 @@ namespace logic
 {
 inline constexpr char to_char(OperatorToken tok)
 {
-    return is_operator_token(tok) ? "()*|&~"[tok - lbegin] : '\a';
+    return is_operator_token(tok) ? "()|&~*"[tok - lbegin] : '\a';
 }
 }  // namespace logic
 

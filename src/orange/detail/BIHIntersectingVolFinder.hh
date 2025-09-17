@@ -27,13 +27,13 @@ namespace detail
  * box. The edge bounding box is the bounding box created by clipping an
  * infinite bounding box with all bounding planes between the root node and the
  * current edge (inclusive). If a ray's intersection with the edge bbox is
- * found to be nearer than the current minimum intersection, traversal procedes
+ * found to be nearer than the current minimum intersection, traversal proceeds
  * down that edge. Likewise, when a root node is reacted, intersections with
  * volume bboxes are first tested against the minimum intersection prior to
  * testing the the volume itself. The minimum intersection is only modified
  * when a nearer minimumium intersection with a actual volume if found, NOT a
  * nearer intersection with an edge bbox or volume bbox. This is because is is
- * possible to have a ray that interects with a volume's bbox, but not the
+ * possible to have a ray that intersects with a volume's bbox, but not the
  * volume itself.
  *
  * \todo move to top-level orange directory out of detail namespace
@@ -95,7 +95,6 @@ class BIHIntersectingVolFinder
     // Calculate the current min intersection, which may/may not be in inf_vols
     template<class F>
     inline CELER_FUNCTION Intersection visit_inf_vols(Intersection intersection,
-                                                      Ray ray,
                                                       F&& visit_vol) const;
 };
 
@@ -117,15 +116,13 @@ BIHIntersectingVolFinder::BIHIntersectingVolFinder(
 /*!
  * Calculate the minimum intersection, with supplied maximum search distance.
  *
- * The visit_vol argument should be of the form:
+ * If no intersection is found within max_search_dist, an empty Intersection
+ * object is returned. The visit_vol argument should be of the form:
  *
- * detail::Intersection(*)(LocalVolumeId id, Ray ray, real_type
- * max_search_dist)
+ * detail::Intersection(*)(LocalVolumeId id, real_type max_search_dist)
  *
- * In other words, for a given LocalVolumeId and Ray, it should provide an
- * Intersection object denoting the next surface and the corresponding
- * distance. If no intersection is found within max_search_dist, an empty
- * Intersection object is returned.
+ * Other information required by the functor should be handled through
+ * lambda capture.
  */
 template<class F>
 CELER_FUNCTION auto
@@ -154,7 +151,7 @@ BIHIntersectingVolFinder::operator()(BIHIntersectingVolFinder::Ray ray,
 
     } while (current_node);
 
-    return this->visit_inf_vols(intersection, ray, visit_vol);
+    return this->visit_inf_vols(intersection, visit_vol);
 }
 
 //---------------------------------------------------------------------------//
@@ -167,7 +164,7 @@ CELER_FUNCTION auto
 BIHIntersectingVolFinder::operator()(BIHIntersectingVolFinder::Ray ray,
                                      F&& visit_vol) const -> Intersection
 {
-    return (*this)(ray, visit_vol, std::numeric_limits<real_type>::infinity());
+    return (*this)(ray, visit_vol, numeric_limits<real_type>::infinity());
 }
 
 //---------------------------------------------------------------------------//
@@ -198,9 +195,19 @@ BIHNodeId BIHIntersectingVolFinder::next_node(BIHNodeId current_id,
     if (previous_id == current_node.parent)
     {
         // Visiting this inner node for the first time; go down either left
-        // or right edge
-        return this->visit_bbox(l_edge.bbox, ray, min_dist) ? l_edge.child
-                                                            : r_edge.child;
+        // edge, right edge, or return to the parent
+        if (this->visit_bbox(l_edge.bbox, ray, min_dist))
+        {
+            return l_edge.child;
+        }
+        else if (this->visit_bbox(r_edge.bbox, ray, min_dist))
+        {
+            return r_edge.child;
+        }
+        else
+        {
+            return current_node.parent;
+        }
     }
 
     if (previous_id == current_node.edges[Side::left].child)
@@ -247,9 +254,9 @@ BIHIntersectingVolFinder::visit_leaf(BIHLeafNode const& leaf_node,
 
         if (this->visit_bbox(bbox, ray, min_intersection.distance))
         {
-            auto intersection = visit_vol(id, ray, min_intersection.distance);
+            auto intersection = visit_vol(id, min_intersection.distance);
             if (intersection
-                && intersection.distance < min_intersection.distance)
+                && (intersection.distance) < (min_intersection.distance))
             {
                 min_intersection = intersection;
             }
@@ -265,13 +272,13 @@ BIHIntersectingVolFinder::visit_leaf(BIHLeafNode const& leaf_node,
 template<class F>
 CELER_FUNCTION auto
 BIHIntersectingVolFinder::visit_inf_vols(Intersection min_intersection,
-                                         BIHIntersectingVolFinder::Ray ray,
                                          F&& visit_vol) const -> Intersection
 {
     for (auto id : view_.inf_vol_ids())
     {
-        auto intersection = visit_vol(id, ray, min_intersection.distance);
-        if (intersection && intersection.distance < min_intersection.distance)
+        auto intersection = visit_vol(id, min_intersection.distance);
+        if (intersection
+            && (intersection.distance) < (min_intersection.distance))
         {
             min_intersection = intersection;
         }

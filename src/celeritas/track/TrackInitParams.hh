@@ -18,6 +18,9 @@ namespace celeritas
 //---------------------------------------------------------------------------//
 /*!
  * Manage persistent track initializer data.
+ *
+ * \todo \c max_events could potentially be per thread, not global? And we
+ * should differentiate between user events and events in flight.
  */
 class TrackInitParams final : public ParamsDataInterface<TrackInitParamsData>
 {
@@ -43,7 +46,7 @@ class TrackInitParams final : public ParamsDataInterface<TrackInitParamsData>
     //! Track sorting strategy
     TrackOrder track_order() const { return host_ref().track_order; }
 
-    //! Access primaries for contructing track initializer states
+    //! Access primaries for constructing track initializer states
     HostRef const& host_ref() const final { return data_.host_ref(); }
 
     //! Access data on device

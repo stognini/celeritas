@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "corecel/math/NumericLimits.hh"
+#include "celeritas/inp/Grid.hh"
 
 #include "ImportData.hh"
 
@@ -53,16 +54,19 @@ class ImportDataTrimmer
     void operator()(ImportMuPairProductionTable& data);
     void operator()(ImportOpticalMaterial& data);
     void operator()(ImportOpticalModel& data);
-    void operator()(ImportParticle& data);
+    void operator()(inp::Particle& data);
     void operator()(ImportPhysMaterial& data);
     void operator()(ImportProcess& data);
     //!@}
 
     //!@{
     //! Trim objects
-    void operator()(ImportPhysicsVector& data);
+    void operator()(inp::ReflectionForm& data);
+    void operator()(inp::GridReflection& data);
+    void operator()(inp::Grid& data);
+    void operator()(inp::UniformGrid& data);
     void operator()(ImportPhysicsTable& data);
-    void operator()(ImportPhysics2DVector& data);
+    void operator()(inp::TwodGrid& data);
     //!@}
 
   private:

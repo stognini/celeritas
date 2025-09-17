@@ -28,13 +28,22 @@ class MfpBuilder;
 class Model : public OpticalStepActionInterface, public ConcreteAction
 {
   public:
+    //!@{
+    //! \name Type aliases
+
+    //! Function to build optical models with a given action id
+    using ModelBuilder = std::function<std::shared_ptr<Model>(ActionId)>;
+
+    //!@}
+
+  public:
     using ConcreteAction::ConcreteAction;
 
     //! Action order for optical models is always post-step
     StepActionOrder order() const override { return StepActionOrder::post; }
 
     //! Build mean free path grids for all optical materials
-    virtual void build_mfps(OpticalMaterialId mat, MfpBuilder& build) const = 0;
+    virtual void build_mfps(OptMatId mat, MfpBuilder& build) const = 0;
 };
 
 //---------------------------------------------------------------------------//
