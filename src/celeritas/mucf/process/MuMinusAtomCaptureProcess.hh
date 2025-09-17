@@ -9,6 +9,7 @@
 
 #include "celeritas/Types.hh"
 #include "celeritas/mat/MaterialParams.hh"
+#include "celeritas/phys/ImportedProcessAdapter.hh"
 #include "celeritas/phys/Process.hh"
 
 namespace celeritas
@@ -25,21 +26,29 @@ class MuMinusAtomCaptureProcess final : public Process
     //! \name Type aliases
     using SPConstParticles = std::shared_ptr<ParticleParams const>;
     using SPConstMaterials = std::shared_ptr<MaterialParams const>;
+    using SPConstImported = std::shared_ptr<ImportedProcesses const>;
     //!@}
 
   public:
     // Construct from particle data
     explicit MuMinusAtomCaptureProcess(SPConstParticles particles,
-                                       SPConstMaterials materials);
+                                       SPConstMaterials materials,
+                                       SPConstImported process_data);
 
     // Construct the models associated with this process
     VecModel build_models(ActionIdIter start_id) const final;
 
     // Get the interaction cross sections for the given energy range
-    StepLimitBuilders step_limits(Applicability applicability) const final;
+    XsGrid macro_xs(Applicability range) const final;
 
-    // Whether to use the integral method to sample interaction length
-    bool use_integral_xs() const final { return false; }
+    // Get the energy loss for the given energy range
+    EnergyLossGrid energy_loss(Applicability range) const final;
+
+    //! Whether the integral method can be used to sample interaction length
+    bool supports_integral_xs() const final { return true; }  // CHECK ME
+
+    //! Whether the process applies when the particle is stopped
+    bool applies_at_rest() const final { return imported_.applies_at_rest(); }
 
     // Name of the process
     std::string_view label() const final;
@@ -47,6 +56,7 @@ class MuMinusAtomCaptureProcess final : public Process
   private:
     SPConstParticles particles_;
     SPConstMaterials materials_;
+    ImportedProcessAdapter imported_;
     ParticleId muon_id_;
 };
 

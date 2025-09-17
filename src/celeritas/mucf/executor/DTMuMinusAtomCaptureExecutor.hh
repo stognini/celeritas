@@ -7,11 +7,14 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include "corecel/Macros.hh"
+#include "corecel/Assert.hh"
 #include "celeritas/global/CoreTrackView.hh"
-#include "celeritas/mat/ElementSelector.hh"
+#include "celeritas/mat/ElementView.hh"
+#include "celeritas/mat/IsotopeView.hh"
 #include "celeritas/mucf/data/DTMuMinusAtomCaptureData.hh"
 #include "celeritas/mucf/interactor/DTMuMinusAtomCaptureInteractor.hh"
+#include "celeritas/random/ElementSelector.hh"
+#include "celeritas/random/IsotopeSelector.hh"
 
 namespace celeritas
 {
@@ -26,30 +29,45 @@ struct DTMuMinusAtomCaptureExecutor
 
 //---------------------------------------------------------------------------//
 /*!
- * Sample a deuterium or tritium capture for the current track.
+ * Sample a deuteron or triton capture for the current track.
  */
 CELER_FUNCTION Interaction
 DTMuMinusAtomCaptureExecutor::operator()(celeritas::CoreTrackView const& track)
 {
-    auto allocate_secondaries
-        = track.make_physics_step_view().make_secondary_allocator();
-    auto particle = track.make_particle_view();
-    auto material = track.make_material_view().make_material_view();
+    auto rng = track.rng();
 
-    auto elcomp_id = track.make_physics_step_view().element();
+    auto phys_track_view = track.physics();
+
+    auto phys_step_view = track.physics_step();
+    auto elcomp_id = phys_step_view.element();
+#if 0
     if (!elcomp_id)
     {
-        // Sample an element
+        // Sample an element; FIX ME
+        auto model_id = phys_track_view.make_model_finder(ParticleProcessId{0});
+        auto select_element = track.physics().make_element_selector(
+            phys_track_view.cdf_table(model_id), energy);
+        elcomp_id = select_element(rng);
+        CELER_ASSERT(elcomp_id);
+        // Set element
+        phys_step_view.element(elcomp_id);
     }
+#endif
 
-    auto elem_id = material.element_id(elcomp_id);
-    CELER_ASSERT(elem_id == model_data.deuterium
-                 || elem_id == model_data.tritium);
-    auto element = material.make_element_view(elcomp_id);
+    auto material = track.material().material_record();
+    ElementView element_view = material.element_record(elcomp_id);
+    IsotopeSelector select_isotope(element_view);
+    IsotopeView target = element_view.isotope_record(select_isotope(rng));
+    auto const target_id = target.isotope_id();
+    CELER_ASSERT(target_id == model_data.deuteron
+                 || target_id == model_data.triton);
 
-    DTMuMinusAtomCaptureInteractor interact(
-        model_data, particle, material, element, allocate_secondaries);
-    auto rng = track.make_rng_engine();
+    auto allocate_secondaries = phys_step_view.make_secondary_allocator();
+    DTMuMinusAtomCaptureInteractor interact(model_data,
+                                            track.make_particle_view(),
+                                            material,
+                                            element_view,
+                                            allocate_secondaries);
     return interact(rng);
 }
 

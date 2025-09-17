@@ -30,15 +30,16 @@ DTMuMinusAtomCaptureModel::DTMuMinusAtomCaptureModel(
     CELER_EXPECT(id);
 
     data_.muon = particles.find(pdg::mu_minus());
-    // TODO: better than string?
-    data_.deuterium = materials.find_element("deuterium");
-    data_.tritium = materials.find_element("tritium");
-    // TODO: This asserts that d or t is present; build model without d or t?
-    CELER_ASSERT(data_);
-
     CELER_VALIDATE(data_.muon,
                    << "missing negative muon (required for "
                    << this->description() << ")");
+
+    // TODO: better than string?
+    data_.deuteron = materials.find_isotope("deuterium");
+    data_.triton = materials.find_isotope("tritium");
+    // TODO: This asserts that d or t is present; build model without d or t?
+    CELER_ASSERT(data_);
+
     CELER_ENSURE(data_);
 }
 
@@ -51,7 +52,7 @@ auto DTMuMinusAtomCaptureModel::applicability() const -> SetApplicability
     Applicability applic;
     applic.particle = data_.muon;
     applic.lower = zero_quantity();  // Valid at rest
-    applic.upper = units::MevEnergy{1e8};  // 100 TeV
+    applic.upper = units::MevEnergy{1e8};  // TODO: Leave it?
 
     return {applic};
 }
@@ -60,7 +61,7 @@ auto DTMuMinusAtomCaptureModel::applicability() const -> SetApplicability
 /*!
  * Get the microscopic cross sections for the given particle and material.
  */
-auto DTMuMinusAtomCaptureModel::micro_xs(Applicability) const -> MicroXsBuilders
+auto DTMuMinusAtomCaptureModel::micro_xs(Applicability) const -> XsTable
 {
     // TODO: FIXME
     return {};

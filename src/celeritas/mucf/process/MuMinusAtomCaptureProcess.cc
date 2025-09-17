@@ -9,8 +9,6 @@
 
 #include <memory>
 
-#include "celeritas/grid/ValueGridBuilder.hh"
-#include "celeritas/grid/ValueGridType.hh"
 #include "celeritas/mucf/model/DTMuMinusAtomCaptureModel.hh"
 #include "celeritas/phys/Model.hh"
 
@@ -20,10 +18,16 @@ namespace celeritas
 /*!
  * Construct from host data.
  */
-MuMinusAtomCaptureProcess::MuMinusAtomCaptureProcess(SPConstParticles particles,
-                                                     SPConstMaterials materials)
+MuMinusAtomCaptureProcess::MuMinusAtomCaptureProcess(
+    SPConstParticles particles,
+    SPConstMaterials materials,
+    SPConstImported process_data)
     : particles_(particles)
     , materials_(materials)
+    , imported_(process_data,
+                particles_,
+                ImportProcessClass::muon_atomic_capture,
+                {pdg::mu_minus()})
     , muon_id_(particles_->find(pdg::mu_minus()))
 {
     CELER_EXPECT(particles_);
@@ -46,17 +50,20 @@ auto MuMinusAtomCaptureProcess::build_models(ActionIdIter start_id) const
 /*!
  * Get the interaction cross sections for the given energy range.
  */
-auto MuMinusAtomCaptureProcess::step_limits(Applicability applicability) const
-    -> StepLimitBuilders
+auto MuMinusAtomCaptureProcess::macro_xs(Applicability applic) const -> XsGrid
 {
-    CELER_EXPECT(applicability.particle == muon_id_);
-
-    StepLimitBuilders builders;
-    builders[ValueGridType::macro_xs] = std::make_unique<ValueGridOTFBuilder>();
-
-    return builders;
+    return imported_.macro_xs(std::move(applic));
 }
 
+//---------------------------------------------------------------------------//
+/*!
+ * Get the energy loss for the given energy range.
+ */
+auto MuMinusAtomCaptureProcess::energy_loss(Applicability applic) const
+    -> EnergyLossGrid
+{
+    return imported_.energy_loss(std::move(applic));
+}
 //---------------------------------------------------------------------------//
 /*!
  * Name of the process.
