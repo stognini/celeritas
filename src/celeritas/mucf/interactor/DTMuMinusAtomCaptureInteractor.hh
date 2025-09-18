@@ -23,9 +23,9 @@ namespace celeritas
 /*!
  * Muonic atom capture interactor for deuteron or triton atoms.
  *
- * This is an \em at-rest interaction where an incoming muon track is
- * absorbed and the resulting secondary is a muonic deuteron or triton atom
- * with no kinetic energy.
+ * This is an \em at-rest interaction where an incoming muon is absorbed and
+ * the resulting secondary is a muonic deuteron or triton atom with no kinetic
+ * energy.
  */
 class DTMuMinusAtomCaptureInteractor
 {

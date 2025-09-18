@@ -24,7 +24,8 @@ namespace celeritas
  *
  * \note This model is only applicable at rest.
  */
-class DTMuMinusAtomCaptureModel final : public Model, public ConcreteAction
+class DTMuMinusAtomCaptureModel final : public Model,
+                                        public StaticConcreteAction
 {
   public:
     // Construct with defaults

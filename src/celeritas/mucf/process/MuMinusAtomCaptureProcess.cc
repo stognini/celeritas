@@ -51,7 +51,7 @@ auto MuMinusAtomCaptureProcess::build_models(ActionIdIter start_id) const
  */
 auto MuMinusAtomCaptureProcess::macro_xs(Applicability applic) const -> XsGrid
 {
-    return imported_.macro_xs(std::move(applic));
+    return {};  // \todo: return from imported_?
 }
 
 //---------------------------------------------------------------------------//
@@ -61,7 +61,7 @@ auto MuMinusAtomCaptureProcess::macro_xs(Applicability applic) const -> XsGrid
 auto MuMinusAtomCaptureProcess::energy_loss(Applicability applic) const
     -> EnergyLossGrid
 {
-    return imported_.energy_loss(std::move(applic));
+    return {};  // \todo: return from imported_?
 }
 //---------------------------------------------------------------------------//
 /*!

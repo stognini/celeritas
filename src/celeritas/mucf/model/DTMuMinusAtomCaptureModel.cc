@@ -22,9 +22,10 @@ DTMuMinusAtomCaptureModel::DTMuMinusAtomCaptureModel(
     ActionId id,
     ParticleParams const& particles,
     MaterialParams const& materials)
-    : ConcreteAction(id,
-                     "dt-mu-capture",
-                     "interact by muon generating a muonic d or t atom")
+    : StaticConcreteAction(
+          id,
+          "dt-mu-capture",
+          R"(interact by muon generating a muonic d or t atom)")
 {
     CELER_EXPECT(id);
 
@@ -37,8 +38,6 @@ DTMuMinusAtomCaptureModel::DTMuMinusAtomCaptureModel(
     data_.deuteron = materials.find_isotope("deuterium");
     data_.triton = materials.find_isotope("tritium");
     // TODO: This asserts that d or t is present; build model without d or t?
-    CELER_ASSERT(data_);
-
     CELER_ENSURE(data_);
 }
 
@@ -51,7 +50,7 @@ auto DTMuMinusAtomCaptureModel::applicability() const -> SetApplicability
     Applicability applic;
     applic.particle = data_.muon;
     applic.lower = zero_quantity();  // Valid at rest
-    applic.upper = units::MevEnergy{1e8};  // TODO: Leave it?
+    applic.upper = units::MevEnergy{1e8};  // \todo Verify range
 
     return {applic};
 }
@@ -62,7 +61,7 @@ auto DTMuMinusAtomCaptureModel::applicability() const -> SetApplicability
  */
 auto DTMuMinusAtomCaptureModel::micro_xs(Applicability) const -> XsTable
 {
-    // TODO: FIXME
+    // \todo Implement
     return {};
 }
 
