@@ -9,13 +9,10 @@
 #include "corecel/Macros.hh"
 #include "corecel/data/StackAllocator.hh"
 #include "celeritas/mat/ElementView.hh"
-#include "celeritas/mat/MaterialView.hh"
 #include "celeritas/mucf/data/DTMuMinusAtomCaptureData.hh"
 #include "celeritas/phys/Interaction.hh"
 #include "celeritas/phys/ParticleTrackView.hh"
 #include "celeritas/phys/Secondary.hh"
-
-#include "random/IsotopeSelector.hh"
 
 namespace celeritas
 {
@@ -39,7 +36,6 @@ class DTMuMinusAtomCaptureInteractor
     inline CELER_FUNCTION
     DTMuMinusAtomCaptureInteractor(DTMuMinusAtomCaptureData const& data,
                                    ParticleTrackView const& particle,
-                                   MaterialView const& material,
                                    ElementView const& element,
                                    StackAllocator<Secondary>& allocate);
 
@@ -50,25 +46,21 @@ class DTMuMinusAtomCaptureInteractor
   private:
     // Shared constant physics properties
     DTMuMinusAtomCaptureData const& data_;
-    // Material properties
-    MaterialView const& material_;
-    // Element properties
-    ElementView const& element_;
     // Allocate space for secondary particle (one muonic d or t)
     StackAllocator<Secondary>& allocate_;
-    // Deuteron number fraction
-    real_type deuteron_frac_{-1};
+    // Store if it is a deuteron target
+    real_type deuteron_frac_{};
     // Triton number fraction
-    real_type triton_frac_{-1};
+    real_type triton_frac_{};
 
-    // Select d or t spin (make it a separate helper)
+    // Select deuteron or triton isotope to form muonic atom
     template<class Engine>
-    inline CELER_FUNCTION real_type select_spin(AtomicMassNumber atomic_mass,
-                                                Engine& rng);
+    inline CELER_FUNCTION IsotopeId select_isotope(Engine& rng);
 
-    // Select muonic atom
+    // Select muonic atom spin
     template<class Engine>
-    inline CELER_FUNCTION ParticleId select_muonic_atom(Engine& rng);
+    inline CELER_FUNCTION ParticleId select_atom_spin(IsotopeId isotope_id,
+                                                      Engine& rng);
 };
 
 //---------------------------------------------------------------------------//
@@ -80,21 +72,15 @@ class DTMuMinusAtomCaptureInteractor
 DTMuMinusAtomCaptureInteractor::DTMuMinusAtomCaptureInteractor(
     DTMuMinusAtomCaptureData const& data,
     ParticleTrackView const& particle,
-    MaterialView const& material,
     ElementView const& element,
     StackAllocator<Secondary>& allocate)
-    : data_(data), material_(material), element_(element), allocate_(allocate)
+    : data_(data), allocate_(allocate)
 {
     // Expect hydrogen-only material, with deuteron or triton isotopes
     CELER_EXPECT(particle.particle_id() == data_.muon);
-    CELER_EXPECT(material_.num_elements() == 1);
-    CELER_EXPECT(material_.element_id(ElementComponentId{0}) == data_.hydrogen);
-
-    auto const& el_view = material_.element_record(ElementComponentId{0});
-    CELER_EXPECT(el_view.atomic_number() == AtomicNumber{1});
 
     // Store isotopic number fractions for the muonic atom selection
-    for (auto const& iso : el_view.isotopes())
+    for (auto const& iso : element.isotopes())
     {
         if (iso.isotope == data_.deuteron)
         {
@@ -107,7 +93,7 @@ DTMuMinusAtomCaptureInteractor::DTMuMinusAtomCaptureInteractor(
     }
 
     // At least one of the isotopes must be present
-    CELER_ENSURE(deuteron_frac_ >= 0 || triton_frac_ >= 0);
+    CELER_ENSURE(deuteron_frac_ + triton_frac_ > 0);
 }
 
 //---------------------------------------------------------------------------//
@@ -126,12 +112,14 @@ CELER_FUNCTION Interaction DTMuMinusAtomCaptureInteractor::operator()(Engine& rn
         return Interaction::from_failure();
     }
 
+    // Select d or t isotope
+    auto isotope_id = this->select_isotope(rng);
+    // Form muonic atom at rest with a given spin
+    secondary->particle_id = this->select_atom_spin(isotope_id, rng);
+    //! \todo Apply electromagnetic cascade to the formed atom
+
     Interaction result = Interaction::from_absorption();
     result.secondaries = {secondary};
-    secondary->particle_id = this->select_muonic_atom(isotope_id, rng);
-    //! \todo Apply electromagnetic cascade to the formed atom
-    secondary->spin = this->select_spin(element_.atomic_mass_number(), rng);
-
     return result;
 }
 
@@ -139,10 +127,11 @@ CELER_FUNCTION Interaction DTMuMinusAtomCaptureInteractor::operator()(Engine& rn
 /*!
  * Select muonic atom spin.
  *
- * If the atom is deuteron, the muonic atom has a spin of 3/2 or 1/2.
- * If the atom is triton, the muonic atom has a spin of 1 or 0.
+ * Deuteron muonic atoms have a spin of 3/2 or 1/2.
+ * Triton muonic atoms have a spin of 1 or 0.
  *
- * The fraction is hardcoded as 2/3 for deuteron and 3/4 for triton.
+ * Fractions of atoms with each spin are set as 2/3 for deuterons and 3/4 for
+ * tritons.
  *
  * \note
  * Yamashita, T., et al. Sci Rep 12, 6393 (2022).
@@ -153,26 +142,30 @@ CELER_FUNCTION Interaction DTMuMinusAtomCaptureInteractor::operator()(Engine& rn
  * and add ref to zotero.
  */
 template<class Engine>
-CELER_FUNCTION real_type DTMuMinusAtomCaptureInteractor::select_spin(
-    AtomicMassNumber atomic_mass, Engine& rng)
+CELER_FUNCTION ParticleId DTMuMinusAtomCaptureInteractor::select_atom_spin(
+    IsotopeId isotope_id, Engine& rng)
 {
-    CELER_EXPECT(atomic_mass == AtomicMassNumber{2}
-                 || atomic_mass == AtomicMassNumber{3});
+    CELER_EXPECT(isotope_id == data_.deuteron || isotope_id == data_.triton);
 
-    bool const is_deuteron = (atomic_mass == AtomicMassNumber{2});
-    real_type const spin_fraction = is_deuteron ? (2 / 3) : 0.75;
-    real_type const selected = UniformRealDistribution<real_type>(rng);
+    bool const is_deuteron = (isotope_id == data_.deuteron) ? true : false;
+    auto const spin_fraction = is_deuteron
+                                   ? data_.muonic_deuteron_spin_fraction()
+                                   : data_.muonic_triton_spin_fraction();
+    auto const selected = UniformRealDistribution<real_type>(rng);
 
-    real_type result;
+    ParticleId result;
     if (is_deuteron)
     {
         // Deuteron spin is either 3/2 or 1/2
-        result = (selected < spin_fraction) ? 1.5 : 0.5;
+        result = (selected < spin_fraction)
+                     ? data_.muonic_deuteron_spin_3_over_2
+                     : data_.muonic_deuteron_spin_1_over_2;
     }
     else
     {
         // Triton spin is either 1 or 0
-        result = (selected < spin_fraction) ? 1 : 0;
+        result = (selected < spin_fraction) ? data_.muonic_triton_spin_1
+                                            : data_.muonic_triton_spin_0;
     }
 
     return result;
@@ -207,20 +200,20 @@ CELER_FUNCTION real_type DTMuMinusAtomCaptureInteractor::select_spin(
  * and add ref to zotero.
  */
 template<class Engine>
-CELER_FUNCTION ParticleId
-DTMuMinusAtomCaptureInteractor::select_muonic_atom(Engine& rng)
+CELER_FUNCTION IsotopeId
+DTMuMinusAtomCaptureInteractor::select_isotope(Engine& rng)
 {
-    CELER_EXPECT(deuteron_frac >= 0 || triton_frac >= 0);
+    CELER_EXPECT(deuteron_frac_ + triton_frac_ > 0);
 
-    real_type const q1s = real_type{1} / (real_type{1} + 2.9 * triton_frac);
-    real_type const deuteron_prob = deuteron_frac * q1s;
+    real_type const q1s = real_type{1} / (real_type{1} + 2.9 * triton_frac_);
+    real_type const deuteron_prob = deuteron_frac_ * q1s;
 
     UniformRealDistribution<real_type> uniform;
     if (uniform(rng) <= deuteron_prob)
     {
-        return data_.muonic_deuteron;
+        return data_.deuteron;
     }
-    return data_.muonic_triton;
+    return data_.triton;
 }
 //---------------------------------------------------------------------------//
 }  // namespace celeritas
