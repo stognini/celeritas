@@ -73,6 +73,8 @@ enum class ImportProcessClass
     gamma_nuclear,
     // Neutron
     neutron_elastic,
+    // MuCF (type is hadronic)
+    mu_atom_capture,
     size_
 };
 

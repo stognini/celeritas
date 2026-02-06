@@ -65,6 +65,7 @@ char const* to_cstring(ImportProcessClass value)
         "gamma_general",
         "gamma_nuclear",
         "neutron_elastic",
+        "mu_atom_capture",
     };
     return to_cstring_impl(value);
 }
@@ -77,6 +78,7 @@ char const* to_geant_name(ImportProcessClass value)
 {
     static EnumStringMapper<ImportProcessClass> const to_name_impl{
         "",  // unknown,
+        // EM processes
         "ionIoni",  // ion_ioni,
         "msc",  // msc,
         "hIoni",  // h_ioni,
@@ -97,6 +99,8 @@ char const* to_geant_name(ImportProcessClass value)
         "GammaGeneralProc",  // gamma_general,
         "GammaNuclearProc",  // gamma_nuclear,
         "neutronElasticProc",  // neutron_elastic,
+        // Hadronic
+        "muMinusAtomicCaptureAtRest",  // Muonic atom capture (used by muCF)
     };
     return to_name_impl(value);
 }

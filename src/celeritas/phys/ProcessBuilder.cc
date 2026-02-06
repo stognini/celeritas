@@ -29,6 +29,7 @@
 #include "celeritas/io/GammaNuclearXsReader.hh"
 #include "celeritas/io/ImportData.hh"
 #include "celeritas/io/NeutronXsReader.hh"
+#include "celeritas/mucf/process/MucfProcess.hh"
 #include "celeritas/neutron/process/NeutronElasticProcess.hh"
 
 #include "ImportedProcessAdapter.hh"
@@ -123,6 +124,7 @@ auto ProcessBuilder::operator()(IPC ipc) -> SPProcess
         {IPC::neutron_elastic, &ProcessBuilder::build_neutron_elastic},
         {IPC::photoelectric, &ProcessBuilder::build_photoelectric},
         {IPC::rayleigh, &ProcessBuilder::build_rayleigh},
+        {IPC::mu_atom_capture, &ProcessBuilder::build_mucf},
     };
 
     // Next, try built-in processes
@@ -248,6 +250,12 @@ auto ProcessBuilder::build_mupairprod() -> SPProcess
 {
     return std::make_shared<MuPairProductionProcess>(
         this->particle(), this->imported(), data_.mu_production);
+}
+
+//---------------------------------------------------------------------------//
+auto ProcessBuilder::build_mucf() -> SPProcess
+{
+    return std::make_shared<MucfProcess>(this->particle(), this->material());
 }
 
 //---------------------------------------------------------------------------//

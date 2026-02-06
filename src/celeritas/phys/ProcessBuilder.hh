@@ -123,6 +123,7 @@ class ProcessBuilder
     auto build_neutron_elastic() -> SPProcess;
     auto build_photoelectric() -> SPProcess;
     auto build_rayleigh() -> SPProcess;
+    auto build_mucf() -> SPProcess;
 };
 
 //---------------------------------------------------------------------------//

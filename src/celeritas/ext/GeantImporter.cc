@@ -1002,12 +1002,22 @@ auto import_processes(GeantImporter::DataSelection selected,
         }
         else if (dynamic_cast<G4MuonMinusAtomicCapture const*>(&process))
         {
-            // G4MuonMinusAtomicCapture is a G4ProcessType::fHadronic
-            // It is also a G4VRestProcess and does not require import data
+            // If muonic atom capture is available, initialize muCF physics
+            // The muCF physics does not require import data, as it is loaded
+            // from hardcoded data, and has no cross section tables, since it
+            // is an at-rest process
             CELER_LOG(debug) << "Initializing default muCF data for particle "
                              << particle.GetParticleName() << " ("
                              << particle.GetPDGEncoding() << ')';
+
             imported.mucf_physics = inp::MucfPhysics::from_default();
+
+            ImportProcess mucf_process;
+            mucf_process.particle_pdg = particle.GetPDGEncoding();
+            mucf_process.process_type = ImportProcessType::hadronic;
+            mucf_process.process_class = ImportProcessClass::mu_atom_capture;
+            mucf_process.applies_at_rest = true;
+            processes.push_back(mucf_process);
         }
         else if (import_optical_model
                  && dynamic_cast<G4OpAbsorption const*>(&process))

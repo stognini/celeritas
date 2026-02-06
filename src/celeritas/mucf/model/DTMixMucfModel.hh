@@ -23,13 +23,11 @@ class ParticleParams;
  * produced, selects the channel, and calls the appropriate interactor.
  *
  * The full set of "actions" is as follows, and in this ordering:
- * - Define muon decay time to compete with the rest of the execution
  * - Form muonic atom and select its spin
  * - May execute atom spin flip or atom transfer
  * - Form muonic molecule and select its spin
- * - Calculate mean cycle time (time it takes from atom formation to fusion)
- * - Confirm if fusion happens or the if the muon should decay
- * - Call appropriate Interactor: Muon decay, or one of the muCF interactors
+ * - Select correct mean cycle time (time from atom formation to fusion)
+ * - Call appropriate Interactor
  *
  * \note This is an at-rest model.
  */
