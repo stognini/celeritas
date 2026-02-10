@@ -22,7 +22,6 @@ namespace celeritas
 MucfProcess::MucfProcess(SPConstParticles particles, SPConstMaterials materials)
     : particles_(particles), materials_(materials)
 {
-    //! \todo Fix ImportProcessClass
     CELER_EXPECT(particles_);
     CELER_EXPECT(materials_);
 }
@@ -33,17 +32,24 @@ MucfProcess::MucfProcess(SPConstParticles particles, SPConstMaterials materials)
  */
 auto MucfProcess::build_models(ActionIdIter start_id) const -> VecModel
 {
-    return {std::make_shared<DTMixMucfModel>(
-        *start_id++, *particles_, *materials_)};
+    auto model = std::make_shared<DTMixMucfModel>(
+        *start_id++, *particles_, *materials_);
+    model_ = model;
+    return {std::move(model)};
 }
 
 //---------------------------------------------------------------------------//
 /*!
  * Get the interaction cross sections for the given energy range.
  */
-auto MucfProcess::macro_xs(Applicability) const -> XsGrid
+auto MucfProcess::macro_xs(Applicability applic) const -> XsGrid
 {
-    return {};
+    auto const& data = model_->host_ref();
+    CELER_ASSERT(data);
+
+    XsGrid result;
+
+    return result;
 }
 
 //---------------------------------------------------------------------------//
@@ -52,6 +58,7 @@ auto MucfProcess::macro_xs(Applicability) const -> XsGrid
  */
 auto MucfProcess::energy_loss(Applicability) const -> EnergyLossGrid
 {
+    // No energy loss for at-rest process
     return {};
 }
 //---------------------------------------------------------------------------//

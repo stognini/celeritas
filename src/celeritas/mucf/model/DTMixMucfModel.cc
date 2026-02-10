@@ -147,8 +147,7 @@ auto DTMixMucfModel::applicability() const -> SetApplicability
     applic.particle = this->host_ref().particle_ids.mu_minus;
     // At-rest model
     applic.lower = zero_quantity();
-    applic.upper = zero_quantity();
-
+    applic.upper = units::MevEnergy{std::numeric_limits<real_type>::epsilon()};
     return {applic};
 }
 

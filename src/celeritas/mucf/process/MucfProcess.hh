@@ -27,6 +27,7 @@ class MucfProcess final : public Process
     //! \name Type aliases
     using SPConstParticles = std::shared_ptr<ParticleParams const>;
     using SPConstMaterials = std::shared_ptr<MaterialParams const>;
+    using SPModel = std::shared_ptr<DTMixMucfModel>;
     //!@}
 
   public:
@@ -38,7 +39,7 @@ class MucfProcess final : public Process
     VecModel build_models(ActionIdIter start_id) const final;
 
     // Get the interaction cross sections for the given energy range
-    XsGrid macro_xs(Applicability) const final;
+    XsGrid macro_xs(Applicability applic) const final;
 
     // Get the energy loss for the given energy range
     EnergyLossGrid energy_loss(Applicability) const final;
@@ -55,6 +56,7 @@ class MucfProcess final : public Process
   private:
     SPConstParticles particles_;
     SPConstMaterials materials_;
+    mutable std::shared_ptr<DTMixMucfModel> model_;
 };
 
 //---------------------------------------------------------------------------//
