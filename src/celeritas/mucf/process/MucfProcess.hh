@@ -27,7 +27,6 @@ class MucfProcess final : public Process
     //! \name Type aliases
     using SPConstParticles = std::shared_ptr<ParticleParams const>;
     using SPConstMaterials = std::shared_ptr<MaterialParams const>;
-    using SPModel = std::shared_ptr<DTMixMucfModel>;
     //!@}
 
   public:
@@ -56,7 +55,6 @@ class MucfProcess final : public Process
   private:
     SPConstParticles particles_;
     SPConstMaterials materials_;
-    mutable std::shared_ptr<DTMixMucfModel> model_;
 };
 
 //---------------------------------------------------------------------------//

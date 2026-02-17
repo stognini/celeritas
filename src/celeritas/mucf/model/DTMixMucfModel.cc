@@ -150,6 +150,49 @@ auto DTMixMucfModel::applicability() const -> SetApplicability
 
 //---------------------------------------------------------------------------//
 /*!
+ * At-rest total interaction rate for given particle and material.
+ */
+auto DTMixMucfModel::interaction_rate(Applicability applic) const -> real_type
+{
+    auto const& data = data_.host_ref();
+
+    auto find_mucf_matid
+        = [](PhysMatId matid, auto const& mucfmatid_to_matid) -> MuCfMatId {
+        for (auto id : range(mucfmatid_to_matid.size()))
+        {
+            MuCfMatId mucf_matid{id};
+            if (mucfmatid_to_matid[mucf_matid] == matid)
+            {
+                return mucf_matid;
+            }
+        }
+        return {};
+    };
+
+    auto mucf_matid = find_mucf_matid(applic.material, data.mucfmatid_to_matid);
+    if (!mucf_matid)
+    {
+        // Not a muCF material
+        return std::numeric_limits<real_type>::max();
+    }
+
+    // Get total material cycle rate
+    auto const& mat_cycle_rates = data.cycle_rates[mucf_matid];
+    real_type total_cycle_rates{0};
+    for (auto mol : range(MucfMuonicMolecule::size_))
+    {
+        for (auto spin : range(2))
+        {
+            total_cycle_rates += mat_cycle_rates[mol][spin];
+        }
+    }
+
+    CELER_ENSURE(total_cycle_rates > 0);
+    return total_cycle_rates;
+}
+
+//---------------------------------------------------------------------------//
+/*!
  * At-rest model does not require microscopic cross sections.
  */
 auto DTMixMucfModel::micro_xs(Applicability) const -> XsTable

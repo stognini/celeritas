@@ -7,7 +7,8 @@
 #pragma once
 
 #include "celeritas/mucf/data/DTMixMucfData.hh"
-#include "celeritas/phys/Model.hh"
+
+#include "AtRestModel.hh"
 
 namespace celeritas
 {
@@ -31,7 +32,7 @@ class ParticleParams;
  *
  * \note This is an at-rest model.
  */
-class DTMixMucfModel final : public Model, public StaticConcreteAction
+class DTMixMucfModel final : public AtRestModel, public StaticConcreteAction
 {
   public:
     //!@{
@@ -47,6 +48,9 @@ class DTMixMucfModel final : public Model, public StaticConcreteAction
 
     // Particle types and energy ranges that this model applies to
     SetApplicability applicability() const final;
+
+    // Get the reaction rate for the given particle and material
+    real_type interaction_rate(Applicability applic) const final;
 
     // Get the microscopic cross sections for the given particle and material
     XsTable micro_xs(Applicability) const final;
