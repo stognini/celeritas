@@ -31,9 +31,6 @@ namespace detail
  * - Single element, multiple isotopes (H element, with H, d, and t isotopes);
  * or
  * - Multiple elements, single isotope each (separate H, d, and t elements).
- *
- * The \c inp:: data has cycle \em rate (\f$\lambda\f$) tables, while the
- * host/device cached data is the cycle \em time \f$\tau = 1/\lambda\f$.
  */
 class MucfMaterialInserter
 {
@@ -47,7 +44,7 @@ class MucfMaterialInserter
 
   private:
     using MoleculeCycles = Array<real_type, 2>;
-    using CycleTimesArray = EnumArray<MucfMuonicMolecule, MoleculeCycles>;
+    using CycleRatesArray = EnumArray<MucfMuonicMolecule, MoleculeCycles>;
     using EquilibriumArray = EquilibrateDensitiesSolver::EquilibriumArray;
     using MaterialFractionsArray = EnumArray<MucfIsotope, real_type>;
     using AtomicMassNumber = AtomicNumber;
@@ -61,7 +58,7 @@ class MucfMaterialInserter
     CollectionBuilder<PhysMatId, MemSpace::host, MuCfMatId> mucfmatid_to_matid_;
     CollectionBuilder<MaterialFractionsArray, MemSpace::host, MuCfMatId>
         isotopic_fractions_;
-    CollectionBuilder<CycleTimesArray, MemSpace::host, MuCfMatId> cycle_times_;
+    CollectionBuilder<CycleRatesArray, MemSpace::host, MuCfMatId> cycle_rates_;
     // Const data
     std::map<AtomicMassNumber, MucfIsotope> const mass_isotope_map_{
         {AtomicMassNumber{1}, MucfIsotope::protium},
@@ -73,15 +70,15 @@ class MucfMaterialInserter
 
     //// HELPER FUNCTIONS ////
 
-    // Calculate mean fusion cycle times for dd muonic molecules
+    // Calculate mean fusion cycle rates for dd muonic molecules
     Array<real_type, 2> calc_dd_cycle(EquilibriumArray const& eq_dens,
                                       real_type const temperature);
 
-    // Calculate mean fusion cycle times for dt muonic molecules
+    // Calculate mean fusion cycle rates for dt muonic molecules
     Array<real_type, 2> calc_dt_cycle(EquilibriumArray const& eq_dens,
                                       real_type const temperature);
 
-    // Calculate mean fusion cycle times for tt muonic molecules
+    // Calculate mean fusion cycle rates for tt muonic molecules
     Array<real_type, 2> calc_tt_cycle(EquilibriumArray const& eq_dens,
                                       real_type const temperature);
 

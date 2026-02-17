@@ -92,21 +92,13 @@ DTMixMucfExecutor::operator()(celeritas::CoreTrackView const& track)
     detail::MuonicMoleculeSpinSelector select_molecule_spin(muonic_molecule);
     auto const molecule_spin = select_molecule_spin(rng);
 
-    // Load cycle time for the selected molecule
-    auto const cycle_time
-        = data.cycle_times[mucf_matid][muonic_molecule][molecule_spin];
-    CELER_ASSERT(cycle_time > 0);
-
-    // Check if muon decays before fusion happens
-    real_type const mucf_len = cycle_time * track.sim().step_length();
-    if (decay_len < mucf_len)
-    {
-        // Muon decays and halts the interaction
-        //! \todo Update track time and return muon decay interactor
-    }
+    // Load cycle rate for the selected molecule
+    auto const cycle_rate
+        = data.cycle_rates[mucf_matid][muonic_molecule][molecule_spin];
+    CELER_ASSERT(cycle_rate > 0);
 
     //! \todo Correct track time update? Or should be done in Interactors?
-    track.sim().add_time(cycle_time);
+    track.sim().add_time(1. / cycle_rate);
 
     // Fuse molecule and generate secondaries
     //! \todo Maybe move the channel selectors into the interactors
