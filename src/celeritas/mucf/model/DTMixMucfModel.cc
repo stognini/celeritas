@@ -140,12 +140,23 @@ DTMixMucfModel::DTMixMucfModel(ActionId id,
  */
 auto DTMixMucfModel::applicability() const -> SetApplicability
 {
-    Applicability applic;
-    applic.particle = this->host_ref().particle_ids.mu_minus;
-    // At-rest model
-    applic.lower = zero_quantity();
-    applic.upper = units::MevEnergy{std::numeric_limits<real_type>::epsilon()};
-    return {applic};
+    SetApplicability applicabilities;
+
+    auto const& data = data_.host_ref();
+    for (auto id : range(data.mucfmatid_to_matid.size()))
+    {
+        auto mucf_matid = MuCfMatId{id};
+        auto physmatid = data.mucfmatid_to_matid[mucf_matid];
+
+        Applicability applic;
+        applic.particle = data.particle_ids.mu_minus;
+        applic.material = physmatid;
+        applic.lower = zero_quantity();
+        applic.upper = zero_quantity();
+        applicabilities.insert(applic);
+    }
+
+    return applicabilities;
 }
 
 //---------------------------------------------------------------------------//
@@ -173,7 +184,7 @@ auto DTMixMucfModel::interaction_rate(Applicability applic) const -> real_type
     if (!mucf_matid)
     {
         // Not a muCF material
-        return std::numeric_limits<real_type>::max();
+        return 0;
     }
 
     // Get total material cycle rate

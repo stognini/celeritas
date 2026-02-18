@@ -49,9 +49,6 @@ DTMixMucfExecutor::operator()(celeritas::CoreTrackView const& track)
 
     auto rng = track.rng();
 
-    // Muon decay may compete against other "actions" in this executor
-    real_type const decay_len{};  //! \todo Set muon decay interaction length
-
     // Find muCF material ID from PhysMatId
     // Make this a View if ever used beyond this executor
     auto find = [&](PhysMatId matid) -> MuCfMatId {
