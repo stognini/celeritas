@@ -11,7 +11,6 @@
 #include "corecel/Assert.hh"
 #include "corecel/Macros.hh"
 #include "corecel/Types.hh"
-#include "corecel/io/Logger.hh"
 #include "corecel/random/distribution/ExponentialDistribution.hh"
 #include "celeritas/Quantities.hh"
 #include "celeritas/Types.hh"
@@ -666,7 +665,6 @@ PhysicsTrackView::make_element_selector(UniformTableId table_id,
  */
 CELER_FUNCTION bool PhysicsTrackView::has_at_rest() const
 {
-    CELER_LOG(info) << "has at rest " << this->process_group().at_rest.size();
     return !this->process_group().at_rest.empty();
 }
 

@@ -650,14 +650,28 @@ void PhysicsParams::build_tables(Options const& opts,
                             = dynamic_cast<AtRestModel const*>(model.get()))
                         {
                             // store interaction rate
+                            CELER_LOG(info)
+                                << "At rest interaction rate for process '"
+                                << proc.label() << "' of particle '"
+                                << data->process_groups[particle_id]
+                                       .processes[pp_idx]
+                                       .unchecked_get()
+                                << "' in material '"
+                                << mats.id_to_label(applic.material)
+                                << "': " << rest_mod->interaction_rate(applic);
                             rates.push_back(rest_mod->interaction_rate(applic));
                         }
                     }
                 }
             }
 
-            temp_at_rest[pp_idx].rate
-                = reals.insert_back(rates.begin(), rates.end());
+            if (!rates.empty())
+            {
+                // Store at-rest interaction rates for this particle/process
+                temp_at_rest.resize(rates.size());
+                temp_at_rest[pp_idx].rate
+                    = reals.insert_back(rates.begin(), rates.end());
+            }
 
             // Check if any material has value grids
             auto has_grids = [](auto const& v) {
