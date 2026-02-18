@@ -110,13 +110,30 @@ struct IntegralXsProcess
 
 //---------------------------------------------------------------------------//
 /*!
+ * At-rest process data for a single particle type.
+ *
+ * This stores the interaction rates for processes that apply when the particle
+ * is at rest. Each rate is indexed by material ID.
+ */
+struct AtRestProcess
+{
+    ItemRange<real_type> rate;  // Indexed per material ID
+
+    //! True if assigned
+    explicit CELER_FUNCTION operator bool() const { return !rate.empty(); }
+};
+
+//---------------------------------------------------------------------------//
+/*!
  * Processes for a single particle type.
  *
  * Each index should be accessed with type ParticleProcessId. \c macro_xs
  * stores the cross section tables for each process, while \c energy_loss and
  * \c range are the process-integrated dE/dx and range for the particle.  \c
  * integral_xs will only be assigned if the integral approach is used and the
- * particle has continuous-discrete processes.
+ * particle has continuous-discrete processes. If \c Process::applies_at_rest
+ * is true, \c at_rest is the sum of all at-rest interaction rates for
+ * the particle/process, and is equivalent to the \c macro_xs .
  *
  * \todo If it's possible for a particle to have multiple at-rest processes, \c
  * at_rest should be the process with the smallest lifetime. This is used in \c
@@ -130,10 +147,10 @@ struct ProcessGroup
     ItemRange<ModelGroup> models;  //!< Model applicability [ppid]
     ItemRange<IntegralXsProcess> integral_xs;  //!< [ppid]
     ItemRange<ValueTable<XsGridId>> macro_xs;  //!< [ppid]
+    ItemRange<AtRestProcess> at_rest;  //!< [ppid]
     UniformTable energy_loss;  //!< Process-integrated energy loss
     UniformTable range;  //!< Process-integrated range
     UniformTable inverse_range;  //!< Inverse process-integrated range
-    ParticleProcessId at_rest;  //!< ID of the particle's at-rest process
 
     //! True if assigned and valid
     explicit CELER_FUNCTION operator bool() const
@@ -357,6 +374,7 @@ struct PhysicsParamsData
     ParticleModelItems<ModelId> model_ids;
     Items<ParticleModelId> pmodel_ids;
     Items<ProcessId> process_ids;
+    Items<AtRestProcess> at_rest;
 
     // Backend storage
     Items<real_type> reals;
@@ -393,7 +411,7 @@ struct PhysicsParamsData
         model_ids = other.model_ids;
         pmodel_ids = other.pmodel_ids;
         process_ids = other.process_ids;
-
+        at_rest = other.at_rest;
         reals = other.reals;
 
         return *this;

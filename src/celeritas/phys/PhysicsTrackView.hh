@@ -11,6 +11,8 @@
 #include "corecel/Assert.hh"
 #include "corecel/Macros.hh"
 #include "corecel/Types.hh"
+#include "corecel/io/Logger.hh"
+#include "corecel/random/distribution/ExponentialDistribution.hh"
 #include "celeritas/Quantities.hh"
 #include "celeritas/Types.hh"
 #include "celeritas/em/xs/EPlusGGMacroXsCalculator.hh"
@@ -119,6 +121,11 @@ class PhysicsTrackView
                                             MaterialView const& material,
                                             Energy energy) const;
 
+    // Return ParticleProcessId after comparing all at rest process rates
+    template<class Engine>
+    inline CELER_FUNCTION ParticleProcessId
+    sample_at_rest_process(MaterialView const& material, Engine& rng) const;
+
     // Estimate maximum macroscopic cross section for the process over the step
     inline CELER_FUNCTION real_type calc_max_xs(IntegralXsProcess const& process,
                                                 ParticleProcessId ppid,
@@ -137,8 +144,8 @@ class PhysicsTrackView
         TabulatedElementSelector make_element_selector(UniformTableId,
                                                        Energy) const;
 
-    // ID of the particle's at-rest process
-    inline CELER_FUNCTION ParticleProcessId at_rest_process() const;
+    // Whether the particle has an at-rest process
+    inline CELER_FUNCTION bool has_at_rest() const;
 
     //// PARAMETER DATA ////
 
@@ -494,18 +501,48 @@ CELER_FUNCTION real_type PhysicsTrackView::calc_xs(ParticleProcessId ppid,
 
 //---------------------------------------------------------------------------//
 /*!
- * Estimate maximum macroscopic cross section for the process over the step.
+ * Calculate or get the total interaction time for the process.
+ */
+template<class Engine>
+CELER_FUNCTION ParticleProcessId PhysicsTrackView::sample_at_rest_process(
+    MaterialView const& material, Engine& rng) const
+{
+    ParticleProcessId shortest_time_ppid;
+    real_type shortest_time = std::numeric_limits<real_type>::max();
+    auto const& at_rest_data = this->process_group().at_rest;
+
+    for (auto ppidx : range(at_rest_data.size()))
+    {
+        auto idx = params_.at_rest[at_rest_data[ppidx]]
+                       .rate[material.material_id().get()];
+
+        real_type time = 1 / params_.reals[idx];
+        real_type sampled_time = ExponentialDistribution<real_type>(time)(rng);
+        if (sampled_time < shortest_time)
+        {
+            shortest_time_ppid = ParticleProcessId{ppidx};
+        }
+    }
+    return shortest_time_ppid;
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Estimate maximum macroscopic cross section for the process over the
+ * step.
  *
  * If this is a particle with an energy loss process, this returns the
- * estimate of the maximum cross section over the step. If the energy of the
- * global maximum of the cross section (calculated at initialization) is in the
- * interval \f$ [\xi E_0, E_0) \f$, where \f$ E_0 \f$ is the pre-step energy
- * and \f$ \xi \f$ is \c min_eprime_over_e (defined by default as \f$ \xi = 1 -
+ * estimate of the maximum cross section over the step. If the energy of
+ * the global maximum of the cross section (calculated at initialization)
+ * is in the interval \f$ [\xi E_0, E_0) \f$, where \f$ E_0 \f$ is the
+ * pre-step energy and \f$ \xi \f$ is \c min_eprime_over_e (defined by
+ * default as \f$ \xi = 1 -
  * \alpha \f$, where \f$ \alpha \f$ is \c max_step_over_range), \f$
  * \sigma_{\max} \f$ is set to the global maximum.  Otherwise, \f$
  * \sigma_{\max} = \max( \sigma(E_0), \sigma(\xi E_0) ) \f$. If the cross
  * section is not monotonic in the interval \f$ [\xi E_0, E_0) \f$ and the
- * interval does not contain the global maximum, the post-step cross section
+ * interval does not contain the global maximum, the post-step cross
+ * section
  * \f$ \sigma(E_1) \f$ may be larger than \f$ \sigma_{\max} \f$.
  */
 CELER_FUNCTION real_type
@@ -532,9 +569,10 @@ PhysicsTrackView::calc_max_xs(IntegralXsProcess const& process,
 /*!
  * Get a hardwired model for on-the-fly cross section calculation.
  *
- * This returns the model ID that applies to the given process ID and energy if
- * the process is hardwired to calculate macroscopic cross sections on the fly.
- * If the result is null, tables should be used for this process/energy.
+ * This returns the model ID that applies to the given process ID and
+ * energy if the process is hardwired to calculate macroscopic cross
+ * sections on the fly. If the result is null, tables should be used for
+ * this process/energy.
  */
 CELER_FUNCTION ModelId PhysicsTrackView::hardwired_model(ParticleProcessId ppid,
                                                          Energy energy) const
@@ -571,8 +609,9 @@ PhysicsTrackView::make_model_finder(ParticleProcessId ppid) const
 /*!
  * Return value table data for the given particle/model/material.
  *
- * A null result means either the model is material independent or the material
- * only has one element, so no cross section CDF tables are stored.
+ * A null result means either the model is material independent or the
+ * material only has one element, so no cross section CDF tables are
+ * stored.
  */
 CELER_FUNCTION
 auto PhysicsTrackView::cdf_table(ParticleModelId pmid) const -> UniformTableId
@@ -601,7 +640,8 @@ auto PhysicsTrackView::cdf_table(ParticleModelId pmid) const -> UniformTableId
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct an element selector to sample an element from tabulated xs data.
+ * Construct an element selector to sample an element from tabulated xs
+ * data.
  */
 CELER_FUNCTION
 TabulatedElementSelector
@@ -619,14 +659,15 @@ PhysicsTrackView::make_element_selector(UniformTableId table_id,
 
 //---------------------------------------------------------------------------//
 /*!
- * ID of the particle's at-rest process.
+ * Whether the particle has an at-rest process.
  *
- * If the particle can have a discrete interaction at rest, this returns the \c
- * ParticleProcessId of that process. Otherwise, it returns a null ID.
+ * If the particle can have a discrete interaction at rest, this returns
+ * true. Otherwise, it returns false.
  */
-CELER_FUNCTION ParticleProcessId PhysicsTrackView::at_rest_process() const
+CELER_FUNCTION bool PhysicsTrackView::has_at_rest() const
 {
-    return this->process_group().at_rest;
+    CELER_LOG(info) << "has at rest " << this->process_group().at_rest.size();
+    return !this->process_group().at_rest.empty();
 }
 
 //---------------------------------------------------------------------------//
@@ -679,9 +720,12 @@ CELER_FUNCTION ModelId PhysicsTrackView::model_id(ParticleModelId pmid) const
  * Below \c min_range, no step scaling is applied, but the step can still
  * be arbitrarily small.
  *
- * \todo Rename \c calc_eloss_step_limit . This step limiter allows tuning the
- * accuracy loss from approximating a constant cross section along the step. We
- * should also split this into limiting the \em actual range (where the energy
+ * \todo Rename \c calc_eloss_step_limit . This step limiter allows tuning
+ the
+ * accuracy loss from approximating a constant cross section along the
+ step. We
+ * should also split this into limiting the \em actual range (where the
+ energy
  * goes to zero or the minimum allowable tracking range) versus a dE/dx
  * limiter.
  */
@@ -692,9 +736,9 @@ CELER_FUNCTION real_type PhysicsTrackView::range_to_step(real_type range) const
     real_type const rho = scalars.min_range;
     if (range < rho * (1 + celeritas::sqrt_tol()))
     {
-        // Small range returns the step. The fudge factor avoids floating point
-        // error in the interpolation below while preserving the near-linear
-        // behavior for range = rho + epsilon.
+        // Small range returns the step. The fudge factor avoids floating
+        // point error in the interpolation below while preserving the
+        // near-linear behavior for range = rho + epsilon.
         return range;
     }
 
@@ -718,8 +762,8 @@ PhysicsTrackView::scalars() const
 /*!
  * Access particle-dependent scalar properties.
  *
- * These properties are different for light particles (electrons/positrons) and
- * heavy particles (muons/hadrons).
+ * These properties are different for light particles (electrons/positrons)
+ * and heavy particles (muons/hadrons).
  */
 CELER_FORCEINLINE_FUNCTION ParticleScalars const&
 PhysicsTrackView::particle_scalars() const
@@ -744,8 +788,8 @@ CELER_FUNCTION size_type PhysicsTrackView::num_particles() const
 /*!
  * Construct a grid calculator of the given type.
  *
- * The calculator must take two arguments: a reference to \c UniformGridRecord
- * and a reference to the backend reals storage.
+ * The calculator must take two arguments: a reference to \c
+ * UniformGridRecord and a reference to the backend reals storage.
  */
 template<class T>
 CELER_FUNCTION T PhysicsTrackView::make_calculator(UniformGridId id) const
@@ -764,8 +808,8 @@ CELER_FUNCTION T PhysicsTrackView::make_calculator(UniformGridId id) const
  * grid Calculator.
  *
  * If the result is null, it's likely because the process doesn't have the
- * associated value (e.g. if the table type is "energy_loss" and the process is
- * not a slowing-down process).
+ * associated value (e.g. if the table type is "energy_loss" and the
+ * process is not a slowing-down process).
  */
 CELER_FUNCTION UniformGridId
 PhysicsTrackView::uniform_grid(UniformTable const& table) const

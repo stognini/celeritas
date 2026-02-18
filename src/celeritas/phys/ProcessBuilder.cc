@@ -32,8 +32,6 @@
 #include "celeritas/mucf/process/MucfProcess.hh"
 #include "celeritas/neutron/process/NeutronElasticProcess.hh"
 
-#include "ImportedProcessAdapter.hh"
-
 namespace celeritas
 {
 //---------------------------------------------------------------------------//

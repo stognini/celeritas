@@ -43,6 +43,7 @@
 #include "celeritas/mat/MaterialData.hh"
 #include "celeritas/mat/MaterialParams.hh"
 #include "celeritas/mat/MaterialView.hh"
+#include "celeritas/mucf/model/AtRestModel.hh"
 #include "celeritas/neutron/model/ChipsNeutronElasticModel.hh"
 
 #include "Model.hh"
@@ -527,6 +528,7 @@ void PhysicsParams::build_tables(Options const& opts,
 
     DedupeCollectionBuilder reals(&data->reals);
     CollectionBuilder integral_xs(&data->integral_xs);
+    CollectionBuilder at_rest(&data->at_rest);
     CollectionBuilder xs_grid_ids(&data->xs_grid_ids);
     CollectionBuilder xs_tables(&data->xs_tables);
     CollectionBuilder uniform_grid_ids(&data->uniform_grid_ids);
@@ -551,6 +553,9 @@ void PhysicsParams::build_tables(Options const& opts,
 
         // Processes with dE/dx and macro xs tables
         std::vector<IntegralXsProcess> temp_integral_xs(process_ids.size());
+
+        // At rest interaction rates per particle/process
+        std::vector<AtRestProcess> temp_at_rest;
 
         // Loop over per-particle processes
         for (auto pp_idx : range(process_ids.size()))
@@ -577,21 +582,8 @@ void PhysicsParams::build_tables(Options const& opts,
                 energy_max_xs.resize(mats.size());
             }
 
-            if (proc.applies_at_rest())
-            {
-                /* \todo For now assume only one process per particle applies
-                 * at rest. If a particle has multiple at-rest processes, we
-                 * will need to check which process has the shortest time to
-                 * interaction and choose that process in \c
-                 * select_discrete_interaction.
-                 */
-                CELER_VALIDATE(!process_group.at_rest,
-                               << "particle ID " << particle_id.get()
-                               << " has multiple at-rest processes");
-
-                // Discrete interaction can occur at rest
-                process_group.at_rest = ParticleProcessId(pp_idx);
-            }
+            // Interaction rates
+            std::vector<real_type> rates;
 
             // Loop over materials
             for (auto mat_idx : range(mats.size()))
@@ -643,7 +635,29 @@ void PhysicsParams::build_tables(Options const& opts,
                     // for this material if the integral approach is used
                     energy_max_xs[mat_idx] = calc_integral_xs(macro_xs);
                 }
+
+                if (proc.applies_at_rest())
+                {
+                    //! \todo Add particle decay rates
+                    for (auto pmod_idx :
+                         range(model_groups[pp_idx].model.size()))
+                    {
+                        ParticleModelId pmid{pmod_idx};
+                        auto model_id = data->model_ids[pmid];
+
+                        auto model = this->model(model_id);
+                        if (auto const* rest_mod
+                            = dynamic_cast<AtRestModel const*>(model.get()))
+                        {
+                            // store interaction rate
+                            rates.push_back(rest_mod->interaction_rate(applic));
+                        }
+                    }
+                }
             }
+
+            temp_at_rest[pp_idx].rate
+                = reals.insert_back(rates.begin(), rates.end());
 
             // Check if any material has value grids
             auto has_grids = [](auto const& v) {
@@ -686,6 +700,10 @@ void PhysicsParams::build_tables(Options const& opts,
         // Construct value tables
         process_group.macro_xs = xs_tables.insert_back(temp_macro_xs.begin(),
                                                        temp_macro_xs.end());
+
+        // Construct at-rest interaction rates
+        process_group.at_rest
+            = at_rest.insert_back(temp_at_rest.begin(), temp_at_rest.end());
     }
 }
 

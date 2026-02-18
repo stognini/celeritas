@@ -52,10 +52,10 @@ find_ppid(MaterialView const& material,
           PhysicsStepView& pstep,
           Engine& rng)
 {
-    if (physics.at_rest_process() && particle.is_stopped())
+    if (physics.has_at_rest() && particle.is_stopped())
     {
-        // If the particle is stopped and has an at-rest process, select it
-        return physics.at_rest_process();
+        // Select at-rest process with shortest interaction time
+        return physics.sample_at_rest_process(material, rng);
     }
 
     // Sample the process from the pre-calculated per-process cross section

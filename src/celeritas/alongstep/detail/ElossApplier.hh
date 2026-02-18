@@ -125,7 +125,7 @@ apply_slowing_down(CoreTrackView const& track, ParticleTrackView::Energy eloss)
 
     if (particle.is_stopped())
     {
-        if (!phys.at_rest_process())
+        if (!phys.has_at_rest())
         {
             // Immediately kill stopped particles with no at rest processes
             sim.status(TrackStatus::killed);
