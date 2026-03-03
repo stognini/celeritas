@@ -29,6 +29,7 @@
 #include <G4MuPairProduction.hh>
 #include <G4MuPairProductionModel.hh>
 #include <G4MuonMinusAtomicCapture.hh>
+#include <G4MuonMinusCapture.hh>
 #include <G4Navigator.hh>
 #include <G4NuclearFormfactorType.hh>
 #include <G4NucleiProperties.hh>
@@ -1021,6 +1022,11 @@ auto import_processes(GeantImporter::DataSelection selected,
             mucf_process.process_class = ImportProcessClass::mu_atom_capture;
             mucf_process.applies_at_rest = true;
             processes.push_back(mucf_process);
+        }
+        else if (dynamic_cast<G4MuonMinusCapture const*>(&process))
+        {
+            // Debugging test
+            CELER_DISCARD(process);
         }
         else if (import_optical_model
                  && dynamic_cast<G4OpAbsorption const*>(&process))

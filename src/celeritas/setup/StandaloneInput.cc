@@ -95,6 +95,10 @@ StandaloneLoaded standalone_input(inp::StandaloneInput& si)
     // (TODO: will be replaced)
     problem.physics.optical = imported.optical_physics;
 
+    // Copy MuCF physics from import data
+    // (TODO: will be replaced)
+    problem.physics.mucf = imported.mucf_physics;
+
     StandaloneLoaded result;
 
     // Set up core params

@@ -329,7 +329,7 @@ inp::FrameworkInput to_inp(SetupOptions const& so)
 
     // Correctly assign DataSelection import flags when muons are present
     auto const selection = GIDS::optical
-                           | (includes_muon() ? GIDS::em : GIDS::em_basic);
+                           | (includes_muon() ? GIDS::all : GIDS::em_basic);
     result.physics_import.data_selection.particles = selection;
     result.physics_import.data_selection.processes = selection;
 

@@ -83,6 +83,10 @@ FrameworkLoaded framework_input(inp::FrameworkInput& fi)
         // (TODO: will be replaced)
         problem.physics.optical = imported.optical_physics;
 
+        // Copy MuCF physics from import data
+        // (TODO: will be replaced)
+        problem.physics.mucf = imported.mucf_physics;
+
         // Load geometry, surfaces, regions from Geant4 world pointer
         problem.model = result.geo->make_model_input();
 

@@ -36,6 +36,7 @@ struct GeantImportDataSelection
         optical = 0x8,  //!< Optical particles and processes
         em = em_basic | em_ex,  //!< Any EM
         hadron = 0x10,  //!< Hadronic particles and processes
+        all = em | hadron | optical
     };
 
     Flags particles = em | optical;

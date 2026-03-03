@@ -6,6 +6,12 @@
 //---------------------------------------------------------------------------//
 #include "MucfPhysics.hh"
 
+#include "corecel/math/Quantity.hh"
+#include "celeritas/UnitTypes.hh"
+#include "celeritas/phys/PDGNumber.hh"
+
+#include "Particle.hh"
+
 namespace celeritas
 {
 namespace inp
@@ -609,6 +615,81 @@ MucfPhysics MucfPhysics::from_default()
     result.atom_spin_flip = mucf_atom_spin_flip_rates();
 
     return result;
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Append muCF-specific particles to \c inp::Particle data.
+ */
+std::vector<inp::Particle>
+append_mucf_particles(std::vector<inp::Particle> const& existing_particles)
+{
+    using InvSecond = RealQuantity<UnitInverse<units::Second>>;
+    auto const stable = constants::stable_decay_constant;
+
+    // Start with existing particles and append all the extra
+    auto result = existing_particles;
+
+    constexpr InvSecond muon_decay_constant{1 / 2.1969811e-6};
+    constexpr InvSecond neutron_decay_constant{1 / 880.2};
+
+#define MUCF_INSERT(NAME, PDG, MASS, CHARGE, DECAY_CONSTANT) \
+    do                                                       \
+    {                                                        \
+        inp::Particle p;                                     \
+        p.name = NAME;                                       \
+        p.pdg = PDG;                                         \
+        p.mass = inp::Particle::MevMass{MASS};               \
+        p.charge = inp::Particle::Charge{CHARGE};            \
+        p.decay_constant = DECAY_CONSTANT;                   \
+        result.push_back(std::move(p));                      \
+    } while (0)
+
+    // Elementary particles and nuclei
+    {
+        MUCF_INSERT("proton", pdg::proton(), 938.2720813, 1, stable);
+        MUCF_INSERT("triton", pdg::triton(), 2808.921112, 1, stable);
+        MUCF_INSERT("neutron",
+                    pdg::neutron(),
+                    939.5654133,
+                    0,
+                    neutron_decay_constant.value());
+        MUCF_INSERT("alpha", pdg::alpha(), 3727.379378, 2, stable);
+        MUCF_INSERT("he3", pdg::he3(), 2808.391586, 2, stable);
+    }
+
+    // Muonic atoms
+    {
+        MUCF_INSERT("muonic_hydrogen",
+                    pdg::muonic_hydrogen(),
+                    105.6583755 + 938.2720813,
+                    0,
+                    muon_decay_constant.value());
+        MUCF_INSERT("muonic_deuteron",
+                    pdg::muonic_deuteron(),
+                    105.6583755 + 1875.612942,
+                    0,
+                    muon_decay_constant.value());
+        MUCF_INSERT("muonic_triton",
+                    pdg::muonic_triton(),
+                    105.6583755 + 2808.921112,
+                    0,
+                    muon_decay_constant.value());
+        MUCF_INSERT("muonic_alpha",
+                    pdg::muonic_alpha(),
+                    105.6583755 + 3727.379378,
+                    0,
+                    muon_decay_constant.value());
+        MUCF_INSERT("muonic_he3",
+                    pdg::muonic_he3(),
+                    105.6583755 + 2808.391586,
+                    0,
+                    muon_decay_constant.value());
+    }
+
+    return result;
+
+#undef MUCF_INSERT
 }
 
 //---------------------------------------------------------------------------//

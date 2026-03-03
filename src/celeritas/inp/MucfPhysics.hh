@@ -13,6 +13,7 @@
 #include "corecel/math/Quantity.hh"
 #include "celeritas/Quantities.hh"
 #include "celeritas/UnitTypes.hh"
+#include "celeritas/inp/Particle.hh"
 #include "celeritas/mucf/Types.hh"
 
 namespace celeritas
@@ -174,6 +175,22 @@ struct MucfPhysics
     //! Construct hardcoded muon-catalyzed fusion physics data
     static MucfPhysics from_default();
 };
+
+//---------------------------------------------------------------------------//
+/*!
+ * Append muCF-specific particles to \c inp::Particle` data.
+ *
+ * This is used in \c Problem::problem to append secondaries to the list of
+ * particles passed to particle params. This odd-behavior is needed since
+ * Geant4 does not have muonic atoms defined at startup. These are instances of
+ * \c G4GenericIon with their PDG calculated on the fly based on their atomic
+ * number/mass.
+ *
+ * \todo Fix all the hardcoded data before merging. These may be also
+ * overridden with input parameters (ImportData particles, and others).
+ */
+std::vector<inp::Particle>
+append_mucf_particles(std::vector<inp::Particle> const& existing_particles);
 
 //---------------------------------------------------------------------------//
 }  // namespace inp

@@ -53,6 +53,7 @@
 #include "celeritas/inp/Control.hh"
 #include "celeritas/inp/Diagnostics.hh"
 #include "celeritas/inp/Field.hh"
+#include "celeritas/inp/MucfPhysics.hh"
 #include "celeritas/inp/Physics.hh"
 #include "celeritas/inp/PhysicsModel.hh"
 #include "celeritas/inp/PhysicsProcess.hh"
@@ -80,6 +81,7 @@
 #include "celeritas/optical/gen/ScintillationParams.hh"
 #include "celeritas/optical/surface/SurfacePhysicsParams.hh"
 #include "celeritas/phys/CutoffParams.hh"
+#include "celeritas/phys/PDGNumber.hh"
 #include "celeritas/phys/ParticleParams.hh"
 #include "celeritas/phys/PhysicsParams.hh"
 #include "celeritas/phys/Process.hh"
@@ -524,8 +526,24 @@ ProblemLoaded problem(inp::Problem const& p, ImportData const& imported)
         imported, params.geometry, params.volume, params.material);
 
     // Construct particle params
-    params.particle = ParticleParams::from_import(imported);
+    {
+        if (p.physics.mucf)
+        {
+            // MuCF physics requires hardcoding extra particles, since in
+            // Geant4 muonic atoms are just a single GenericIon with different
+            // PDG codes generated on the fly when a new secondary is created
 
+            // Make local copy of import and append mucf particles
+            auto mucf_imported = imported;
+            mucf_imported.particles
+                = inp::append_mucf_particles(imported.particles);
+            params.particle = ParticleParams::from_import(mucf_imported);
+        }
+        else
+        {
+            params.particle = ParticleParams::from_import(imported);
+        }
+    }
     // Construct cutoffs
     params.cutoff = CutoffParams::from_import(
         imported, params.particle, params.material);
@@ -535,7 +553,26 @@ ProblemLoaded problem(inp::Problem const& p, ImportData const& imported)
         imported, params.material, params.particle);
 
     // Load physics: create individual processes with make_shared
-    params.physics = build_physics(p, params, imported);
+    if (p.physics.mucf)
+    {
+        // Initialize custom muon-catalyzed fusion physics
+        auto mucf_imported = imported;
+        mucf_imported.mucf_physics = inp::MucfPhysics::from_default();
+
+        // Append process
+        ImportProcess mucf_process;
+        mucf_process.particle_pdg = pdg::mu_minus().get();
+        mucf_process.process_type = ImportProcessType::hadronic;
+        mucf_process.process_class = ImportProcessClass::mu_atom_capture;
+        mucf_process.applies_at_rest = true;
+        mucf_imported.processes.push_back(std::move(mucf_process));
+
+        params.physics = build_physics(p, params, mucf_imported);
+    }
+    else
+    {
+        params.physics = build_physics(p, params, imported);
+    }
 
     CELER_ASSUME(!p.field.valueless_by_exception());
     params.action_reg->insert(build_along_step(p.field, params, imported));
